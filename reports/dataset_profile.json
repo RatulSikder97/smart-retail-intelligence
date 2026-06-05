@@ -374,7 +374,7 @@
           "non_null": 735075,
           "missing_pct": 13.9,
           "unique": 5279,
-          "examples": "0.0, 31.929999999999996, 13.08",
+          "examples": "0.0, 31.93, 13.08",
           "description": "Monthly sales target for product 9",
           "min": 0.0,
           "median": 0.0,

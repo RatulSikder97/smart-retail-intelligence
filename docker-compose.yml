@@ -62,7 +62,9 @@ services:
     image: apache/hadoop:3.4.1
     platform: linux/amd64
     profiles: ["spark"]
-    hostname: datanode
+    # horizontal scale via env: DATANODES=3 docker compose --profile spark up -d
+    deploy:
+      replicas: ${DATANODES:-1}
     command: ["hdfs", "datanode"]
     environment:
       - HADOOP_OPTS=-Djava.security.egd=file:/dev/./urandom
@@ -79,7 +81,7 @@ services:
     platform: linux/amd64
     profiles: ["spark-jobs"]
     command: ["bash", "-c",
-      "for i in $(seq 1 30); do hdfs dfs -ls / >/dev/null 2>&1 && break; echo waiting for namenode…; sleep 3; done; hdfs dfs -mkdir -p /smart_retail/raw && hdfs dfs -put -f /data/dataset/*.csv /smart_retail/raw/ && hdfs dfs -ls -h /smart_retail/raw"]
+      "for i in $(seq 1 30); do hdfs dfs -ls / >/dev/null 2>&1 && break; echo waiting for namenode…; sleep 3; done; hdfs dfs -mkdir -p /smart_retail/raw && hdfs dfs -D dfs.replication=2 -put -f /data/dataset/*.csv /smart_retail/raw/ && hdfs dfs -ls -h /smart_retail/raw"]
     environment:
       - CORE-SITE.XML_fs.default.name=hdfs://namenode:8020
       - CORE-SITE.XML_fs.defaultFS=hdfs://namenode:8020
@@ -115,14 +117,16 @@ services:
       dockerfile: Dockerfile.spark
     profiles: ["spark"]
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    deploy:
+      replicas: ${WORKERS:-1}
     environment:
       - SPARK_NO_DAEMONIZE=true
       - SPARK_WORKER_CORES=4
       - SPARK_WORKER_MEMORY=4g
     depends_on:
       - spark-master
-    ports:
-      - "8081:8081"   # worker web UI
+    # no published ports: scale freely with --scale spark-worker=N
+    # (per-worker UIs remain reachable through the master UI on :8080)
     volumes:
       - ./dataset:/data/dataset:ro
       - ./data:/data/out
@@ -160,6 +164,9 @@ services:
       --driver-memory 3g
       --conf spark.hadoop.fs.defaultFS=hdfs://namenode:8020
       /opt/jobs/spark_ml_pipeline.py
+    environment:
+      # regional scope, e.g. DIVISIONS=Khulna,Barisal make spark-pipeline
+      - DIVISIONS=${DIVISIONS:-}
     depends_on:
       - spark-master
       - spark-worker
@@ -167,4 +174,24 @@ services:
       - datanode
     volumes:
       - ./data:/data/out
+      - ./spark_jobs:/opt/jobs:ro
+
+  spark-partition:
+    image: smart-retail-spark:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.spark
+    profiles: ["spark-jobs"]
+    command: >
+      /opt/spark/bin/spark-submit
+      --master spark://spark-master:7077
+      --deploy-mode client
+      --conf spark.hadoop.fs.defaultFS=hdfs://namenode:8020
+      /opt/jobs/partition_dataset.py
+    depends_on:
+      - spark-master
+      - spark-worker
+      - namenode
+      - datanode
+    volumes:
       - ./spark_jobs:/opt/jobs:ro

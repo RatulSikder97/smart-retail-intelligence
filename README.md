@@ -68,6 +68,30 @@ writes `data/spark/clean_shops.parquet` plus per-division analytics. It
 reproduces the pandas pipeline's counts exactly (832,881 → 719,817 → 613,660)
 — a cross-validation of both implementations.
 
+### Scaling out: regional partitioning + dynamic topology
+
+```bash
+WORKERS=3 DATANODES=3 make spark-up   # scale storage + compute horizontally
+make spark-partition                  # division-partitioned warehouse in HDFS
+DIVISIONS=Khulna,Barisal make spark-pipeline   # regional (pruned) MLlib run
+make spark-pipeline                   # full national run
+```
+
+Design choice — **partition by division, scale datanodes freely** (rather than
+"one datanode per district"): HDFS distributes *blocks*, not semantic regions,
+and 64 district shards of a 206 MB dataset would average ~3 MB against a
+128 MB block size (the classic small-files problem). Instead the warehouse is
+written Hive-style (`…/warehouse/shops/division=Khulna/…`, 8+1 partitions), so
+any regional job engages Spark partition pruning — the physical plan carries
+`PartitionFilters: [division = Khulna]` and never reads other divisions'
+files. Datanodes and Spark workers scale horizontally via `deploy.replicas`
+(`WORKERS`/`DATANODES` env), and raw data is stored with replication 2 so the
+loss of any single datanode loses nothing.
+
+Operational notes: HDFS metadata and blocks live inside the containers (demo
+setup) — after recreating the namenode or datanodes, re-run the ingest. Job
+targets use `--no-deps` so running a job never rescales the live topology.
+
 **Where is Hadoop?** Spark bundles the Hadoop 3 client libraries (this build
 is `spark-3.5-bin-hadoop3`), which is how it reads/writes the shared volume.
 A full HDFS + YARN cluster adds nothing at 206 MB of input — the mounted

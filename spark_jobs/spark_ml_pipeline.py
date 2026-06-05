@@ -17,6 +17,8 @@ data/spark/spark_metrics.json so the dashboard can display this run.
 """
 
 import json
+import os
+import sys
 import time
 
 from pyspark.ml.clustering import BisectingKMeans, KMeans
@@ -82,14 +84,34 @@ def grid_density(df, radius_km: float, label: str):
     )
 
 
-def phase1_features(spark, metrics):
+def phase1_features(spark, metrics, divisions=None):
     t0 = time.time()
-    shops = spark.read.csv(f"{HDFS}/raw/shop_info_with_geo.csv", header=True, inferSchema=True)
-    shops = shops.withColumn("shop_code", F.col("shop_code").cast("string"))
-    targets = spark.read.csv(f"{HDFS}/raw/product_target_for_shop.csv", header=True, inferSchema=True)
-    targets = targets.withColumn("shop_code", F.col("shop_code").cast("string"))
+    try:
+        # division-partitioned warehouse (built by partition_dataset.py):
+        # a divisions filter prunes to just those partition directories,
+        # so a Khulna-only run never reads Dhaka's files at all
+        shops = spark.read.parquet(f"{HDFS}/warehouse/shops")
+        targets = spark.read.parquet(f"{HDFS}/warehouse/targets")
+        if divisions:
+            targets = targets.filter(F.col("division").isin(divisions))
+        targets = targets.drop("division")
+        source = "partitioned warehouse (partition pruning active)"
+    except Exception:
+        shops = spark.read.csv(f"{HDFS}/raw/shop_info_with_geo.csv", header=True, inferSchema=True)
+        shops = shops.withColumn("shop_code", F.col("shop_code").cast("string"))
+        targets = spark.read.csv(f"{HDFS}/raw/product_target_for_shop.csv", header=True, inferSchema=True)
+        targets = targets.withColumn("shop_code", F.col("shop_code").cast("string"))
+        source = "raw CSVs (run partition_dataset.py to enable pruning)"
+        if divisions:
+            shops = shops.filter(F.col("division").isin(divisions))
+    if divisions and "warehouse" in source:
+        shops = shops.filter(F.col("division").isin(divisions))
 
     n_raw = shops.count()
+    metrics["run_scope"] = {
+        "divisions": divisions or "all",
+        "input_source": source,
+    }
     shops = shops.dropDuplicates(["shop_code"]).filter(
         F.col("latitude").between(LAT_MIN, LAT_MAX)
         & F.col("longitude").between(LON_MIN, LON_MAX)
@@ -308,15 +330,23 @@ def phase5_anomaly(clustered, kmeans_model, metrics):
 
 
 def main():
+    # region scope: `spark-submit … spark_ml_pipeline.py Khulna,Barisal`
+    # or DIVISIONS=Khulna,Barisal in the service environment
+    raw_scope = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("DIVISIONS", "")
+    divisions = [d.strip() for d in raw_scope.split(",") if d.strip()] or None
+
     spark = (
-        SparkSession.builder.appName("smart-retail-mllib-pipeline")
+        SparkSession.builder.appName(
+            "smart-retail-mllib-pipeline"
+            + (f"-{'-'.join(divisions)}" if divisions else "")
+        )
         .config("spark.hadoop.fs.defaultFS", "hdfs://namenode:8020")
         .getOrCreate()
     )
     spark.sparkContext.setLogLevel("WARN")
     metrics = {"storage": "hdfs://namenode:8020/smart_retail"}
 
-    features = phase1_features(spark, metrics)
+    features = phase1_features(spark, metrics, divisions)
     df = assemble(features)
     clustered, kmeans_model = phase2_clustering(df, metrics)
     phase3_regression(clustered, metrics)
@@ -326,7 +356,12 @@ def main():
     metrics["total_duration_sec"] = round(
         sum(v["duration_sec"] for k, v in metrics.items() if isinstance(v, dict) and "duration_sec" in v), 1
     )
-    with open(LOCAL_METRICS, "w") as fh:
+    # regional runs get their own metrics file; only a full run owns the default
+    out_path = (
+        LOCAL_METRICS.replace(".json", f"_{'_'.join(divisions)}.json")
+        if divisions else LOCAL_METRICS
+    )
+    with open(out_path, "w") as fh:
         json.dump(metrics, fh, indent=2)
     print(json.dumps(metrics, indent=2))
     spark.stop()
