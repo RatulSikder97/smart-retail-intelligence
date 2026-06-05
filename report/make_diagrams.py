@@ -126,9 +126,10 @@ steps = [
     ("gauge", "5. Evaluate", "Optuna, 5-fold<br>47 tests"),
     ("desktop", "6. Deliver", "dashboard<br>audit lists"),
 ]
-sbw, sgap = 94, 12  # six boxes across 624px
+# 6*93 + 5*12 = 618 <= 624 with 3px margins each side — nothing clips
+sbw, sgap = 93, 12
 cells, wires1 = [], []
-x = 2
+x = 3
 for i, (icon, t, b) in enumerate(steps):
     cells.append(card(x, 4, sbw, 108, icon, t, b, icon_h=20))
     if i < len(steps) - 1:
