@@ -67,9 +67,10 @@ TARGET_COLUMNS = [SHOP_ID, *PRODUCT_TARGET_COLUMNS, TOTAL_TARGET]
 # Bangladesh bounding box (lat_min, lat_max, lon_min, lon_max) for GPS validation
 BD_BBOX = (20.5, 26.7, 88.0, 92.7)
 
+# As spelled in the dataset (pre-2018 romanizations: Barisal, Chittagong)
 DIVISIONS = [
-    "Barishal",
-    "Chattogram",
+    "Barisal",
+    "Chittagong",
     "Dhaka",
     "Khulna",
     "Mymensingh",

@@ -8,10 +8,10 @@
     "n_feature_columns": 48
   },
   "durations_sec": {
-    "phase_1": 23.0,
-    "phase_2": 29.6,
-    "phase_3": 37.6,
-    "phase_4": 55.5,
+    "phase_1": 22.5,
+    "phase_2": 29.1,
+    "phase_3": 65.0,
+    "phase_4": 70.2,
     "phase_5": 38.9
   },
   "phase_2_clustering": {
