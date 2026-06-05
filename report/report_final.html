@@ -67,23 +67,23 @@
     <tr><td>2&emsp;Review of Literature</td><td class="pg">6</td></tr>
     <tr><td>3&emsp;Data</td><td class="pg">7</td></tr>
     <tr><td class="l1">3.1&emsp;Data Description</td><td class="pg">8</td></tr>
-    <tr><td class="l1">3.2&emsp;Data Transformation and Feature Engineering</td><td class="pg">8</td></tr>
-    <tr><td class="l1">3.3&emsp;Exploratory Data Analysis</td><td class="pg">9</td></tr>
-    <tr><td class="l1">3.4&emsp;Data Cleaning and Handling Missing Values</td><td class="pg">12</td></tr>
-    <tr><td class="l1">3.5&emsp;Distributed Data Preparation on HDFS and Spark</td><td class="pg">13</td></tr>
-    <tr><td>4&emsp;Methodologies and Experimental Results</td><td class="pg">14</td></tr>
-    <tr><td class="l1">4.1&emsp;Experimental Setup</td><td class="pg">14</td></tr>
-    <tr><td class="l1">4.2&emsp;Unsupervised Learning: Shop Archetypes (RQ1)</td><td class="pg">14</td></tr>
-    <tr><td class="l1">4.3&emsp;Supervised Learning: Sales-Target Regression (RQ2)</td><td class="pg">17</td></tr>
-    <tr><td class="l1">4.4&emsp;Supervised Learning: Target-Miss Risk Classification (RQ3)</td><td class="pg">19</td></tr>
-    <tr><td class="l1">4.5&emsp;Unsupervised Learning: Anomaly Detection (RQ4)</td><td class="pg">21</td></tr>
-    <tr><td class="l1">4.6&emsp;Distributed Execution on the Spark Cluster</td><td class="pg">22</td></tr>
-    <tr><td class="l1">4.7&emsp;Summary Comparison Under Cross-Validation</td><td class="pg">23</td></tr>
-    <tr><td>5&emsp;Conclusion</td><td class="pg">23</td></tr>
-    <tr><td>References</td><td class="pg">24</td></tr>
-    <tr><td>Appendix A: Data dictionaries</td><td class="pg">26</td></tr>
-    <tr><td>Appendix B: Files accompanying this report</td><td class="pg">27</td></tr>
-    <tr><td>Appendix C: Reproduction and key source code excerpts</td><td class="pg">27</td></tr>
+    <tr><td class="l1">3.2&emsp;Data Transformation and Feature Engineering</td><td class="pg">9</td></tr>
+    <tr><td class="l1">3.3&emsp;Exploratory Data Analysis</td><td class="pg">10</td></tr>
+    <tr><td class="l1">3.4&emsp;Data Cleaning and Handling Missing Values</td><td class="pg">13</td></tr>
+    <tr><td class="l1">3.5&emsp;Distributed Data Preparation on HDFS and Spark</td><td class="pg">14</td></tr>
+    <tr><td>4&emsp;Methodologies and Experimental Results</td><td class="pg">15</td></tr>
+    <tr><td class="l1">4.1&emsp;Experimental Setup</td><td class="pg">15</td></tr>
+    <tr><td class="l1">4.2&emsp;Unsupervised Learning: Shop Archetypes (RQ1)</td><td class="pg">15</td></tr>
+    <tr><td class="l1">4.3&emsp;Supervised Learning: Sales-Target Regression (RQ2)</td><td class="pg">18</td></tr>
+    <tr><td class="l1">4.4&emsp;Supervised Learning: Target-Miss Risk Classification (RQ3)</td><td class="pg">21</td></tr>
+    <tr><td class="l1">4.5&emsp;Unsupervised Learning: Anomaly Detection (RQ4)</td><td class="pg">23</td></tr>
+    <tr><td class="l1">4.6&emsp;Distributed Execution on the Spark Cluster</td><td class="pg">23</td></tr>
+    <tr><td class="l1">4.7&emsp;Summary Comparison Under Cross-Validation</td><td class="pg">24</td></tr>
+    <tr><td class="l1">4.8&emsp;Threats to Validity</td><td class="pg">25</td></tr>
+    <tr><td>5&emsp;Conclusion</td><td class="pg">25</td></tr>
+    <tr><td>References</td><td class="pg">26</td></tr>
+    <tr><td>Appendix A: Files accompanying this report</td><td class="pg">28</td></tr>
+    <tr><td>Appendix B: Reproduction and key source code excerpts</td><td class="pg">28</td></tr>
   </table>
 </div>
 
@@ -91,21 +91,23 @@
   <h2 class="sec" style="font-size:12pt;">List of Tables</h2>
   <table class="toct">
     <tr><td>1.&emsp;The three files of the dataset</td><td class="pg">8</td></tr>
-    <tr><td>2.&emsp;The preprocessing funnel</td><td class="pg">9</td></tr>
-    <tr><td>3.&emsp;Engineered features (48 columns)</td><td class="pg">9</td></tr>
-    <tr><td>4.&emsp;10-NN imputation accuracy on held-out known shops</td><td class="pg">13</td></tr>
-    <tr><td>5.&emsp;Full-pipeline sensitivity of enabling k-NN imputation</td><td class="pg">13</td></tr>
-    <tr><td>6.&emsp;Internal criteria for the K-Means k scan</td><td class="pg">14</td></tr>
-    <tr><td>7.&emsp;Cluster profiles (medians over the full dataset)</td><td class="pg">15</td></tr>
-    <tr><td>8.&emsp;Hyperparameter search space and selected values (regression)</td><td class="pg">18</td></tr>
-    <tr><td>9.&emsp;Regression performance on the held-out test set</td><td class="pg">18</td></tr>
-    <tr><td>10.&emsp;Regression performance under 5-fold cross-validation</td><td class="pg">18</td></tr>
-    <tr><td>11.&emsp;Hyperparameter search space and selected values (classification)</td><td class="pg">20</td></tr>
-    <tr><td>12.&emsp;Risk classification performance on the held-out test set</td><td class="pg">20</td></tr>
-    <tr><td>13.&emsp;Confusion matrix of the winning classifier (out-of-fold)</td><td class="pg">21</td></tr>
-    <tr><td>14.&emsp;Reference versus distributed execution</td><td class="pg">22</td></tr>
-    <tr><td>15.&emsp;All algorithms under 5-fold cross-validation</td><td class="pg">23</td></tr>
-    <tr><td>A.1&ndash;A.3&emsp;Column dictionaries of the three files</td><td class="pg">26</td></tr>
+    <tr><td>2.&emsp;Column dictionary of the shop file</td><td class="pg">9</td></tr>
+    <tr><td>3.&emsp;Column dictionary of the targets file</td><td class="pg">9</td></tr>
+    <tr><td>4.&emsp;Column dictionary of the product catalogue</td><td class="pg">9</td></tr>
+    <tr><td>5.&emsp;The preprocessing funnel</td><td class="pg">10</td></tr>
+    <tr><td>6.&emsp;Engineered features (48 columns)</td><td class="pg">10</td></tr>
+    <tr><td>7.&emsp;10-NN imputation accuracy on held-out known shops</td><td class="pg">14</td></tr>
+    <tr><td>8.&emsp;Full-pipeline sensitivity of enabling k-NN imputation</td><td class="pg">14</td></tr>
+    <tr><td>9.&emsp;Internal criteria for the K-Means k scan</td><td class="pg">15</td></tr>
+    <tr><td>10.&emsp;Cluster profiles (medians over the full dataset)</td><td class="pg">16</td></tr>
+    <tr><td>11.&emsp;Hyperparameter search space and selected values (regression)</td><td class="pg">19</td></tr>
+    <tr><td>12.&emsp;Regression performance on the held-out test set</td><td class="pg">19</td></tr>
+    <tr><td>13.&emsp;Regression performance under 5-fold cross-validation</td><td class="pg">20</td></tr>
+    <tr><td>14.&emsp;Hyperparameter search space and selected values (classification)</td><td class="pg">21</td></tr>
+    <tr><td>15.&emsp;Risk classification performance on the held-out test set</td><td class="pg">22</td></tr>
+    <tr><td>16.&emsp;Confusion matrix of the winning classifier (out-of-fold)</td><td class="pg">22</td></tr>
+    <tr><td>17.&emsp;Reference versus distributed execution</td><td class="pg">24</td></tr>
+    <tr><td>18.&emsp;All algorithms under 5-fold cross-validation</td><td class="pg">25</td></tr>
   </table>
 </div>
 
@@ -114,21 +116,21 @@
   <table class="toct">
     <tr><td>1.&emsp;Overall methodology of the project</td><td class="pg">6</td></tr>
     <tr><td>2.&emsp;Pipeline architecture: reference and distributed lanes</td><td class="pg">8</td></tr>
-    <tr><td>3.&emsp;The preprocessing funnel</td><td class="pg">8</td></tr>
-    <tr><td>4.&emsp;Clean outlets per division</td><td class="pg">10</td></tr>
-    <tr><td>5.&emsp;Shops per business type</td><td class="pg">10</td></tr>
-    <tr><td>6.&emsp;Distributions of the engineered features</td><td class="pg">11</td></tr>
-    <tr><td>7.&emsp;Distribution of the monthly total target</td><td class="pg">11</td></tr>
-    <tr><td>8.&emsp;Monthly target by division (median and IQR)</td><td class="pg">12</td></tr>
-    <tr><td>9.&emsp;Missing values per raw column</td><td class="pg">12</td></tr>
-    <tr><td>10.&emsp;Model selection for the number of clusters</td><td class="pg">60</td></tr>
-    <tr><td>11.&emsp;Archetype sizes</td><td class="pg">61</td></tr>
-    <tr><td>12.&emsp;Spatial map of the eight archetypes</td><td class="pg">62</td></tr>
-    <tr><td>13.&emsp;Assigned target versus model prediction</td><td class="pg">63</td></tr>
-    <tr><td>14.&emsp;Top-10 SHAP feature attributions</td><td class="pg">64</td></tr>
-    <tr><td>15.&emsp;Out-of-fold ROC curves of the risk classifiers</td><td class="pg">65</td></tr>
-    <tr><td>16.&emsp;Share of shops labelled at-risk, by division</td><td class="pg">66</td></tr>
-    <tr><td>17.&emsp;Distribution of the combined anomaly score</td><td class="pg">67</td></tr>
+    <tr><td>3.&emsp;The preprocessing funnel</td><td class="pg">9</td></tr>
+    <tr><td>4.&emsp;Clean outlets per division</td><td class="pg">11</td></tr>
+    <tr><td>5.&emsp;Shops per business type</td><td class="pg">11</td></tr>
+    <tr><td>6.&emsp;Distributions of the engineered features</td><td class="pg">12</td></tr>
+    <tr><td>7.&emsp;Distribution of the monthly total target</td><td class="pg">12</td></tr>
+    <tr><td>8.&emsp;Monthly target by division (median and IQR)</td><td class="pg">13</td></tr>
+    <tr><td>9.&emsp;Missing values per raw column</td><td class="pg">13</td></tr>
+    <tr><td>10.&emsp;Model selection for the number of clusters</td><td class="pg">16</td></tr>
+    <tr><td>11.&emsp;Archetype sizes</td><td class="pg">17</td></tr>
+    <tr><td>12.&emsp;Spatial map of the eight archetypes</td><td class="pg">18</td></tr>
+    <tr><td>13.&emsp;Assigned target versus model prediction</td><td class="pg">20</td></tr>
+    <tr><td>14.&emsp;Top-10 SHAP feature attributions</td><td class="pg">21</td></tr>
+    <tr><td>15.&emsp;Out-of-fold ROC curves of the risk classifiers</td><td class="pg">22</td></tr>
+    <tr><td>16.&emsp;Share of shops labelled at-risk, by division</td><td class="pg">23</td></tr>
+    <tr><td>17.&emsp;Distribution of the combined anomaly score</td><td class="pg">23</td></tr>
   </table>
 </div>
 \n
@@ -157,7 +159,7 @@
 <div class="figure"><img src="figures/fig_overview.svg" style="width: 6.4in;">
 <p class="figcaption">Fig. 1. Overall methodology of the project: six steps from dataset acquisition to delivery. Step 4 answers the four research questions; steps 2&ndash;4 additionally run on the distributed Hadoop/Spark lane (Fig. 2).</p></div>
 
-<p>The remainder of this report is organised as follows. Section 2 reviews the literature on the methods we employ. Section 3 describes the data: its files, the transformation into model-ready features, an exploratory analysis, the treatment of missing values, and the distributed preparation on HDFS and Spark. Section 4 presents the methodologies and experimental results, one research question at a time, followed by the distributed execution results and a summary comparison of all algorithms under cross-validation. Section 5 concludes with numbered findings, recommended actions, limitations, and future work. Three appendices provide the full data dictionaries, the files accompanying this report, and reproduction instructions with key source-code excerpts.</p>
+<p>The remainder of this report is organised as follows. Section 2 reviews the literature on the methods we employ. Section 3 describes the data: its files, the transformation into model-ready features, an exploratory analysis, the treatment of missing values, and the distributed preparation on HDFS and Spark. Section 4 presents the methodologies and experimental results, one research question at a time, followed by the distributed execution results and a summary comparison of all algorithms under cross-validation. Section 5 concludes with numbered findings, recommended actions, limitations, and future work. Two appendices list the files accompanying this report and give reproduction instructions with key source-code excerpts.</p>
 
 <h2 class="sec">2. Review of Literature</h2>
 
@@ -176,7 +178,7 @@
 
 <h3 class="sub">3.1 Data Description</h3>
 
-<p class="noindent">The dataset comprises three interlinked comma-separated files, summarised in Table 1; the complete column dictionaries are given in Appendix A. Three properties of the data required particular care. First, the shop identifier <code>shop_code</code> mixes purely numeric strings with hexadecimal-like strings; if a file slice happens to contain only numeric codes, a na&iuml;ve loader infers an integer type and every subsequent join fails silently. Our loader therefore pins the identifier to a string type. Second, the two large files are ordered differently, so row-aligned sampling of both produces zero join overlap; any subsample must be joined by key. Third, 20,849 shop codes (2.4%) appear more than once in the targets file, sometimes once with values and once entirely empty; we de-duplicate keeping the valued record.</p>
+<p class="noindent">The dataset comprises three interlinked comma-separated files, summarised in Table 1 and fully documented, column by column, in Tables 2&ndash;4. Three properties of the data required particular care. First, the shop identifier <code>shop_code</code> mixes purely numeric strings with hexadecimal-like strings; if a file slice happens to contain only numeric codes, a na&iuml;ve loader infers an integer type and every subsequent join fails silently. Our loader therefore pins the identifier to a string type. Second, the two large files are ordered differently, so row-aligned sampling of both produces zero join overlap; any subsample must be joined by key. Third, 20,849 shop codes (2.4%) appear more than once in the targets file, sometimes once with values and once entirely empty; we de-duplicate keeping the valued record.</p>
 
 <p class="tcaption">TABLE 1<br>The Three Files of the Dataset</p>
 <table class="data">
@@ -189,11 +191,50 @@
       <td>SKU catalogue: 42 variants over 24 base products, 5 brands, 9 flavour/variant types, with shop-style and importance-tier price columns, packaging, and volumes.</td></tr>
 </table>
 
+<p>Tables 2&ndash;4 give the complete column dictionaries of the three files, profiled from the actual data. Reading them together conveys how the network was surveyed: the shop file (Table 2) mixes near-complete operational fields with the two systematic gaps analysed in Section 3.4; the targets file (Table 3) is a wide fact table whose 17 product columns encode each shop&rsquo;s assigned assortment; and the catalogue (Table 4) reveals the commercial structure &mdash; two price systems coexist, one keyed to the shop&rsquo;s style (<code>price_a/b/c</code>) and one to its importance tier (<code>price_1/2/3</code>), so a shop&rsquo;s classification directly determines the prices it is offered, which is why the importance tier later emerges as a top predictor of sales targets (Section 4.3). All names are anonymised by the dataset authors; no personally identifying information is present.</p>
+
+<p class="tcaption">TABLE 2<br>Variables of <code>shop_info_with_geo.csv</code> (832,881 Rows)</p>
+<table class="data">
+  <tr><th>Variable</th><th>Type</th><th class="num">Missing</th><th class="num">Distinct</th><th>Definition</th></tr>
+  <tr><td>shop_code</td><td>string</td><td class="num">0%</td><td class="num">832,881</td><td>Unique shop identifier (join key)</td></tr>
+  <tr><td>organizer</td><td>categorical</td><td class="num">10.23%</td><td class="num">62</td><td>Field organizer who registered the shop</td></tr>
+  <tr><td>place_nature</td><td>categorical</td><td class="num">13.39%</td><td class="num">10</td><td>Nature of the location (market, roadside, &hellip;)</td></tr>
+  <tr><td>place_name</td><td>text</td><td class="num">10.23%</td><td class="num">86,217</td><td>Free-text location name (not used as a feature)</td></tr>
+  <tr><td>freq_type</td><td>categorical</td><td class="num">10.23%</td><td class="num">1,277</td><td>Visit-frequency classification</td></tr>
+  <tr><td>shop_type</td><td>categorical</td><td class="num">10.23%</td><td class="num">12</td><td>Business type</td></tr>
+  <tr><td>shop_style</td><td>categorical</td><td class="num">10.23%</td><td class="num">3</td><td>Appearance-based class</td></tr>
+  <tr><td>shop_importance</td><td>categorical</td><td class="num">10.23%</td><td class="num">3</td><td>Company importance tier</td></tr>
+  <tr><td>ss_importance</td><td>categorical</td><td class="num">10.23%</td><td class="num">7</td><td>Detailed importance rating</td></tr>
+  <tr><td>visit_target</td><td>numeric</td><td class="num">99.69%</td><td class="num">27</td><td>Planned monthly visits (dropped)</td></tr>
+  <tr><td>latitude / longitude</td><td>numeric</td><td class="num">13.58%</td><td class="num">&mdash;</td><td>GPS coordinates</td></tr>
+  <tr><td>geometry</td><td>WKT</td><td class="num">0%</td><td class="num">703,324</td><td><code>POINT (lon lat)</code>; <code>POINT EMPTY</code> when GPS absent</td></tr>
+  <tr><td>zila / upazila / division</td><td>categorical</td><td class="num">13.59%</td><td class="num">64 / 515 / 8</td><td>Administrative location</td></tr>
+</table>
+
+<p class="tcaption">TABLE 3<br>Variables of <code>product_target_for_shop.csv</code> (853,732 Rows)</p>
+<table class="data">
+  <tr><th>Variable</th><th>Type</th><th>Definition</th></tr>
+  <tr><td>shop_code</td><td>string</td><td>Shop reference key; 2.4% duplicated, valued rows kept</td></tr>
+  <tr><td>prod_1 &hellip; prod_17</td><td>numeric</td><td>Monthly sales target for each product; NaN treated as zero when counting a shop&rsquo;s product mix</td></tr>
+  <tr><td>Total</td><td>numeric</td><td>Monthly total target; 118,656 rows carry no value &mdash; such shops are excluded from the supervised phases, never imputed</td></tr>
+</table>
+
+<p class="tcaption">TABLE 4<br>Variables of <code>product_info.csv</code> (42 Rows)</p>
+<table class="data">
+  <tr><th>Variable</th><th>Definition</th></tr>
+  <tr><td>sku_id, sku_name</td><td>Unique SKU variant (anonymised)</td></tr>
+  <tr><td>product_id, product_name</td><td>Base product (24 distinct)</td></tr>
+  <tr><td>brand, type</td><td>Brand (5) and flavour/variant category (9), anonymised</td></tr>
+  <tr><td>packet_size, in_packet, total_volume</td><td>Packaging and volume characteristics</td></tr>
+  <tr><td>price_a/b/c, price_1/2/3</td><td>Shop-style and importance-tier price columns; tier prices missing for SKUs not sold in that tier</td></tr>
+  <tr><td>freq, total_price</td><td>Monthly sales frequency target; total price (sell income)</td></tr>
+</table>
+
 <h3 class="sub">3.2 Data Transformation and Feature Engineering</h3>
 
-<p class="noindent">Table 2 summarises the transformation funnel from raw file to model-ready table, visualised in Fig. 3. All 832,881 raw records carry a unique shop code. GPS validation (Section 3.4) removes 113,064 rows, leaving 719,817 shops &mdash; exactly the outlet count published with the dataset. Joining the de-duplicated targets file attaches a monthly target to 613,660 shops (85.3% of the clean set); the join prefers valued rows over empty duplicates.</p>
+<p class="noindent">Table 5 summarises the transformation funnel from raw file to model-ready table, visualised in Fig. 3. All 832,881 raw records carry a unique shop code. GPS validation (Section 3.4) removes 113,064 rows, leaving 719,817 shops &mdash; exactly the outlet count published with the dataset. Joining the de-duplicated targets file attaches a monthly target to 613,660 shops (85.3% of the clean set); the join prefers valued rows over empty duplicates.</p>
 
-<p class="tcaption">TABLE 2<br>The Preprocessing Funnel</p>
+<p class="tcaption">TABLE 5<br>The Preprocessing Funnel</p>
 <table class="data">
   <tr><th>Stage</th><th class="num">Shops</th><th>Rule</th></tr>
   <tr><td>1. Raw shop records</td><td class="num">832,881</td><td>&mdash;</td></tr>
@@ -205,9 +246,9 @@
 <div class="figure"><img src="figures/f7_funnel.png">
 <p class="figcaption">Fig. 3. The preprocessing funnel from raw records to model-ready shops.</p></div>
 
-<p>From the cleaned records we engineer 48 model features per shop, listed by group in Table 3. The spatial features operationalise the over-stock/stock-out hypothesis of the proposal: neighbourhood density is computed with a BallTree under the haversine metric, which answers all 719,817 radius queries in seconds (O(n log n) rather than the O(n&sup2;) of a pairwise scan), and centrality is the great-circle distance to the shop centroid of the district. Low-cardinality categoricals are one-hot encoded, so an attribute with n levels becomes n indicator columns, with <code>Unknown</code> kept as an explicit level rather than dropped (Section 3.4 explains why). The monthly target <code>Total</code> is used exclusively as the supervised label and never as a model input.</p>
+<p>From the cleaned records we engineer 48 model features per shop, listed by group in Table 6. The spatial features operationalise the over-stock/stock-out hypothesis of the proposal: neighbourhood density is computed with a BallTree under the haversine metric, which answers all 719,817 radius queries in seconds (O(n log n) rather than the O(n&sup2;) of a pairwise scan), and centrality is the great-circle distance to the shop centroid of the district. Low-cardinality categoricals are one-hot encoded, so an attribute with n levels becomes n indicator columns, with <code>Unknown</code> kept as an explicit level rather than dropped (Section 3.4 explains why). The monthly target <code>Total</code> is used exclusively as the supervised label and never as a model input.</p>
 
-<p class="tcaption">TABLE 3<br>Engineered Features (48 Columns)</p>
+<p class="tcaption">TABLE 6<br>Engineered Features (48 Columns)</p>
 <table class="data">
   <tr><th>Group</th><th>Features</th><th>Computation</th></tr>
   <tr><td>Neighbourhood density</td><td><code>density_500m</code>, <code>density_1km</code>, <code>density_5km</code></td>
@@ -233,6 +274,8 @@
 
 <p>Fig. 6 shows the distributions of the four principal engineered features. Neighbourhood density is heavily right-skewed &mdash; most shops have fewer than one hundred neighbours within a kilometre while the metro-Dhaka core reaches thousands; distance to the district centre peaks around 10&ndash;20 km; and the product-mix count concentrates at 5&ndash;7 products with a visible spike at zero created by the data-poor segment. Fig. 7 shows the distribution of the monthly total target among the 613,660 joined shops, which is extremely right-tailed: the median is 14.1 while the mean is 28.9 and the raw file reaches 91,283 &mdash; a small population of wholesale-style outlets carries targets three orders of magnitude above the typical shop. This skew matters throughout Section 4: it is why squared-error regression metrics are volatile across resampling folds, and why anomaly detection must compare shops only with their own kind.</p>
 
+<p>Two further structures in Fig. 6 deserve comment because they anticipate later findings. The product-mix distribution (panel c) is bimodal: a large mode at 5&ndash;7 products &mdash; the standard assortment a field representative assigns &mdash; and an isolated spike at exactly zero, which is not a natural tail but the 85,167-shop joint-missingness population; a genuine behavioural variable would decay smoothly towards zero. The density distribution (panel a) spans three orders of magnitude, from single-digit neighbour counts in rural upazilas to more than a thousand within the Dhaka metropolitan core &mdash; the raw material from which the clustering of Section 4.2 recovers an urban&ndash;rural taxonomy without ever being told what &ldquo;urban&rdquo; means.</p>
+
 <div class="figure"><img src="figures/f9_feature_distributions.png" style="width: 5.9in;">
 <p class="figcaption">Fig. 6. Distributions of the principal engineered features, clipped at the 99th percentile: (a) neighbour density within 1 km; (b) distance to the district centre; (c) product-mix breadth; (d) the monthly total target.</p></div>
 
@@ -251,9 +294,9 @@
 <div class="figure"><img src="figures/f10_missingness.png">
 <p class="figcaption">Fig. 9. Missing values per raw column of the shop file. The 10.23% block is the jointly missing attribute group; 13.58% of rows lack GPS entirely.</p></div>
 
-<p>Because refilling missing categoricals from spatial neighbours is a natural suggestion, we tested it empirically rather than dismissing it. For shops whose attributes are known, we hid the true value and predicted it from the majority vote of the 10 nearest neighbours (haversine distance). Table 4 shows the outcome against the majority-class baseline. Location-determined fields are nearly perfectly recoverable, and <code>shop_style</code> carries real spatial signal; but <code>shop_type</code> would be wrong for one shop in three, and <code>shop_importance</code> imputation is <i>worse</i> than blind majority guessing. We therefore impute only the geographic fields (and optionally style, at a &ge;70% neighbour-agreement threshold, behind an explicit flag with per-row indicator columns), and never the business attributes.</p>
+<p>Because refilling missing categoricals from spatial neighbours is a natural suggestion, we tested it empirically rather than dismissing it. For shops whose attributes are known, we hid the true value and predicted it from the majority vote of the 10 nearest neighbours (haversine distance). Table 7 shows the outcome against the majority-class baseline. Location-determined fields are nearly perfectly recoverable, and <code>shop_style</code> carries real spatial signal; but <code>shop_type</code> would be wrong for one shop in three, and <code>shop_importance</code> imputation is <i>worse</i> than blind majority guessing. We therefore impute only the geographic fields (and optionally style, at a &ge;70% neighbour-agreement threshold, behind an explicit flag with per-row indicator columns), and never the business attributes.</p>
 
-<p class="tcaption">TABLE 4<br>10-Nearest-Neighbour Imputation Accuracy on Held-Out Known Shops</p>
+<p class="tcaption">TABLE 7<br>10-Nearest-Neighbour Imputation Accuracy on Held-Out Known Shops</p>
 <table class="data">
   <tr><th>Attribute</th><th class="num">10-NN majority accuracy</th><th class="num">Majority-class baseline</th><th>Decision</th></tr>
   <tr><td>zila (district)</td><td class="num">99.8%</td><td class="num">11.3%</td><td>impute</td></tr>
@@ -262,9 +305,9 @@
   <tr><td>shop_importance</td><td class="num">86.9%</td><td class="num">87.9%</td><td>never &mdash; below baseline</td></tr>
 </table>
 
-<p>To quantify what imputation would change downstream, we ran the full pipeline once with imputation enabled (Table 5). The supervised metrics improve &mdash; risk ROC-AUC rises from 0.857 to 0.881 &mdash; but the archetype taxonomy collapses from 8 clusters to 3, because filling in <code>shop_style</code> blends the ghost-shop segment into ordinary archetypes, hiding exactly the population the audit use-case needs to see. The risk numbers are also not strictly comparable across the two runs, since the proxy label is defined relative to cluster peers and the clusters changed. The reference pipeline therefore keeps imputation off; the flag exists for prediction-focused deployments.</p>
+<p>To quantify what imputation would change downstream, we ran the full pipeline once with imputation enabled (Table 8). The supervised metrics improve &mdash; risk ROC-AUC rises from 0.857 to 0.881 &mdash; but the archetype taxonomy collapses from 8 clusters to 3, because filling in <code>shop_style</code> blends the ghost-shop segment into ordinary archetypes, hiding exactly the population the audit use-case needs to see. The risk numbers are also not strictly comparable across the two runs, since the proxy label is defined relative to cluster peers and the clusters changed. The reference pipeline therefore keeps imputation off; the flag exists for prediction-focused deployments.</p>
 
-<p class="tcaption">TABLE 5<br>Full-Pipeline Sensitivity of Enabling k-NN Imputation</p>
+<p class="tcaption">TABLE 8<br>Full-Pipeline Sensitivity of Enabling k-NN Imputation</p>
 <table class="data">
   <tr><th>Metric</th><th class="num">Reference (no imputation)</th><th class="num">With k-NN imputation</th></tr>
   <tr><td>Clustering best k</td><td class="num">8</td><td class="num">3</td></tr>
@@ -277,19 +320,19 @@
 
 <p class="noindent">Because the course concerns big data analytics, the entire data-preparation stage also runs distributed, and this lane is not an afterthought: it is the storage and preprocessing backbone of Fig. 2. The storage layer is a Hadoop HDFS cluster [15] with one namenode and nine datanodes &mdash; one per data partition: the eight divisions plus the <code>Unknown</code> bucket &mdash; running in Docker. The three raw CSVs are ingested into <code>hdfs://namenode:8020/smart_retail/raw</code> through the Hadoop FileSystem API at replication factor 2, so the loss of any single datanode loses no blocks. (An operational finding worth recording: the emulated Hadoop command-line client aborted intermittently on the 200 MB transfer, so the ingest job runs on the native Spark image, which bundles the Hadoop client libraries.)</p>
 
-<p>On top of HDFS, an Apache Spark standalone cluster [16] re-executes every cleaning rule of Sections 3.2&ndash;3.4 as distributed Spark SQL: de-duplication of shop codes, GPS validation against the national bounding box, an explicit <code>Unknown</code> level for categorical gaps, and the valued-row-preferred de-duplication of the targets file expressed as a window function over <code>shop_code</code>. Neighbourhood density uses a grid-window approximation (cell edge equal to the radius, counts summed over the 3&times;3 neighbourhood), since an exact BallTree does not distribute. The cleaned data is then rewritten as a Hive-style warehouse partitioned by division &mdash; <code>&hellip;/warehouse/shops/division=Khulna/&hellip;</code> &mdash; which enables partition pruning: a job scoped to selected divisions provably never reads the other divisions&rsquo; files (Spark&rsquo;s physical plans show <code>PartitionFilters: [division = Khulna]</code>). The distributed preparation reproduces the reference funnel of Table 2 exactly &mdash; 832,881 &rarr; 719,817 &rarr; 613,660 &mdash; which we regard as a strong correctness check: two independent implementations of every cleaning rule, on different engines, agree to the row. Section 4.6 reports the corresponding execution results.</p>
+<p>On top of HDFS, an Apache Spark standalone cluster [16] re-executes every cleaning rule of Sections 3.2&ndash;3.4 as distributed Spark SQL: de-duplication of shop codes, GPS validation against the national bounding box, an explicit <code>Unknown</code> level for categorical gaps, and the valued-row-preferred de-duplication of the targets file expressed as a window function over <code>shop_code</code>. Neighbourhood density uses a grid-window approximation (cell edge equal to the radius, counts summed over the 3&times;3 neighbourhood), since an exact BallTree does not distribute. The cleaned data is then rewritten as a Hive-style warehouse partitioned by division &mdash; <code>&hellip;/warehouse/shops/division=Khulna/&hellip;</code> &mdash; which enables partition pruning: a job scoped to selected divisions provably never reads the other divisions&rsquo; files (Spark&rsquo;s physical plans show <code>PartitionFilters: [division = Khulna]</code>). The distributed preparation reproduces the reference funnel of Table 5 exactly &mdash; 832,881 &rarr; 719,817 &rarr; 613,660 &mdash; which we regard as a strong correctness check: two independent implementations of every cleaning rule, on different engines, agree to the row. Section 4.6 reports the corresponding execution results.</p>
 
 <h2 class="sec">4. Methodologies and Experimental Results</h2>
 
 <h3 class="sub">4.1 Experimental Setup</h3>
 
-<p class="noindent">All experiments use a fixed random seed (42) end to end. Supervised models are evaluated on a held-out 20% test split; in addition, every algorithm is re-evaluated under 5-fold cross-validation (Section 4.7), with resampling and scaling fitted inside training folds only. All code is written in Python 3.11 and runs inside Docker containers; the reference lane executes the exact algorithms of the proposal with scikit-learn [14], XGBoost [7], LightGBM [8], imbalanced-learn, SHAP [9], and Optuna [13], while the distributed lane uses Spark MLlib [17]. The complete source layout and reproduction commands are given in Appendices B and C; the full five-phase reference pipeline completes in roughly six minutes on one machine.</p>
+<p class="noindent">All experiments use a fixed random seed (42) end to end. Supervised models are evaluated on a held-out 20% test split; in addition, every algorithm is re-evaluated under 5-fold cross-validation (Section 4.7), with resampling and scaling fitted inside training folds only. All code is written in Python 3.11 and runs inside Docker containers; the reference lane executes the exact algorithms of the proposal with scikit-learn [14], XGBoost [7], LightGBM [8], imbalanced-learn, SHAP [9], and Optuna [13], while the distributed lane uses Spark MLlib [17]. The complete source layout and reproduction commands are given in Appendices A and B; the full five-phase reference pipeline completes in roughly six minutes on one machine.</p>
 
 <h3 class="sub">4.2 Unsupervised Learning: Shop Archetypes (RQ1)</h3>
 
-<p class="noindent">To discover natural outlet archetypes we standardised the 48 features to zero mean and unit variance and applied K-Means [2] for every k from 3 to 9, with 10 random restarts per k. Since no ground-truth segmentation exists, each k was scored with two independent internal criteria: the silhouette coefficient [3], computed on a 10,000-shop subsample for tractability, and the Davies&ndash;Bouldin index [4] on all rows. Table 6 lists the scores and Fig. 10 plots them; the criteria agree on <b>k = 8</b> (silhouette 0.187, Davies&ndash;Bouldin 1.94).</p>
+<p class="noindent">To discover natural outlet archetypes we standardised the 48 features to zero mean and unit variance and applied K-Means [2] for every k from 3 to 9, with 10 random restarts per k. Since no ground-truth segmentation exists, each k was scored with two independent internal criteria: the silhouette coefficient [3], computed on a 10,000-shop subsample for tractability, and the Davies&ndash;Bouldin index [4] on all rows. Table 9 lists the scores and Fig. 10 plots them; the criteria agree on <b>k = 8</b> (silhouette 0.187, Davies&ndash;Bouldin 1.94).</p>
 
-<p class="tcaption">TABLE 6<br>Internal Criteria for the K-Means k Scan</p>
+<p class="tcaption">TABLE 9<br>Internal Criteria for the K-Means k Scan</p>
 <table class="data">
   <tr><th class="num">k</th><th class="num">3</th><th class="num">4</th><th class="num">5</th><th class="num">6</th><th class="num">7</th><th class="num">8</th><th class="num">9</th></tr>
   <tr><td>Silhouette (higher better)</td><td class="num">0.180</td><td class="num">0.142</td><td class="num">0.162</td><td class="num">0.162</td><td class="num">0.140</td><td class="num"><b>0.187</b></td><td class="num">0.186</td></tr>
@@ -301,9 +344,9 @@
 
 <p>As structural cross-checks we ran two further algorithms. Agglomerative clustering with Ward&rsquo;s linkage on a 20,000-shop subsample corroborates the K-Means structure (silhouette 0.145, Davies&ndash;Bouldin 1.80 at k = 8). DBSCAN [5] at default settings (&epsilon; = 0.5, minPts = 50 in the standardised space) collapses to a single cluster with 98.7% of points labelled noise. We report the DBSCAN outcome rather than hiding it, because it is informative: the retail network is a dense continuous fabric, not a set of separated islands, which also explains why the silhouette is modest &mdash; archetypes overlap at their boundaries.</p>
 
-<p>Table 7 profiles the eight archetypes by their median feature values, Fig. 11 shows their sizes, and Fig. 12 maps a 60,000-shop sample coloured by archetype &mdash; the clusters are strongly geographic, as the density and position features imply. The taxonomy is directly interpretable. Cluster C4 (28.5% of shops) is the typical semi-urban outlet of the Dhaka belt. C3 is the metro-Dhaka core: a median of 869 neighbours within one kilometre, only 8.2 km from the district centre, with elevated targets. C2 is small (1.4%) but is the key-account tier &mdash; its median monthly target of 90.0 is six to eight times any other archetype&rsquo;s. Most notably, C1 (85,167 shops, 11.8%) is exactly the population with <code>Unknown</code> business attributes and zero targeted products: the data-poor &ldquo;ghost-shop&rdquo; segment. The clustering thus converted a data-quality gap into a machine-generated audit list, which we consider a principal finding of the project.</p>
+<p>Table 10 profiles the eight archetypes by their median feature values, Fig. 11 shows their sizes, and Fig. 12 maps a 60,000-shop sample coloured by archetype &mdash; the clusters are strongly geographic, as the density and position features imply. The taxonomy is directly interpretable. Cluster C4 (28.5% of shops) is the typical semi-urban outlet of the Dhaka belt. C3 is the metro-Dhaka core: a median of 869 neighbours within one kilometre, only 8.2 km from the district centre, with elevated targets. C2 is small (1.4%) but is the key-account tier &mdash; its median monthly target of 90.0 is six to eight times any other archetype&rsquo;s. Most notably, C1 (85,167 shops, 11.8%) is exactly the population with <code>Unknown</code> business attributes and zero targeted products: the data-poor &ldquo;ghost-shop&rdquo; segment. The clustering thus converted a data-quality gap into a machine-generated audit list, which we consider a principal finding of the project.</p>
 
-<p class="tcaption">TABLE 7<br>Cluster Profiles (Medians Over the Full Dataset)</p>
+<p class="tcaption">TABLE 10<br>Cluster Profiles (Medians Over the Full Dataset)</p>
 <table class="data">
   <tr><th class="num">C</th><th class="num">Density 1 km</th><th class="num">Dist. to centre (km)</th>
       <th class="num">Products targeted</th><th class="num">Total target</th><th class="num">Shops</th><th class="num">Share</th><th>Dominant division / reading</th></tr>
@@ -327,9 +370,9 @@
 
 <p class="noindent">The 613,660 shops with a target were split 80/20 into training and test sets. We benchmarked four models of increasing capacity. <i>Linear regression</i> on standardised inputs serves as the baseline; its purpose is diagnostic, establishing how much of the signal is linear. <i>Random Forest</i> [6] (100 trees, depth &le; 20, minimum leaf 5) bounds variance through bagging. <i>XGBoost</i> [7] (300 trees, depth 8, learning rate 0.1) and <i>LightGBM</i> [8] (300 trees, 63 leaves) are gradient-boosted alternatives with different tree-growth strategies (level-wise versus leaf-wise).</p>
 
-<p>In addition, the hyperparameters of the XGBoost candidate were selected by Bayesian optimization with the Tree-structured Parzen Estimator (Optuna [13]): 30 trials, each scored by 3-fold cross-validated RMSE on a 100,000-shop training subsample. Table 8 gives the search space and the selected values; the search chose a deliberately conservative configuration &mdash; fewer, shallower-learning trees with strong subsampling. The tuned model competes in the benchmark as its own candidate so that the default-versus-tuned comparison remains visible.</p>
+<p>In addition, the hyperparameters of the XGBoost candidate were selected by Bayesian optimization with the Tree-structured Parzen Estimator (Optuna [13]): 30 trials, each scored by 3-fold cross-validated RMSE on a 100,000-shop training subsample. Table 11 gives the search space and the selected values; the search chose a deliberately conservative configuration &mdash; fewer, shallower-learning trees with strong subsampling. The tuned model competes in the benchmark as its own candidate so that the default-versus-tuned comparison remains visible.</p>
 
-<p class="tcaption">TABLE 8<br>Hyperparameter Search Space and Selected Values (Regression)</p>
+<p class="tcaption">TABLE 11<br>Hyperparameter Search Space and Selected Values (Regression)</p>
 <table class="data">
   <tr><th>Hyperparameter</th><th>Search space</th><th class="num">Selected</th></tr>
   <tr><td>n_estimators</td><td>150 &ndash; 600 (step 50)</td><td class="num">150</td></tr>
@@ -341,9 +384,9 @@
   <tr><td>reg_lambda</td><td>0.1 &ndash; 10 (log)</td><td class="num">0.53</td></tr>
 </table>
 
-<p>Table 9 records the test-set performance. The linear baseline confirms that the problem is strongly non-linear: it explains almost none of the variance (R&sup2; 0.024) where every tree ensemble exceeds 0.32 on identical inputs. On the held-out split the default-configured XGBoost performs best (RMSE 204.44, R&sup2; 0.452), while the tuned XGBoost scores lower (R&sup2; 0.321). Table 10 explains why this is not a failure of the tuning: under 5-fold cross-validation the split winner proves highly unstable &mdash; R&sup2; 0.020 &plusmn; 0.612 &mdash; because whenever a fold&rsquo;s validation set receives a handful of the extreme wholesale outlets of Fig. 7, its squared error explodes. The tuned model behaves in the opposite way (R&sup2; 0.327 &plusmn; 0.062, roughly ten times less variance): Bayesian optimization traded peak single-split performance for generalisation stability. Notably, LightGBM &mdash; unremarkable on the single split &mdash; attains the best cross-validated mean (R&sup2; 0.373 &plusmn; 0.078), so for deployment we would choose between LightGBM and the tuned XGBoost, never the split winner. Fig. 13 visualises the fit of the best model against the assigned targets.</p>
+<p>Table 12 records the test-set performance. The linear baseline confirms that the problem is strongly non-linear: it explains almost none of the variance (R&sup2; 0.024) where every tree ensemble exceeds 0.32 on identical inputs. On the held-out split the default-configured XGBoost performs best (RMSE 204.44, R&sup2; 0.452), while the tuned XGBoost scores lower (R&sup2; 0.321). Table 13 explains why this is not a failure of the tuning: under 5-fold cross-validation the split winner proves highly unstable &mdash; R&sup2; 0.020 &plusmn; 0.612 &mdash; because whenever a fold&rsquo;s validation set receives a handful of the extreme wholesale outlets of Fig. 7, its squared error explodes. The tuned model behaves in the opposite way (R&sup2; 0.327 &plusmn; 0.062, roughly ten times less variance): A detail of Table 12 rewards attention: Random Forest attains the best MAE (17.58) while ranking mid-field on RMSE. Because MAE weights all shops equally while RMSE squares the large errors, this divergence localises the difficulty precisely in the wholesale tail &mdash; the models agree closely on the typical shop (median target 14.1) and disagree almost entirely about a few hundred extreme outlets. An allocation system that only needs shop-level rankings could therefore deploy any of the tree ensembles; one that must predict absolute volumes for key accounts should treat those shops as a separate modelling problem. Bayesian optimization traded peak single-split performance for generalisation stability. Notably, LightGBM &mdash; unremarkable on the single split &mdash; attains the best cross-validated mean (R&sup2; 0.373 &plusmn; 0.078), so for deployment we would choose between LightGBM and the tuned XGBoost, never the split winner. Fig. 13 visualises the fit of the best model against the assigned targets.</p>
 
-<p class="tcaption">TABLE 9<br>Regression Performance on the Held-Out Test Set</p>
+<p class="tcaption">TABLE 12<br>Regression Performance on the Held-Out Test Set</p>
 <table class="data">
   <tr><th>Model</th><th class="num">RMSE</th><th class="num">MAE</th><th class="num">R&sup2;</th></tr>
   <tr><td>Linear regression (baseline)</td><td class="num">272.70</td><td class="num">23.78</td><td class="num">0.024</td></tr>
@@ -353,7 +396,7 @@
   <tr><td>XGBoost (Optuna-tuned)</td><td class="num">227.45</td><td class="num">18.71</td><td class="num">0.321</td></tr>
 </table>
 
-<p class="tcaption">TABLE 10<br>Regression Performance Under 5-Fold Cross-Validation (Mean &plusmn; Std)</p>
+<p class="tcaption">TABLE 13<br>Regression Performance Under 5-Fold Cross-Validation (Mean &plusmn; Std)</p>
 <table class="data">
   <tr><th>Model</th><th class="num">R&sup2;</th><th class="num">RMSE</th></tr>
   <tr><td>Linear regression</td><td class="num">0.037 &plusmn; 0.008</td><td class="num">247.2 &plusmn; 34.8</td></tr>
@@ -373,9 +416,9 @@
 
 <h3 class="sub">4.4 Supervised Learning: Target-Miss Risk Classification (RQ3)</h3>
 
-<p class="noindent">The dataset contains assigned targets rather than realised sales, so a direct &ldquo;missed the target&rdquo; label cannot be constructed. We define an explicit proxy, stated wherever results appear: a shop is labelled <i>at-risk</i> when its total target is below 80% of the median target of its peer group, defined as the same archetype (Section 4.2) and the same business type &mdash; that is, when it materially under-indexes shops that look like it. The base rate is 36.6%. Because the classes are imbalanced, SMOTE [10] is applied inside an imbalanced-learn pipeline so that synthetic oversampling occurs strictly within training folds; the test set is never resampled. We trained logistic regression (standardised inputs), Random Forest, and XGBoost; the XGBoost hyperparameters were again selected by Optuna TPE (Table 11) &mdash; here the search chose the opposite of the regression case: a large, deep ensemble.</p>
+<p class="noindent">The dataset contains assigned targets rather than realised sales, so a direct &ldquo;missed the target&rdquo; label cannot be constructed. We define an explicit proxy, stated wherever results appear: a shop is labelled <i>at-risk</i> when its total target is below 80% of the median target of its peer group, defined as the same archetype (Section 4.2) and the same business type &mdash; that is, when it materially under-indexes shops that look like it. The base rate is 36.6%. Because the classes are imbalanced, SMOTE [10] is applied inside an imbalanced-learn pipeline so that synthetic oversampling occurs strictly within training folds; the test set is never resampled. We trained logistic regression (standardised inputs), Random Forest, and XGBoost; the XGBoost hyperparameters were again selected by Optuna TPE (Table 14) &mdash; here the search chose the opposite of the regression case: a large, deep ensemble.</p>
 
-<p class="tcaption">TABLE 11<br>Hyperparameter Search Space and Selected Values (Classification)</p>
+<p class="tcaption">TABLE 14<br>Hyperparameter Search Space and Selected Values (Classification)</p>
 <table class="data">
   <tr><th>Hyperparameter</th><th>Search space</th><th class="num">Selected</th></tr>
   <tr><td>n_estimators</td><td>150 &ndash; 600 (step 50)</td><td class="num">550</td></tr>
@@ -387,9 +430,9 @@
   <tr><td>reg_lambda</td><td>0.1 &ndash; 10 (log)</td><td class="num">2.38</td></tr>
 </table>
 
-<p>Table 12 reports the test-set results: Bayesian optimization delivers an unambiguous improvement, with the tuned XGBoost outperforming every candidate on every metric (ROC-AUC 0.869 against 0.857 for the defaults). Five-fold cross-validation of the winner confirms the result is not split luck (ROC-AUC 0.870 &plusmn; 0.001, F1 0.712 &plusmn; 0.001) &mdash; exceptionally stable, in sharp contrast to the regression task, because the binary peer-relative label is unaffected by the extreme values of the raw target. Fig. 15 shows the out-of-fold ROC curves of all four classifiers, computed so that every shop&rsquo;s score comes from a model that never saw it in training, and Table 13 gives the corresponding confusion matrix of the winner at the 0.5 threshold. Fig. 16 shows how the labelled risk distributes geographically, from 27.8% in Barisal to 48.5% in Khulna &mdash; a ready-made priority order for field teams.</p>
+<p>Table 15 reports the test-set results: Bayesian optimization delivers an unambiguous improvement, with the tuned XGBoost outperforming every candidate on every metric (ROC-AUC 0.869 against 0.857 for the defaults). Five-fold cross-validation of the winner confirms the result is not split luck (ROC-AUC 0.870 &plusmn; 0.001, F1 0.712 &plusmn; 0.001) &mdash; exceptionally stable, in sharp contrast to the regression task, because the binary peer-relative label is unaffected by the extreme values of the raw target. Fig. 15 shows the out-of-fold ROC curves of all four classifiers, computed so that every shop&rsquo;s score comes from a model that never saw it in training, and Table 16 gives the corresponding confusion matrix of the winner at the 0.5 threshold. Fig. 16 shows how the labelled risk distributes geographically, from 27.8% in Barisal to 48.5% in Khulna &mdash; a ready-made priority order for field teams.</p>
 
-<p class="tcaption">TABLE 12<br>Risk Classification Performance on the Held-Out Test Set</p>
+<p class="tcaption">TABLE 15<br>Risk Classification Performance on the Held-Out Test Set</p>
 <table class="data">
   <tr><th>Model</th><th class="num">ROC-AUC</th><th class="num">F1</th><th class="num">Precision</th><th class="num">Recall</th></tr>
   <tr><td>Logistic regression</td><td class="num">0.760</td><td class="num">0.618</td><td class="num">0.542</td><td class="num">0.720</td></tr>
@@ -401,7 +444,9 @@
 <div class="figure"><img src="figures/f12_roc.png">
 <p class="figcaption">Fig. 15. Out-of-fold ROC curves of the four risk classifiers (5-fold cross-validation; every score produced by a model that never saw the shop in training).</p></div>
 
-<p class="tcaption">TABLE 13<br>Confusion Matrix of the Winning Classifier (Out-of-Fold, Threshold 0.5)</p>
+<p>Read operationally, the confusion matrix (Table 16) says the following to a distributor. Of every 100 shops the model flags, about 73 are genuinely at-risk (precision 0.73), so field visits triggered by the model are productive nearly three times out of four; of every 100 truly at-risk shops, the model surfaces about 69 (recall 0.69). The 57,213 false positives are not wasted effort in practice &mdash; they are concentrated near the 80% labelling threshold, where a visit is rarely useless &mdash; while the 68,999 missed shops motivate lowering the decision threshold in deployments where coverage matters more than precision; the ROC curve of Fig. 15 shows the available trade-offs.</p>
+
+<p class="tcaption">TABLE 16<br>Confusion Matrix of the Winning Classifier (Out-of-Fold, Threshold 0.5)</p>
 <table class="data" style="min-width: 55%;">
   <tr><th></th><th class="num">Predicted: not at-risk</th><th class="num">Predicted: at-risk</th></tr>
   <tr><td><b>Actual: not at-risk</b></td><td class="num">331,610</td><td class="num">57,213</td></tr>
@@ -420,9 +465,9 @@
 
 <h3 class="sub">4.6 Distributed Execution on the Spark Cluster</h3>
 
-<p class="noindent">Building on the distributed preparation of Section 3.5, the Spark lane also executes the modelling phases with MLlib [17]: K-Means and Bisecting K-Means for clustering, gradient-boosted trees for regression and class-weighted classification, and a centroid-distance ranking for anomalies. MLlib provides no XGBoost, SHAP, SMOTE, Isolation Forest, or LOF, so the distributed lane uses the nearest available equivalents while the scikit-learn lane remains the reference for the exact algorithms of the proposal. Table 14 summarises the comparison. Partition pruning makes regional analysis genuinely cheaper: a run scoped to Khulna and Barisal processed 115,742 shops in 598 s against 1,112 s for the national run, reading only the requested partitions. The runtime comparison also illustrates an honest engineering lesson: at 206 MB the dataset fits in memory, and the single-node reference pipeline completes in roughly six minutes end to end &mdash; distributed execution pays off at data volumes larger than this project&rsquo;s, and the correct architecture, which we follow, is distributed storage and preparation feeding a single-node model-training stage.</p>
+<p class="noindent">Building on the distributed preparation of Section 3.5, the Spark lane also executes the modelling phases with MLlib [17]: K-Means and Bisecting K-Means for clustering, gradient-boosted trees for regression and class-weighted classification, and a centroid-distance ranking for anomalies. MLlib provides no XGBoost, SHAP, SMOTE, Isolation Forest, or LOF, so the distributed lane uses the nearest available equivalents while the scikit-learn lane remains the reference for the exact algorithms of the proposal. Table 17 summarises the comparison. Partition pruning makes regional analysis genuinely cheaper: a run scoped to Khulna and Barisal processed 115,742 shops in 598 s against 1,112 s for the national run, reading only the requested partitions. The runtime comparison also illustrates an honest engineering lesson: at 206 MB the dataset fits in memory, and the single-node reference pipeline completes in roughly six minutes end to end &mdash; distributed execution pays off at data volumes larger than this project&rsquo;s, and the correct architecture, which we follow, is distributed storage and preparation feeding a single-node model-training stage.</p>
 
-<p class="tcaption">TABLE 14<br>Reference Versus Distributed Execution</p>
+<p class="tcaption">TABLE 17<br>Reference Versus Distributed Execution</p>
 <table class="data">
   <tr><th>Aspect</th><th>scikit-learn (reference)</th><th>Hadoop + Spark (distributed)</th></tr>
   <tr><td>Storage</td><td>local parquet volumes</td><td>HDFS, 9 datanodes, replication 2, division-partitioned warehouse</td></tr>
@@ -433,11 +478,13 @@
   <tr><td>Regional run (Khulna + Barisal)</td><td>&mdash;</td><td>598 s over 115,742 shops via partition pruning</td></tr>
 </table>
 
+<p>Running Hadoop and Spark inside containers on a development machine also produced operational findings worth recording, since they are the kind of engineering reality a production deployment would meet. Three were material: (i) the HDFS namenode hung before opening its RPC port until Java&rsquo;s <code>SecureRandom</code> was pointed at a non-blocking entropy source &mdash; a known behaviour under CPU emulation; (ii) the emulated Hadoop command-line client intermittently aborted mid-transfer on the 200 MB ingest, which we resolved by uploading through the Hadoop FileSystem API from the native Spark image instead; and (iii) datanode storage is container-ephemeral, so a topology change can strand block metadata &mdash; the reason our ingest stores at replication factor 2 and the pipeline documents a re-ingest procedure. None of these affects the analytical results; all three are reproducible and documented in the repository.</p>
+
 <h3 class="sub">4.7 Summary Comparison Under Cross-Validation</h3>
 
-<p class="noindent">Following the practice of reporting all algorithms under a common resampling protocol, Table 15 compiles every candidate of both supervised tasks under the same 5-fold cross-validation (resampling inside folds only; out-of-fold scores). Three observations summarise the experiments. First, tree ensembles dominate the linear baselines on both tasks by wide margins. Second, on the heavy-tailed regression target the ranking by a single split and the ranking by cross-validation disagree &mdash; the default XGBoost wins the split but is the least stable model in the table &mdash; whereas on the bounded classification task the two protocols agree. Third, the cross-validated ranking rewards robustness: LightGBM, whose leaf-wise trees handle the tail best, attains the highest mean R&sup2; (0.373 &plusmn; 0.078), the Bayesian-tuned XGBoost is the most stable competitive regressor (&plusmn; 0.062), and the split-winning default XGBoost is the least stable model in the table. On the classification task, where the label is bounded, the split and cross-validated rankings agree and the Bayesian-tuned XGBoost is the best classifier outright.</p>
+<p class="noindent">Following the practice of reporting all algorithms under a common resampling protocol, Table 18 compiles every candidate of both supervised tasks under the same 5-fold cross-validation (resampling inside folds only; out-of-fold scores). Three observations summarise the experiments. First, tree ensembles dominate the linear baselines on both tasks by wide margins. Second, on the heavy-tailed regression target the ranking by a single split and the ranking by cross-validation disagree &mdash; the default XGBoost wins the split but is the least stable model in the table &mdash; whereas on the bounded classification task the two protocols agree. Third, the cross-validated ranking rewards robustness: LightGBM, whose leaf-wise trees handle the tail best, attains the highest mean R&sup2; (0.373 &plusmn; 0.078), the Bayesian-tuned XGBoost is the most stable competitive regressor (&plusmn; 0.062), and the split-winning default XGBoost is the least stable model in the table. On the classification task, where the label is bounded, the split and cross-validated rankings agree and the Bayesian-tuned XGBoost is the best classifier outright.</p>
 
-<p class="tcaption">TABLE 15<br>All Algorithms Under 5-Fold Cross-Validation</p>
+<p class="tcaption">TABLE 18<br>All Algorithms Under 5-Fold Cross-Validation</p>
 <table class="data">
   <tr><th>Task / model</th><th class="num">Primary metric (mean &plusmn; std)</th><th class="num">Secondary</th></tr>
   <tr><td>Regression &mdash; Linear regression</td><td class="num">R&sup2; 0.037 &plusmn; 0.008</td><td class="num">RMSE 247.2 &plusmn; 34.8</td></tr>
@@ -450,6 +497,10 @@
   <tr><td>Classification &mdash; XGBoost (defaults)</td><td class="num">ROC-AUC 0.858 (out-of-fold)&nbsp;</td><td class="num">F1 0.695</td></tr>
   <tr><td><b>Classification &mdash; XGBoost (tuned)</b></td><td class="num"><b>ROC-AUC 0.870 (out-of-fold)&nbsp;</b></td><td class="num"><b>F1 0.712</b></td></tr>
 </table>
+
+<h3 class="sub">4.8 Threats to Validity</h3>
+
+<p class="noindent">Following standard empirical-research practice, we state explicitly what could invalidate or weaken our conclusions. <i>Construct validity:</i> the dataset carries assigned targets rather than realised sales, so RQ2 predicts the distributor&rsquo;s allocation function rather than consumer demand, and the RQ3 label identifies shops that under-index their peers&rsquo; targets rather than shops that will verifiably miss quotas; both readings are stated wherever the results appear. <i>Internal validity:</i> the risk label is derived from the same feature space the classifier learns from (via the cluster peer groups), which inflates separability relative to an externally observed label; the out-of-fold protocol prevents train&ndash;test leakage but cannot remove this construct-level circularity. <i>External validity:</i> all findings derive from one distributor&rsquo;s network in one country over 2022&ndash;2024; the archetype taxonomy in particular should be re-estimated before being applied elsewhere. <i>Statistical validity:</i> the heavy-tailed target makes squared-error comparisons fold-sensitive, which is precisely why every headline number in this report is accompanied by its cross-validated dispersion.</p>
 
 <h2 class="sec">5. Conclusion</h2>
 
@@ -486,46 +537,7 @@
 <p class="noindent">[17] X. Meng et al., &ldquo;MLlib: Machine learning in Apache Spark,&rdquo; <i>J. Mach. Learn. Res.</i>, vol. 17, no. 34, pp. 1&ndash;7, 2016.</p>
 </div>
 
-<h2 class="sec" style="page-break-before: always;">Appendix A: Data Dictionaries</h2>
-
-<p class="tcaption">TABLE A.1<br>Variables of <code>shop_info_with_geo.csv</code> (832,881 Rows)</p>
-<table class="data">
-  <tr><th>Variable</th><th>Type</th><th class="num">Missing</th><th class="num">Distinct</th><th>Definition</th></tr>
-  <tr><td>shop_code</td><td>string</td><td class="num">0%</td><td class="num">832,881</td><td>Unique shop identifier (join key)</td></tr>
-  <tr><td>organizer</td><td>categorical</td><td class="num">10.23%</td><td class="num">62</td><td>Field organizer who registered the shop</td></tr>
-  <tr><td>place_nature</td><td>categorical</td><td class="num">13.39%</td><td class="num">10</td><td>Nature of the location (market, roadside, &hellip;)</td></tr>
-  <tr><td>place_name</td><td>text</td><td class="num">10.23%</td><td class="num">86,217</td><td>Free-text location name (not used as a feature)</td></tr>
-  <tr><td>freq_type</td><td>categorical</td><td class="num">10.23%</td><td class="num">1,277</td><td>Visit-frequency classification</td></tr>
-  <tr><td>shop_type</td><td>categorical</td><td class="num">10.23%</td><td class="num">12</td><td>Business type</td></tr>
-  <tr><td>shop_style</td><td>categorical</td><td class="num">10.23%</td><td class="num">3</td><td>Appearance-based class</td></tr>
-  <tr><td>shop_importance</td><td>categorical</td><td class="num">10.23%</td><td class="num">3</td><td>Company importance tier</td></tr>
-  <tr><td>ss_importance</td><td>categorical</td><td class="num">10.23%</td><td class="num">7</td><td>Detailed importance rating</td></tr>
-  <tr><td>visit_target</td><td>numeric</td><td class="num">99.69%</td><td class="num">27</td><td>Planned monthly visits (dropped)</td></tr>
-  <tr><td>latitude / longitude</td><td>numeric</td><td class="num">13.58%</td><td class="num">&mdash;</td><td>GPS coordinates</td></tr>
-  <tr><td>geometry</td><td>WKT</td><td class="num">0%</td><td class="num">703,324</td><td><code>POINT (lon lat)</code>; <code>POINT EMPTY</code> when GPS absent</td></tr>
-  <tr><td>zila / upazila / division</td><td>categorical</td><td class="num">13.59%</td><td class="num">64 / 515 / 8</td><td>Administrative location</td></tr>
-</table>
-
-<p class="tcaption">TABLE A.2<br>Variables of <code>product_target_for_shop.csv</code> (853,732 Rows)</p>
-<table class="data">
-  <tr><th>Variable</th><th>Type</th><th>Definition</th></tr>
-  <tr><td>shop_code</td><td>string</td><td>Shop reference key; 2.4% duplicated, valued rows kept</td></tr>
-  <tr><td>prod_1 &hellip; prod_17</td><td>numeric</td><td>Monthly sales target for each product; NaN treated as zero when counting a shop&rsquo;s product mix</td></tr>
-  <tr><td>Total</td><td>numeric</td><td>Monthly total target; 118,656 rows carry no value &mdash; such shops are excluded from the supervised phases, never imputed</td></tr>
-</table>
-
-<p class="tcaption">TABLE A.3<br>Variables of <code>product_info.csv</code> (42 Rows)</p>
-<table class="data">
-  <tr><th>Variable</th><th>Definition</th></tr>
-  <tr><td>sku_id, sku_name</td><td>Unique SKU variant (anonymised)</td></tr>
-  <tr><td>product_id, product_name</td><td>Base product (24 distinct)</td></tr>
-  <tr><td>brand, type</td><td>Brand (5) and flavour/variant category (9), anonymised</td></tr>
-  <tr><td>packet_size, in_packet, total_volume</td><td>Packaging and volume characteristics</td></tr>
-  <tr><td>price_a/b/c, price_1/2/3</td><td>Shop-style and importance-tier price columns; tier prices missing for SKUs not sold in that tier</td></tr>
-  <tr><td>freq, total_price</td><td>Monthly sales frequency target; total price (sell income)</td></tr>
-</table>
-
-<h2 class="sec">Appendix B: Files Accompanying This Report</h2>
+<h2 class="sec" style="page-break-before: always;">Appendix A: Files Accompanying This Report</h2>
 <table class="data">
   <tr><th>Path</th><th>Content</th></tr>
   <tr><td><code>src/smart_retail/</code></td><td>Python package: configuration, loaders, profiling, feature engineering, the four model phases, Bayesian tuning + cross-validation, pipeline CLI, report generator</td></tr>
@@ -537,7 +549,7 @@
   <tr><td><code>report/make_figures.py</code>, <code>report/make_cv_extras.py</code></td><td>Scripts that regenerate all figures and cross-validation tables from the artifacts</td></tr>
 </table>
 
-<h2 class="sec">Appendix C: Reproduction and Key Source Code Excerpts</h2>
+<h2 class="sec">Appendix B: Reproduction and Key Source Code Excerpts</h2>
 
 <p class="noindent">Every number in this report reproduces with a fixed seed: <code>make build &amp;&amp; make pipeline</code> runs the five-phase reference pipeline (&asymp;6 min); <code>python -m smart_retail.pipeline --phases 3,4 --tune --cv</code> adds Bayesian tuning and cross-validation; <code>WORKERS=2 DATANODES=9 make spark-up &amp;&amp; make spark-partition &amp;&amp; make spark-pipeline</code> runs the distributed lane; <code>make test</code> executes the test suite; <code>make dashboard</code> serves the dashboard on port 8501. Three excerpts illustrate the load-bearing implementation decisions.</p>
 

@@ -1,159 +1,151 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="480" viewBox="0 0 1040 480" font-family="Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="470" viewBox="0 0 1040 470" font-family="Helvetica, Arial, sans-serif">
   <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
       <path d="M 0 1 L 9 5 L 0 9 z" fill="#5B6B7C"/>
     </marker>
-    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <marker id="ag" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
       <path d="M 0 1 L 9 5 L 0 9 z" fill="#1a7a4b"/>
     </marker>
   </defs>
 
-  <!-- ==================== lanes ==================== -->
-  <rect x="196" y="22" width="622" height="200" rx="12" fill="#f4f8fd" stroke="#b9cde4" stroke-width="1.2"/>
-  <text x="507" y="44" text-anchor="middle" font-size="13" font-weight="bold" fill="#16385C">Reference lane &#8212; scikit-learn (exact proposal algorithms)</text>
+  <!-- ==================== lane containers ==================== -->
+  <rect x="200" y="24" width="618" height="196" rx="12" fill="#f4f8fd" stroke="#b9cde4" stroke-width="1.2"/>
+  <text x="509" y="46" text-anchor="middle" font-size="13" font-weight="bold" fill="#16385C">Reference lane &#8212; scikit-learn (exact proposal algorithms)</text>
 
-  <rect x="196" y="252" width="622" height="200" rx="12" fill="#fdf8ec" stroke="#e4cf9a" stroke-width="1.2"/>
-  <text x="507" y="274" text-anchor="middle" font-size="13" font-weight="bold" fill="#8a6d1d">Distributed lane &#8212; Hadoop HDFS + Apache Spark (same phases)</text>
+  <rect x="200" y="254" width="618" height="196" rx="12" fill="#fdf8ec" stroke="#e4cf9a" stroke-width="1.2"/>
+  <text x="509" y="276" text-anchor="middle" font-size="13" font-weight="bold" fill="#8a6d1d">Distributed lane &#8212; Hadoop HDFS + Apache Spark (same phases)</text>
 
   <!-- ==================== source ==================== -->
-  <g>
-    <rect x="20" y="182" width="146" height="110" rx="10" fill="#ffffff" stroke="#5B6B7C" stroke-width="1.4"/>
-    <g transform="translate(73,192)">
-      <path d="M2 0 h26 l10 10 v30 h-36 z" fill="#fff" stroke="#5B6B7C" stroke-width="1.5"/>
-      <path d="M28 0 v10 h10" fill="none" stroke="#5B6B7C" stroke-width="1.5"/>
-      <text x="19" y="30" text-anchor="middle" font-size="10" fill="#5B6B7C" font-weight="bold">CSV</text>
-    </g>
-    <text x="93" y="252" text-anchor="middle" font-size="12" font-weight="bold" fill="#16385C">Raw dataset</text>
-    <text x="93" y="268" text-anchor="middle" font-size="10.5" fill="#41556E">832,881 shops &#183; 42 SKUs</text>
-    <text x="93" y="283" text-anchor="middle" font-size="10.5" fill="#41556E">3 files &#183; 206 MB</text>
+  <rect x="20" y="192" width="150" height="96" rx="10" fill="#ffffff" stroke="#5B6B7C" stroke-width="1.4"/>
+  <g transform="translate(78,202)">
+    <path d="M2 0 h22 l9 9 v25 h-31 z" fill="#fff" stroke="#5B6B7C" stroke-width="1.4"/>
+    <path d="M24 0 v9 h9" fill="none" stroke="#5B6B7C" stroke-width="1.4"/>
+    <text x="17" y="26" text-anchor="middle" font-size="9" fill="#5B6B7C" font-weight="bold">CSV</text>
   </g>
+  <text x="95" y="256" text-anchor="middle" font-size="12" font-weight="bold" fill="#16385C">Raw dataset</text>
+  <text x="95" y="271" text-anchor="middle" font-size="10" fill="#41556E">832,881 shops &#183; 42 SKUs</text>
+  <text x="95" y="284" text-anchor="middle" font-size="10" fill="#41556E">3 files &#183; 206 MB</text>
 
-  <!-- ==================== reference lane boxes ==================== -->
-  <!-- P1 -->
-  <g>
-    <rect x="216" y="92" width="140" height="96" rx="9" fill="#fff" stroke="#2a78d6" stroke-width="1.5"/>
-    <g transform="translate(226,102)" fill="none" stroke="#2a78d6" stroke-width="1.5">
-      <path d="M0 0 h24 l-9 11 v9 l-6 4 v-13 z"/>
-    </g>
-    <text x="292" y="118" text-anchor="middle" font-size="12" font-weight="bold" fill="#16385C">Phase 1</text>
-    <text x="286" y="138" text-anchor="middle" font-size="10.5" fill="#41556E">cleaning &#183; GPS checks</text>
-    <text x="286" y="153" text-anchor="middle" font-size="10.5" fill="#41556E">BallTree densities</text>
-    <text x="286" y="168" text-anchor="middle" font-size="10.5" fill="#41556E">48 features</text>
+  <!-- ==================== reference lane ==================== -->
+  <!-- Phase 1 -->
+  <rect x="216" y="92" width="142" height="96" rx="9" fill="#fff" stroke="#2a78d6" stroke-width="1.5"/>
+  <g transform="translate(230,104)" fill="none" stroke="#2a78d6" stroke-width="1.5">
+    <path d="M0 0 h20 l-7.5 9 v8 l-5 3.5 v-11.5 z"/>
   </g>
-  <!-- P2 -->
-  <g>
-    <rect x="382" y="92" width="132" height="96" rx="9" fill="#fff" stroke="#2a78d6" stroke-width="1.5"/>
-    <g transform="translate(390,98)">
-      <circle cx="6" cy="7" r="3" fill="#2a78d6"/><circle cx="16" cy="4" r="3" fill="#1baf7a"/>
-      <circle cx="11" cy="15" r="3" fill="#eda100"/><circle cx="21" cy="12" r="3" fill="#e34948"/>
-    </g>
-    <text x="462" y="118" text-anchor="middle" font-size="12" font-weight="bold" fill="#16385C">Phase 2 &#183; RQ1</text>
-    <text x="448" y="138" text-anchor="middle" font-size="10.5" fill="#41556E">K-Means (k = 8)</text>
-    <text x="448" y="153" text-anchor="middle" font-size="10.5" fill="#41556E">hierarchical + DBSCAN</text>
-    <text x="448" y="168" text-anchor="middle" font-size="10.5" fill="#41556E">cross-checks</text>
-  </g>
-  <!-- P3/P4/P5 stack -->
-  <g>
-    <rect x="540" y="58" width="258" height="42" rx="8" fill="#fff" stroke="#2a78d6" stroke-width="1.5"/>
-    <text x="669" y="76" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#16385C">Phase 3 &#183; RQ2 &#8212; regression</text>
-    <text x="669" y="92" text-anchor="middle" font-size="10" fill="#41556E">linear / RF / XGBoost / LightGBM &#183; SHAP</text>
+  <text x="297" y="117" text-anchor="middle" font-size="12" font-weight="bold" fill="#16385C">Phase 1</text>
+  <text x="287" y="139" text-anchor="middle" font-size="10" fill="#41556E">cleaning &#183; GPS checks</text>
+  <text x="287" y="154" text-anchor="middle" font-size="10" fill="#41556E">BallTree densities</text>
+  <text x="287" y="169" text-anchor="middle" font-size="10" fill="#41556E">48 features</text>
 
-    <rect x="540" y="110" width="258" height="42" rx="8" fill="#fff" stroke="#2a78d6" stroke-width="1.5"/>
-    <text x="669" y="128" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#16385C">Phase 4 &#183; RQ3 &#8212; risk classification</text>
-    <text x="669" y="144" text-anchor="middle" font-size="10" fill="#41556E">SMOTE-in-fold &#183; LogReg / RF / XGBoost</text>
+  <!-- Phase 2 -->
+  <rect x="380" y="92" width="134" height="96" rx="9" fill="#fff" stroke="#2a78d6" stroke-width="1.5"/>
+  <g transform="translate(392,102)">
+    <circle cx="9" cy="9" r="8.5" fill="none" stroke="#2a78d6" stroke-width="1.4"/>
+    <circle cx="6.5" cy="7" r="2.2" fill="#2a78d6"/>
+    <circle cx="12" cy="6" r="2.2" fill="#1baf7a"/>
+    <circle cx="9.5" cy="12.5" r="2.2" fill="#e34948"/>
+  </g>
+  <text x="453" y="117" text-anchor="middle" font-size="12" font-weight="bold" fill="#16385C">Phase 2 &#183; RQ1</text>
+  <text x="447" y="139" text-anchor="middle" font-size="10" fill="#41556E">K-Means (k = 8)</text>
+  <text x="447" y="154" text-anchor="middle" font-size="10" fill="#41556E">hierarchical + DBSCAN</text>
+  <text x="447" y="169" text-anchor="middle" font-size="10" fill="#41556E">cross-checks</text>
 
-    <rect x="540" y="162" width="258" height="42" rx="8" fill="#fff" stroke="#2a78d6" stroke-width="1.5"/>
-    <text x="669" y="180" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#16385C">Phase 5 &#183; RQ4 &#8212; anomaly detection</text>
-    <text x="669" y="196" text-anchor="middle" font-size="10" fill="#41556E">per-cluster Isolation Forest + LOF</text>
-  </g>
+  <!-- Phases 3-5 stack -->
+  <rect x="540" y="58" width="258" height="42" rx="8" fill="#fff" stroke="#2a78d6" stroke-width="1.5"/>
+  <text x="669" y="75" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#16385C">Phase 3 &#183; RQ2 &#8212; regression</text>
+  <text x="669" y="91" text-anchor="middle" font-size="9.5" fill="#41556E">linear / RF / XGBoost / LightGBM &#183; SHAP</text>
 
-  <!-- ==================== distributed lane boxes ==================== -->
-  <g>
-    <rect x="216" y="300" width="172" height="122" rx="9" fill="#fff" stroke="#eda100" stroke-width="1.5"/>
-    <g transform="translate(228,310)" stroke="#eda100" stroke-width="1.4" fill="#fff">
-      <ellipse cx="16" cy="4" rx="14" ry="4"/>
-      <path d="M2 4 v9 a14 4 0 0 0 28 0 v-9"/>
-      <path d="M2 13 v9 a14 4 0 0 0 28 0 v-9"/>
-    </g>
-    <text x="315" y="324" text-anchor="middle" font-size="12" font-weight="bold" fill="#16385C">HDFS storage</text>
-    <text x="302" y="346" text-anchor="middle" font-size="10.5" fill="#41556E">1 namenode &#183; 9 datanodes</text>
-    <text x="302" y="361" text-anchor="middle" font-size="10.5" fill="#41556E">replication factor 2</text>
-    <text x="302" y="376" text-anchor="middle" font-size="10.5" fill="#41556E">warehouse partitioned</text>
-    <text x="302" y="391" text-anchor="middle" font-size="10.5" fill="#41556E">by division (8 + 1)</text>
-  </g>
-  <g>
-    <rect x="428" y="300" width="166" height="122" rx="9" fill="#fff" stroke="#eda100" stroke-width="1.5"/>
-    <!-- spark bolt icon -->
-    <path transform="translate(442,310)" d="M12 0 L2 16 h8 L6 30 L22 12 h-9 L18 0 z" fill="#eda100"/>
-    <text x="525" y="324" text-anchor="middle" font-size="12" font-weight="bold" fill="#16385C">Spark SQL</text>
-    <text x="511" y="346" text-anchor="middle" font-size="10.5" fill="#41556E">distributed cleaning:</text>
-    <text x="511" y="361" text-anchor="middle" font-size="10.5" fill="#41556E">dedup &#183; GPS validation</text>
-    <text x="511" y="376" text-anchor="middle" font-size="10.5" fill="#41556E">window-join of targets</text>
-    <text x="511" y="391" text-anchor="middle" font-size="10.5" fill="#41556E">grid-window densities</text>
-  </g>
-  <g>
-    <rect x="634" y="300" width="164" height="122" rx="9" fill="#fff" stroke="#eda100" stroke-width="1.5"/>
-    <g transform="translate(646,308)">
-      <circle cx="10" cy="10" r="4" fill="none" stroke="#eda100" stroke-width="1.4"/>
-      <circle cx="24" cy="6" r="3" fill="#eda100"/>
-      <circle cx="22" cy="20" r="3" fill="#eda100"/>
-      <line x1="13" y1="9" x2="21" y2="7" stroke="#eda100" stroke-width="1.2"/>
-      <line x1="13" y1="12" x2="19" y2="18" stroke="#eda100" stroke-width="1.2"/>
-    </g>
-    <text x="730" y="324" text-anchor="middle" font-size="12" font-weight="bold" fill="#16385C">Spark MLlib</text>
-    <text x="716" y="346" text-anchor="middle" font-size="10.5" fill="#41556E">K-Means &#183; Bisecting</text>
-    <text x="716" y="361" text-anchor="middle" font-size="10.5" fill="#41556E">GBT regression + class.</text>
-    <text x="716" y="376" text-anchor="middle" font-size="10.5" fill="#41556E">centroid-distance</text>
-    <text x="716" y="391" text-anchor="middle" font-size="10.5" fill="#41556E">anomaly ranking</text>
-  </g>
+  <rect x="540" y="110" width="258" height="42" rx="8" fill="#fff" stroke="#2a78d6" stroke-width="1.5"/>
+  <text x="669" y="127" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#16385C">Phase 4 &#183; RQ3 &#8212; risk classification</text>
+  <text x="669" y="143" text-anchor="middle" font-size="9.5" fill="#41556E">SMOTE-in-fold &#183; LogReg / RF / XGBoost</text>
 
-  <!-- ==================== outputs ==================== -->
-  <g>
-    <rect x="856" y="182" width="164" height="110" rx="10" fill="#eef8f2" stroke="#1a7a4b" stroke-width="1.5"/>
-    <g transform="translate(910,192)">
-      <rect x="0" y="0" width="44" height="30" rx="3" fill="#fff" stroke="#1a7a4b" stroke-width="1.5"/>
-      <rect x="7" y="15" width="6" height="10" fill="#2a78d6"/>
-      <rect x="18" y="8" width="6" height="17" fill="#1baf7a"/>
-      <rect x="29" y="12" width="6" height="13" fill="#eda100"/>
-    </g>
-    <text x="938" y="248" text-anchor="middle" font-size="12" font-weight="bold" fill="#14532d">Deliverables</text>
-    <text x="938" y="265" text-anchor="middle" font-size="10.5" fill="#2f6247">dashboard &#183; report</text>
-    <text x="938" y="280" text-anchor="middle" font-size="10.5" fill="#2f6247">audit lists &#183; metrics</text>
-  </g>
+  <rect x="540" y="162" width="258" height="42" rx="8" fill="#fff" stroke="#2a78d6" stroke-width="1.5"/>
+  <text x="669" y="179" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#16385C">Phase 5 &#183; RQ4 &#8212; anomaly detection</text>
+  <text x="669" y="195" text-anchor="middle" font-size="9.5" fill="#41556E">per-cluster Isolation Forest + LOF</text>
 
-  <!-- ==================== connectors (edge-anchored) ==================== -->
-  <g stroke="#5B6B7C" stroke-width="1.6" fill="none">
-    <!-- raw -> P1 : right edge (166,207) up to left edge of P1 (216,140) -->
-    <path d="M166 210 h20 v-70 h30" marker-end="url(#a)"/>
-    <!-- raw -> HDFS -->
-    <path d="M166 264 h20 v97 h30" marker-end="url(#a)"/>
+  <!-- ==================== distributed lane ==================== -->
+  <!-- HDFS -->
+  <rect x="216" y="302" width="180" height="120" rx="9" fill="#fff" stroke="#eda100" stroke-width="1.5"/>
+  <g transform="translate(230,312)" stroke="#eda100" stroke-width="1.4" fill="none">
+    <ellipse cx="15" cy="5" rx="13" ry="5"/>
+    <path d="M2 5 v20"/>
+    <path d="M28 5 v20"/>
+    <path d="M2 25 a13 5 0 0 0 26 0"/>
+    <path d="M2 15 a13 5 0 0 0 26 0"/>
+  </g>
+  <text x="317" y="327" text-anchor="middle" font-size="12" font-weight="bold" fill="#16385C">HDFS storage</text>
+  <text x="306" y="351" text-anchor="middle" font-size="10" fill="#41556E">1 namenode &#183; 9 datanodes</text>
+  <text x="306" y="366" text-anchor="middle" font-size="10" fill="#41556E">replication factor 2</text>
+  <text x="306" y="381" text-anchor="middle" font-size="10" fill="#41556E">warehouse partitioned</text>
+  <text x="306" y="396" text-anchor="middle" font-size="10" fill="#41556E">by division (8 + 1)</text>
+
+  <!-- Spark SQL -->
+  <rect x="424" y="302" width="176" height="120" rx="9" fill="#fff" stroke="#eda100" stroke-width="1.5"/>
+  <path transform="translate(438,310)" d="M10 0 L1.5 13.5 h6.5 L5 25 L18.5 10 h-7.5 L15 0 z" fill="#eda100"/>
+  <text x="521" y="327" text-anchor="middle" font-size="12" font-weight="bold" fill="#16385C">Spark SQL</text>
+  <text x="512" y="351" text-anchor="middle" font-size="10" fill="#41556E">distributed cleaning:</text>
+  <text x="512" y="366" text-anchor="middle" font-size="10" fill="#41556E">dedup &#183; GPS validation</text>
+  <text x="512" y="381" text-anchor="middle" font-size="10" fill="#41556E">window-join of targets</text>
+  <text x="512" y="396" text-anchor="middle" font-size="10" fill="#41556E">grid-window densities</text>
+
+  <!-- Spark MLlib -->
+  <rect x="628" y="302" width="170" height="120" rx="9" fill="#fff" stroke="#eda100" stroke-width="1.5"/>
+  <g transform="translate(642,310)" stroke="#eda100" stroke-width="1.3">
+    <line x1="6" y1="18" x2="15" y2="6"/>
+    <line x1="15" y1="6" x2="24" y2="16"/>
+    <circle cx="6" cy="18" r="3.4" fill="#fff"/>
+    <circle cx="15" cy="6" r="3.4" fill="#eda100"/>
+    <circle cx="24" cy="16" r="3.4" fill="#fff"/>
+  </g>
+  <text x="726" y="327" text-anchor="middle" font-size="12" font-weight="bold" fill="#16385C">Spark MLlib</text>
+  <text x="713" y="351" text-anchor="middle" font-size="10" fill="#41556E">K-Means &#183; Bisecting</text>
+  <text x="713" y="366" text-anchor="middle" font-size="10" fill="#41556E">GBT regression + class.</text>
+  <text x="713" y="381" text-anchor="middle" font-size="10" fill="#41556E">centroid-distance</text>
+  <text x="713" y="396" text-anchor="middle" font-size="10" fill="#41556E">anomaly ranking</text>
+
+  <!-- ==================== deliverables ==================== -->
+  <rect x="866" y="192" width="154" height="96" rx="10" fill="#eef8f2" stroke="#1a7a4b" stroke-width="1.5"/>
+  <g transform="translate(922,202)">
+    <rect x="0" y="0" width="40" height="26" rx="3" fill="#fff" stroke="#1a7a4b" stroke-width="1.4"/>
+    <rect x="7" y="13" width="5" height="9" fill="#2a78d6"/>
+    <rect x="17" y="7" width="5" height="15" fill="#1baf7a"/>
+    <rect x="27" y="10" width="5" height="12" fill="#eda100"/>
+  </g>
+  <text x="943" y="252" text-anchor="middle" font-size="12" font-weight="bold" fill="#14532d">Deliverables</text>
+  <text x="943" y="267" text-anchor="middle" font-size="10" fill="#2f6247">dashboard &#183; report</text>
+  <text x="943" y="280" text-anchor="middle" font-size="10" fill="#2f6247">audit lists &#183; metrics</text>
+
+  <!-- ==================== connectors (strict orthogonal) ==================== -->
+  <g stroke="#5B6B7C" stroke-width="1.5" fill="none">
+    <!-- source trunk -->
+    <path d="M170 240 H186"/>
+    <path d="M186 240 V140 H216" marker-end="url(#a)"/>
+    <path d="M186 240 V362 H216" marker-end="url(#a)"/>
     <!-- P1 -> P2 -->
-    <line x1="356" y1="140" x2="382" y2="140" marker-end="url(#a)"/>
-    <!-- P2 -> P3/P4/P5 -->
-    <path d="M514 140 h13 v-61 h13" marker-end="url(#a)"/>
-    <line x1="514" y1="140" x2="540" y2="131" marker-end="url(#a)"/>
-    <path d="M514 140 h13 v43 h13" marker-end="url(#a)"/>
+    <path d="M358 140 H380" marker-end="url(#a)"/>
+    <!-- P2 fan-out trunk -->
+    <path d="M514 140 H527"/>
+    <path d="M527 79 V183"/>
+    <path d="M527 79 H540" marker-end="url(#a)"/>
+    <path d="M527 131 H540" marker-end="url(#a)"/>
+    <path d="M527 183 H540" marker-end="url(#a)"/>
     <!-- HDFS -> Spark SQL -> MLlib -->
-    <line x1="388" y1="361" x2="428" y2="361" marker-end="url(#a)"/>
-    <line x1="594" y1="361" x2="634" y2="361" marker-end="url(#a)"/>
+    <path d="M396 362 H424" marker-end="url(#a)"/>
+    <path d="M600 362 H628" marker-end="url(#a)"/>
   </g>
-  <!-- outputs -->
-  <g stroke="#1a7a4b" stroke-width="1.6" fill="none">
-    <!-- phases 3-5 -> deliverables -->
-    <path d="M798 131 h29 v80 h29" marker-end="url(#ag)"/>
-    <!-- MLlib -> deliverables -->
-    <path d="M798 361 h29 v-80 h29" marker-end="url(#ag)"/>
+  <!-- outputs to deliverables -->
+  <g stroke="#1a7a4b" stroke-width="1.5" fill="none">
+    <path d="M798 131 H836 V224 H866" marker-end="url(#ag)"/>
+    <path d="M798 362 H836 V256 H866" marker-end="url(#ag)"/>
   </g>
-  <text x="176" y="200" font-size="10" fill="#5B6B7C">shops +</text>
-  <text x="176" y="212" font-size="10" fill="#5B6B7C">targets</text>
-  <text x="177" y="288" font-size="10" fill="#5B6B7C">ingest</text>
-  <text x="838" y="176" font-size="10" fill="#1a7a4b" text-anchor="middle">results</text>
-  <text x="838" y="306" font-size="10" fill="#1a7a4b" text-anchor="middle">cross-</text>
-  <text x="838" y="318" font-size="10" fill="#1a7a4b" text-anchor="middle">validates</text>
+
+  <!-- connector labels (clear of the lines) -->
+  <text x="192" y="130" font-size="9.5" fill="#5B6B7C">shops + targets</text>
+  <text x="192" y="378" font-size="9.5" fill="#5B6B7C">ingest</text>
+  <text x="842" y="120" font-size="9.5" fill="#1a7a4b">results</text>
+  <text x="842" y="380" font-size="9.5" fill="#1a7a4b">cross-validates</text>
 
   <!-- equality badge between lanes -->
-  <g>
-    <rect x="390" y="226" width="234" height="22" rx="11" fill="#fff" stroke="#c9d6e6" stroke-width="1"/>
-    <text x="507" y="241" text-anchor="middle" font-size="10.5" fill="#41556E">identical row counts: 832,881 &#8594; 719,817 &#8594; 613,660</text>
-  </g>
+  <rect x="390" y="226" width="238" height="21" rx="10.5" fill="#fff" stroke="#c9d6e6" stroke-width="1"/>
+  <text x="509" y="240" text-anchor="middle" font-size="10" fill="#41556E">identical row counts: 832,881 &#8594; 719,817 &#8594; 613,660</text>
 </svg>
