@@ -36,6 +36,149 @@ st.set_page_config(page_title="Smart Retail Intelligence", layout="wide")
 
 CFG = Config.from_env()
 
+# --------------------------------------------------------------------------
+# design system — "research instrument": IBM Plex, hairlines, quiet chrome
+# --------------------------------------------------------------------------
+
+INK, MUTED, HAIRLINE, PANEL, NAVY = "#1C2A3A", "#5B6B7C", "#E5EAF0", "#F7F9FB", "#16385C"
+
+st.markdown(
+    """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+html, body, [data-testid="stAppViewContainer"] * { font-family: 'IBM Plex Sans', sans-serif; }
+/* restore Streamlit's icon font (the override above would garble icons) */
+[data-testid="stIconMaterial"], span[class*="material-symbols"] {
+  font-family: 'Material Symbols Rounded' !important;
+}
+code, kbd, pre, [data-testid="stMetricValue"] { font-variant-numeric: tabular-nums; }
+
+.block-container { max-width: 1260px; padding-top: 0.8rem; padding-bottom: 3rem; }
+#MainMenu, footer, [data-testid="stToolbar"], [data-testid="stDecoration"] { display: none; }
+
+h1, h2, h3 { color: #16385C; letter-spacing: -0.01em; }
+
+/* tabs as quiet mono nav */
+button[data-baseweb="tab"] p {
+  font-family: 'IBM Plex Mono', monospace !important;
+  font-size: 0.72rem !important; text-transform: uppercase; letter-spacing: 0.06em;
+  color: #5B6B7C;
+}
+button[data-baseweb="tab"][aria-selected="true"] p { color: #1C2A3A; font-weight: 600; }
+div[data-baseweb="tab-highlight"] { background-color: #2A78D6; height: 2px; }
+div[data-baseweb="tab-border"] { background-color: #E5EAF0; }
+
+/* dataframe headers in mono */
+[data-testid="stDataFrame"] thead th, [data-testid="stDataFrame"] [role="columnheader"] {
+  font-family: 'IBM Plex Mono', monospace !important;
+  font-size: 0.68rem !important; text-transform: uppercase; letter-spacing: 0.05em;
+  color: #5B6B7C !important;
+}
+
+/* bordered containers: subtler radius + hairline */
+div[data-testid="stVerticalBlockBorderWrapper"] > div {
+  border-color: #E5EAF0 !important; border-radius: 8px;
+}
+
+/* metric fallback styling where st.metric remains */
+[data-testid="stMetricLabel"] p {
+  font-family: 'IBM Plex Mono', monospace !important;
+  font-size: 0.68rem !important; text-transform: uppercase;
+  letter-spacing: 0.05em; color: #5B6B7C !important;
+}
+[data-testid="stMetricValue"] { font-size: 1.65rem; font-weight: 600; color: #1C2A3A; }
+[data-testid="stMetricDelta"] { font-size: 0.72rem; }
+
+.stat-row { display: grid; gap: 12px; margin: 0.35rem 0 0.9rem 0; }
+.stat-tile {
+  border: 1px solid #E5EAF0; border-radius: 8px; background: #fff;
+  padding: 0.65rem 0.85rem;
+}
+.stat-tile.accent { border-left: 3px solid #2A78D6; }
+.stat-label {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.66rem;
+  text-transform: uppercase; letter-spacing: 0.06em; color: #5B6B7C;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.stat-value {
+  font-size: 1.55rem; font-weight: 600; color: #1C2A3A;
+  font-variant-numeric: tabular-nums; line-height: 1.25; margin-top: 0.1rem;
+}
+.stat-context { font-size: 0.72rem; color: #5B6B7C; margin-top: 0.05rem; }
+
+.eyebrow {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem;
+  text-transform: uppercase; letter-spacing: 0.09em; color: #2A78D6;
+  margin-bottom: 0.1rem;
+}
+.section-title { font-size: 1.22rem; font-weight: 650; color: #16385C; margin: 0; }
+.section-desc { font-size: 0.86rem; color: #5B6B7C; margin: 0.15rem 0 0.7rem 0; }
+
+.readout {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: #5B6B7C;
+  border-top: 1px solid #E5EAF0; border-bottom: 1px solid #E5EAF0;
+  padding: 0.45rem 0.1rem; margin: 0.6rem 0 1rem 0; letter-spacing: 0.02em;
+}
+.readout b { color: #1C2A3A; font-weight: 500; }
+
+.topbar { display: flex; justify-content: space-between; align-items: baseline; }
+.wordmark { font-size: 1.45rem; font-weight: 700; color: #16385C; letter-spacing: -0.015em; }
+.wordmark small { font-size: 0.9rem; font-weight: 400; color: #5B6B7C; margin-left: 0.9rem; }
+.topmeta { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; color: #5B6B7C; text-align: right; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+def _plex_theme():
+    axis = {"labelColor": MUTED, "titleColor": MUTED, "labelFont": "IBM Plex Sans",
+            "titleFont": "IBM Plex Sans", "labelFontSize": 11, "titleFontSize": 11,
+            "gridColor": "#EEF2F6", "domain": False, "tickColor": "#EEF2F6",
+            "labelLimit": 180}
+    return {
+        "config": {
+            "font": "IBM Plex Sans",
+            "axis": axis,
+            # never drop category labels on y; keep smart thinning on x
+            "axisY": {"labelOverlap": False},
+            "view": {"stroke": None},
+            "title": {"anchor": "start", "fontSize": 13, "fontWeight": 600,
+                      "color": INK, "font": "IBM Plex Sans"},
+            "legend": {"labelColor": MUTED, "titleColor": MUTED},
+        }
+    }
+
+
+alt.themes.register("plex", _plex_theme)
+alt.themes.enable("plex")
+
+
+def stat_row(tiles: list[tuple], accent: bool = False) -> None:
+    """Evenly boxed stat tiles: (label, value, context-or-None) triples."""
+    cells = "".join(
+        f'<div class="stat-tile{" accent" if accent else ""}">'
+        f'<div class="stat-label">{label}</div>'
+        f'<div class="stat-value">{value}</div>'
+        + (f'<div class="stat-context">{context}</div>' if context else "")
+        + "</div>"
+        for label, value, context in tiles
+    )
+    st.markdown(
+        f'<div class="stat-row" style="grid-template-columns: repeat({len(tiles)}, 1fr);">{cells}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def section_header(eyebrow: str, title: str, description: str = "") -> None:
+    st.markdown(
+        f'<div class="eyebrow">{eyebrow}</div>'
+        f'<p class="section-title">{title}</p>'
+        + (f'<p class="section-desc">{description}</p>' if description else ""),
+        unsafe_allow_html=True,
+    )
+
 
 # --------------------------------------------------------------------------
 # data access
@@ -156,13 +299,15 @@ def cluster_color(cluster_id) -> str:
 
 
 def cluster_legend(cluster_ids) -> str:
-    chips = " ".join(
-        f'<span style="display:inline-block;width:0.8em;height:0.8em;'
+    chips = "".join(
+        f'<span style="display:inline-flex;align-items:center;gap:4px;'
+        f'font-size:0.74rem;color:{MUTED};margin-right:12px;">'
+        f'<span style="display:inline-block;width:9px;height:9px;'
         f'border-radius:2px;background:{cluster_color(c)};"></span>'
-        f'&nbsp;Cluster {int(c)}&nbsp;&nbsp;'
+        f'Cluster {int(c)}</span>'
         for c in sorted(cluster_ids)
     )
-    return f'<div style="line-height:1.8">{chips}</div>'
+    return f'<div style="line-height:1.9;margin-bottom:4px;">{chips}</div>'
 
 
 def hbar(df: pd.DataFrame, value: str, label: str, color=SEQUENTIAL_HUE,
@@ -174,10 +319,10 @@ def hbar(df: pd.DataFrame, value: str, label: str, color=SEQUENTIAL_HUE,
     )
     return (
         base_chart.mark_bar(color=color, cornerRadiusEnd=4, height={"band": 0.6})
-        + base_chart.mark_text(align="left", dx=4, color="#555").encode(
+        + base_chart.mark_text(align="left", dx=4, color=MUTED).encode(
             text=alt.Text(value, format=fmt)
         )
-    )
+    ).properties(padding={"left": 5, "right": 52, "top": 5, "bottom": 5})
 
 
 def histogram(df: pd.DataFrame, column: str, title: str, clip_q: float = 0.99) -> alt.Chart:
@@ -225,24 +370,37 @@ art = load_artifacts()
 
 st.markdown(
     """
-<div style="padding:1.1rem 1.4rem;border-radius:10px;margin-bottom:0.8rem;
-     background:linear-gradient(100deg,#f0f5fc 0%,#fafbfd 70%);
-     border:1px solid #e3eaf3;">
-  <div style="font-size:1.55rem;font-weight:700;color:#16385c;">
-    Smart Retail Intelligence
+<div class="topbar">
+  <div class="wordmark">Smart Retail Intelligence
+    <small>Bangladesh FMCG distribution network</small>
   </div>
-  <div style="color:#41556e;margin-top:0.15rem;">
-    Bangladesh FMCG distribution network · 719,817 GPS-tagged outlets
-  </div>
-  <div style="margin-top:0.55rem;">
-    <code style="background:#e8f0fa;border-radius:4px;padding:2px 8px;">MITE 431 · Big Data Analytics</code>
-    <code style="background:#e8f0fa;border-radius:4px;padding:2px 8px;">Mendeley mgzvngzng2 · CC BY 4.0</code>
-    <code style="background:#e8f0fa;border-radius:4px;padding:2px 8px;">Ratul Sikder · Fahim Rahman</code>
-  </div>
+  <div class="topmeta">MITE 431 · Big Data Analytics<br>
+  Mendeley mgzvngzng2 · CC BY 4.0 · R. Sikder &amp; F. Rahman</div>
 </div>
 """,
     unsafe_allow_html=True,
 )
+
+_m = art.get("metrics", {})
+if _m:
+    _q = _m.get("phase_1_preprocessing", {})
+    _c = _m.get("phase_2_clustering", {})
+    _r = _m.get("phase_3_regression", {})
+    _cl = _m.get("phase_4_classification", {})
+    _dur = sum(_m.get("durations_sec", {}).values())
+    _reg_best = _r.get("models", {}).get(_r.get("best_model", ""), {})
+    _clf_best = _cl.get("models", {}).get(_cl.get("best_model", ""), {})
+    st.markdown(
+        '<div class="readout">'
+        f'PIPELINE&nbsp;&nbsp;<b>{_q.get("n_final_shops", 0):,}</b> outlets · '
+        f'<b>{_q.get("n_feature_columns", "—")}</b> features · '
+        f'k = <b>{_c.get("best_k", "—")}</b> archetypes · '
+        f'sales R² <b>{_reg_best.get("r2", float("nan")):.2f}</b> · '
+        f'risk AUC <b>{_clf_best.get("roc_auc", float("nan")):.3f}</b> · '
+        f'full run <b>{_dur:.0f}s</b>'
+        "</div>",
+        unsafe_allow_html=True,
+    )
 
 if "features" not in art:
     require(art, "features")
@@ -251,7 +409,9 @@ if "features" not in art:
 base = build_base(tuple(sorted(art.keys())))
 
 with st.container(border=True):
-    fc1, fc2, fc3, fc4, fc5, fc6 = st.columns([2, 2, 2, 2, 1.6, 1.4])
+    st.markdown('<div class="eyebrow">Filters — apply to every analysis view</div>',
+                unsafe_allow_html=True)
+    fc1, fc2, fc3, fc4, fc5 = st.columns([2, 2, 2, 2, 1.6])
     sel_divisions = fc1.multiselect(
         "Division", sorted(base["division"].unique()), placeholder="All divisions"
     )
@@ -269,9 +429,7 @@ with st.container(border=True):
     sel_importance = fc4.multiselect(
         "Importance", sorted(base["shop_importance"].unique()), placeholder="All tiers"
     )
-    with fc5:
-        st.markdown("<div style='height:1.75rem'></div>", unsafe_allow_html=True)
-        only_target = st.checkbox("Has sales target")
+    only_target = fc5.toggle("Has sales target")
 
     mask = pd.Series(True, index=base.index)
     if sel_divisions:
@@ -286,8 +444,8 @@ with st.container(border=True):
         mask &= base["has_target"]
 
     f = base[mask]
-    fc6.metric("Shops in view", f"{len(f):,}",
-               f"{len(f) / len(base):.1%} of {len(base):,}", delta_color="off")
+
+filters_active = len(f) != len(base)
 
 if f.empty:
     st.warning("The current filter combination matches no shops — clear a filter.")
@@ -303,50 +461,45 @@ if f.empty:
 with tab_overview:
     quality = art.get("metrics", {}).get("phase_1_preprocessing", {})
 
-    st.subheader("Dataset at a glance")
-    st.caption(
-        "Full dataset — not affected by the sidebar filters. Source: Mendeley "
-        "`mgzvngzng2` v1 (Shahin, Swarna & Farid, 2025), collected Feb 2022 – Oct 2024."
+    section_header(
+        "The network", "Dataset at a glance",
+        "Full dataset, independent of filters — Mendeley mgzvngzng2 v1 "
+        "(Shahin, Swarna & Farid, 2025), collected Feb 2022 – Oct 2024.",
     )
-    d1, d2, d3, d4, d5 = st.columns(5)
-    d1.metric("Raw shop records", f"{quality.get('n_raw_shop_rows', len(base)):,}")
-    d2.metric(
-        "Outlets analysed", f"{quality.get('n_final_shops', len(base)):,}",
-        f"-{quality.get('n_invalid_or_missing_gps', 0):,} missing GPS", delta_color="off",
-    )
-    d3.metric(
-        "Shops with sales target",
-        f"{quality.get('n_shops_with_target', int(base['has_target'].sum())):,}",
-        f"{quality.get('n_shops_with_target', 0) / max(quality.get('n_final_shops', 1), 1):.0%} of outlets",
-        delta_color="off",
-    )
-    if "products" in art:
-        products = art["products"]
-        d4.metric(
-            "SKU variants", len(products),
-            f"{products['brand'].nunique()} brands · {products['type'].nunique()} types",
-            delta_color="off",
+    n_products_cat = len(art["products"]) if "products" in art else 42
+    brands = art["products"]["brand"].nunique() if "products" in art else 5
+    types_ = art["products"]["type"].nunique() if "products" in art else 9
+    stat_row([
+        ("Raw records", f"{quality.get('n_raw_shop_rows', len(base)):,}", "3 source files"),
+        ("Outlets analysed", f"{quality.get('n_final_shops', len(base)):,}",
+         f"{quality.get('n_invalid_or_missing_gps', 0):,} lacked GPS"),
+        ("With sales target", f"{quality.get('n_shops_with_target', int(base['has_target'].sum())):,}",
+         f"{quality.get('n_shops_with_target', 0) / max(quality.get('n_final_shops', 1), 1):.0%} of outlets"),
+        ("SKU variants", n_products_cat, f"{brands} brands · {types_} types"),
+        ("Targeted products", len(schema.PRODUCT_TARGET_COLUMNS), "per shop"),
+    ])
+    stat_row([
+        ("Divisions", base["division"].nunique(), "incl. 'Unknown'"),
+        ("Districts · zila", base["zila"].nunique(), None),
+        ("Sub-districts · upazila", base["upazila"].nunique(), None),
+        ("Model features", quality.get("n_feature_columns", "—"), "engineered in phase 1"),
+        ("Mean predicted risk", f"{base['risk_score'].mean():.1%}" if "risk_score" in base else "—",
+         "across scored shops"),
+    ])
+
+    if filters_active:
+        st.markdown('<div style="height:0.4rem"></div>', unsafe_allow_html=True)
+        section_header("Filtered view", "What the current filters select", "")
+        stat_row(
+            [
+                ("Shops in view", f"{len(f):,}", f"{len(f) / len(base):.1%} of the network"),
+                ("Divisions", f["division"].nunique(), None),
+                ("Districts", f["zila"].nunique(), None),
+                ("With target", f"{int(f['has_target'].sum()):,}", f"{f['has_target'].mean():.0%} coverage"),
+                ("Mean predicted risk", f"{f['risk_score'].mean():.1%}" if "risk_score" in f else "—", None),
+            ],
+            accent=True,
         )
-    else:
-        d4.metric("SKU variants", "42", "5 brands · 9 types", delta_color="off")
-    d5.metric("Targeted products / shop", len(schema.PRODUCT_TARGET_COLUMNS))
-
-    g1, g2, g3, g4 = st.columns(4)
-    g1.metric("Divisions", base["division"].nunique())
-    g2.metric("Districts (zila)", base["zila"].nunique())
-    g3.metric("Sub-districts (upazila)", base["upazila"].nunique())
-    g4.metric("Model features", quality.get("n_feature_columns", "—"))
-    st.divider()
-
-    st.subheader("Current view")
-    c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Shops in view", f"{len(f):,}")
-    c2.metric("Divisions", f["division"].nunique())
-    c3.metric("Districts", f["zila"].nunique())
-    c4.metric("With target", f"{int(f['has_target'].sum()):,}",
-              f"{f['has_target'].mean():.0%}", delta_color="off")
-    if "risk_score" in f:
-        c5.metric("Mean predicted risk", f"{f['risk_score'].mean():.1%}")
 
     left, right = st.columns([3, 2])
     with left:
@@ -444,13 +597,22 @@ def render_column_detail(record: dict) -> None:
             )
             st.altair_chart(chart, width="stretch")
     else:
+        total_rows = record["non_null"] + record["missing"]
+        if record["unique"] >= 0.95 * max(record["non_null"], 1):
+            st.markdown(
+                f"**Identifier column** — {record['unique']:,} distinct values "
+                f"across {total_rows:,} rows (effectively one per record), so a "
+                "value distribution carries no information. Used as the join key."
+            )
+            return
         st.markdown("**Category landscape**")
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Distinct values", f"{record['unique']:,}")
-        c2.metric("Most common", record.get("most_common", "—"),
-                  f"{record.get('most_common_count', 0):,} rows", delta_color="off")
-        c3.metric("Least common", record.get("least_common", "—"),
-                  f"{record.get('least_common_count', 0):,} rows", delta_color="off")
+        stat_row([
+            ("Distinct values", f"{record['unique']:,}", None),
+            ("Most common", record.get("most_common", "—"),
+             f"{record.get('most_common_count', 0):,} rows"),
+            ("Least common", record.get("least_common", "—"),
+             f"{record.get('least_common_count', 0):,} rows"),
+        ])
         top = pd.DataFrame(record.get("top_values", []))
         if not top.empty:
             top["value"] = top["value"].replace("<missing>", "(missing → 'Unknown')")
@@ -463,7 +625,8 @@ def render_column_detail(record: dict) -> None:
 
 
 with tab_dataset:
-    st.subheader("In-depth dataset description")
+    section_header("The data", "In-depth dataset description",
+                   "Every column of every source file, profiled from the actual data.")
     profile = art.get("dataset_profile")
     if not profile:
         st.info(
@@ -543,7 +706,8 @@ with tab_dataset:
 
 # ==========================================================================
 with tab_method:
-    st.subheader("How the analysis is produced")
+    section_header("Methodology", "How the analysis is produced",
+                   "Two execution paths over the same raw data — reference scikit-learn and distributed Hadoop/Spark.")
     st.graphviz_chart("""
 digraph pipeline {
   rankdir=LR; bgcolor=transparent;
@@ -576,7 +740,7 @@ digraph pipeline {
 
     if require(art, "metrics"):
         quality = art["metrics"].get("phase_1_preprocessing", {})
-        st.subheader("Data preparation, step by step")
+        section_header("Phase 1", "Data preparation, step by step")
         funnel = pd.DataFrame(
             [
                 {"stage": "1 · Raw shop records", "shops": quality.get("n_raw_shop_rows", 0)},
@@ -607,7 +771,7 @@ digraph pipeline {
         )
         st.divider()
 
-        st.subheader("Methods, phase by phase")
+        section_header("Phases 1–5", "Methods, phase by phase")
         st.markdown(
             "Each phase consumes the previous phase's output. The table gives "
             "the one-line view; the notes underneath explain how each method "
@@ -669,7 +833,7 @@ final rank is the mean of the two percentile ranks.
         sensitivity = art.get("imputation_sensitivity")
         if sensitivity:
             st.divider()
-            st.subheader("Missing-value sensitivity — k-NN imputation experiment")
+            section_header("Sensitivity", "Missing values — the k-NN imputation experiment")
             ref, imp = sensitivity["reference_no_imputation"], sensitivity["with_knn_imputation"]
             details = sensitivity["imputation_details"]
             st.markdown(
@@ -706,7 +870,7 @@ final rank is the mean of the two percentile ranks.
 
         st.divider()
 
-        st.subheader("Distributed run — Hadoop HDFS + Spark MLlib")
+        section_header("Big data layer", "Distributed run — Hadoop HDFS + Spark MLlib")
 
         topology = cluster_topology()
         if topology:
@@ -794,7 +958,7 @@ final rank is the mean of the two percentile ranks.
             )
         st.divider()
 
-        st.subheader("Engineered feature attributes")
+        section_header("Feature engineering", "Engineered feature attributes")
         feature_cols = numeric_feature_columns(art["features"])
         onehot_families: dict[str, list] = {}
         core = []
@@ -863,7 +1027,7 @@ with tab_rq1:
                 "DBSCAN run on a 20k subsample as structural cross-checks."
             )
 
-        st.subheader(f"Result — {best_k} archetypes")
+        section_header("RQ1 · Result", f"{best_k} shop archetypes")
         km = clustering.get("kmeans", {})
         if km:
             selection = pd.DataFrame(
@@ -954,7 +1118,7 @@ with tab_rq2:
                 "per-feature contributions."
             )
 
-        st.subheader(f"Result — best model: {reg.get('best_model', '?')}")
+        section_header("RQ2 · Result", f"Best model: {reg.get('best_model', '?')}")
         models = pd.DataFrame(reg.get("models", {})).T.reset_index(names="model")
         st.dataframe(
             models.style.format({"rmse": "{:.3f}", "mae": "{:.3f}", "r2": "{:.3f}"}),
@@ -1028,7 +1192,7 @@ with tab_rq3:
                 "is never touched."
             )
 
-        st.subheader(f"Result — best model: {clf.get('best_model', '?')}")
+        section_header("RQ3 · Result", f"Best model: {clf.get('best_model', '?')}")
         models = pd.DataFrame(clf.get("models", {})).T.reset_index(names="model")
         st.dataframe(
             models.style.format("{:.3f}", subset=models.columns[1:].tolist()),
@@ -1112,7 +1276,7 @@ with tab_rq4:
         c2.metric("Top decile in view", f"{len(anomaly_view[anomaly_view['combined_score'] >= 0.90]):,}")
         c3.metric("Top decile (full run)", f"{anom.get('n_top_anomalies', 0):,}")
 
-        st.subheader("Result — ranked anomalies")
+        section_header("RQ4 · Result", "Ranked anomalies")
         map_top = (
             anomaly_view.sort_values("combined_score", ascending=False)
             .dropna(subset=["latitude", "longitude"]).head(MAP_SAMPLE)
@@ -1151,7 +1315,7 @@ with tab_report:
             risk_by_division=risk_by_division,
             top_anomalies=art.get("top_anomalies"),
         )
-        st.subheader("Analysis report — dataset to conclusions")
+        section_header("Report", "Dataset to conclusions, end to end")
         st.caption(
             "Generated live from reports/metrics.json (full dataset, not filtered), "
             "so the numbers always match the latest pipeline run."
