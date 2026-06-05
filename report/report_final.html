@@ -160,7 +160,7 @@
 
 <p>Fig. 1 shows the full workflow of the project in six steps: from getting the dataset, through distributed storage, cleaning and feature engineering, the four modelling phases, and evaluation with Bayesian tuning and cross-validation, to the delivered dashboard, report, and audit lists.</p>
 
-<div class="figure"><img src="figures/fig_overview.svg" style="width: 6.4in;">
+<div class="figure"><img src="figures/f_overview.png" style="width: 6.4in;">
 <p class="figcaption">Fig. 1. Overall methodology of the project: six steps from dataset acquisition to delivery. Step 4 answers the four research questions; steps 2&ndash;4 additionally run on the distributed Hadoop/Spark lane (Fig. 2).</p></div>
 
 <p>The rest of this report is organised as follows. Section 2 reviews the literature on the methods we use. Section 3 describes the data: the files, how we turn them into model-ready features, an exploratory analysis, how we treat missing values, and the distributed preparation on HDFS and Spark. Section 4 presents the methodology and results one research question at a time, then the distributed execution results, and finally a summary comparison of all algorithms under cross-validation. Section 5 closes with numbered findings, recommended actions, limitations, and future work. Two appendices list the files that accompany this report and give reproduction instructions with key source-code excerpts.</p>
@@ -175,7 +175,7 @@
 
 <p class="noindent">For this project we work with the publicly available dataset titled &ldquo;Comprehensive Retail Network Dataset of Bangladesh&rdquo; from Mendeley Data [1] (dataset DOI 10.17632/mgzvngzng2.1, article DOI 10.1016/j.dib.2025.112326, CC BY 4.0). The data was collected between February 2022 and October 2024, and we downloaded it on 5 June 2026. Every statistic in this section comes from our own profiling code run on the actual files; nothing is copied from the dataset paper. Fig. 2 shows where the data sits in our overall architecture. Each record passes through two independent preparation lanes: the scikit-learn reference lane and the distributed Hadoop/Spark lane described in Section 3.5. The outputs of the two lanes cross-validate each other.</p>
 
-<div class="figure"><img src="figures/fig_architecture.svg" style="width: 6.4in;">
+<div class="figure"><img src="figures/f15_architecture.png" style="width: 6.4in;">
 <p class="figcaption">Fig. 2. Pipeline architecture. The same raw data flows through a scikit-learn reference lane (the exact proposal algorithms) and a distributed Hadoop HDFS + Apache Spark lane; matching row counts across the two lanes cross-validate the preparation.</p></div>
 
 <h3 class="sub">3.1 Data Description</h3>

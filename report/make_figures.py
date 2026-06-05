@@ -251,58 +251,104 @@ ax.legend(frameon=False)
 save(fig, "f14_anomaly_scores.png")
 print("extra figures written")
 
-# F15 — pipeline architecture (two lanes)
+# F15 — pipeline architecture (two lanes), drawn on a strict grid
 import matplotlib.patches as mpatches
-fig, ax = plt.subplots(figsize=(COL_W * 1.9, 2.6))
-ax.axis("off")
 
-def box(x, y, w, h, text, fc="#eef4fb", ec="#2a78d6"):
-    ax.add_patch(mpatches.FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.012",
-                                         fc=fc, ec=ec, lw=0.8))
-    ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=6.6)
+def _diagram_axes(w, h):
+    fig, ax = plt.subplots(figsize=(w, h))
+    ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.axis("off")
+    return fig, ax
 
-def arrow(x1, y1, x2, y2, label=None):
+def _box(ax, x, y, w, h, lines, fc="#eef4fb", ec="#2a78d6", title_fs=7.2, body_fs=6.2):
+    ax.add_patch(mpatches.FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.008",
+                                         fc=fc, ec=ec, lw=0.9))
+    title, *body = lines
+    if body:
+        ax.text(x + w / 2, y + h - 0.035, title, ha="center", va="top",
+                fontsize=title_fs, fontweight="bold", color="#1c2a3a")
+        ax.text(x + w / 2, y + 0.04, "\n".join(body), ha="center", va="bottom",
+                fontsize=body_fs, color="#41556e")
+    else:
+        ax.text(x + w / 2, y + h / 2, title, ha="center", va="center",
+                fontsize=title_fs, fontweight="bold", color="#1c2a3a")
+
+def _arrow(ax, x1, y1, x2, y2, color="#7a8a9a"):
     ax.annotate("", xy=(x2, y2), xytext=(x1, y1),
-                arrowprops=dict(arrowstyle="->", color="#777", lw=0.7))
-    if label:
-        ax.text((x1 + x2) / 2, (y1 + y2) / 2 + 0.02, label,
-                ha="center", fontsize=5.8, color="#555")
+                arrowprops=dict(arrowstyle="-|>", color=color, lw=0.9,
+                                shrinkA=1, shrinkB=1))
 
-# lanes
-ax.add_patch(mpatches.FancyBboxPatch((0.16, 0.52), 0.60, 0.40, boxstyle="round,pad=0.008",
-                                     fc="none", ec="#c9d6e6", lw=0.7, ls="-"))
-ax.text(0.46, 0.945, "Reference lane — scikit-learn (exact proposal algorithms)",
-        ha="center", fontsize=6.2, color="#41556e")
-ax.add_patch(mpatches.FancyBboxPatch((0.16, 0.06), 0.60, 0.36, boxstyle="round,pad=0.008",
-                                     fc="none", ec="#eeddb3", lw=0.7))
-ax.text(0.46, 0.445, "Distributed lane — Hadoop HDFS + Apache Spark (same phases)",
-        ha="center", fontsize=6.2, color="#8a6d1d")
+fig, ax = _diagram_axes(COL_W * 2.0, 3.1)
 
-box(0.01, 0.38, 0.13, 0.18, "Raw CSVs\n832,881 shops\n42 SKUs", fc="#f5f7fa", ec="#5B6B7C")
-# reference lane
-box(0.18, 0.66, 0.16, 0.16, "Phase 1\ncleaning +\nBallTree features")
-box(0.37, 0.66, 0.14, 0.16, "Phase 2\nK-Means k=8")
-box(0.54, 0.74, 0.20, 0.10, "Phase 3  regression + SHAP")
-box(0.54, 0.62, 0.20, 0.10, "Phase 4  risk + weights")
-box(0.54, 0.545, 0.20, 0.06, "Phase 5  IForest + LOF")
-# distributed lane
-box(0.18, 0.16, 0.17, 0.18, "HDFS storage\n9 datanodes, repl. 2\ndivision-partitioned\nwarehouse", fc="#fdf3e2", ec="#eda100")
-box(0.40, 0.16, 0.17, 0.18, "Spark SQL\ncleaning + grid\ndensities", fc="#fdf3e2", ec="#eda100")
-box(0.60, 0.16, 0.14, 0.18, "Spark MLlib\nphases 2–5", fc="#fdf3e2", ec="#eda100")
-box(0.80, 0.38, 0.17, 0.18, "Dashboard\n+ report", fc="#e8f5ee", ec="#1baf7a")
+# lane containers
+ax.add_patch(mpatches.FancyBboxPatch((0.205, 0.545), 0.575, 0.415, boxstyle="round,pad=0.006",
+                                     fc="#fbfdff", ec="#c9d6e6", lw=0.8))
+ax.text(0.4925, 0.985, "Reference lane — scikit-learn (exact proposal algorithms)",
+        ha="center", va="top", fontsize=6.6, color="#2a78d6", fontweight="bold")
+ax.add_patch(mpatches.FancyBboxPatch((0.205, 0.045), 0.575, 0.415, boxstyle="round,pad=0.006",
+                                     fc="#fffdf7", ec="#eeddb3", lw=0.8))
+ax.text(0.4925, 0.485, "Distributed lane — Hadoop HDFS + Apache Spark (same phases)",
+        ha="center", va="top", fontsize=6.6, color="#a07d1c", fontweight="bold")
 
-arrow(0.14, 0.50, 0.18, 0.72)
-arrow(0.14, 0.44, 0.18, 0.28, "ingest")
-arrow(0.34, 0.74, 0.37, 0.74)
-arrow(0.51, 0.74, 0.54, 0.78)
-arrow(0.51, 0.74, 0.54, 0.66)
-arrow(0.51, 0.72, 0.54, 0.575)
-arrow(0.74, 0.70, 0.82, 0.56)
-arrow(0.35, 0.25, 0.40, 0.25)
-arrow(0.57, 0.25, 0.60, 0.25)
-arrow(0.74, 0.25, 0.82, 0.40, "cross-validates")
-ax.set_xlim(0, 1); ax.set_ylim(0, 1)
+# left and right columns
+_box(ax, 0.015, 0.38, 0.155, 0.24,
+     ["Raw dataset", "3 CSVs · 206 MB", "832,881 rows"], fc="#f5f7fa", ec="#5B6B7C")
+_box(ax, 0.815, 0.38, 0.17, 0.24,
+     ["Deliverables", "dashboard · report", "audit lists · metrics"], fc="#e8f5ee", ec="#1baf7a")
+
+# reference lane, one row of four
+ref_y, ref_h = 0.60, 0.28
+_box(ax, 0.225, ref_y, 0.125, ref_h, ["Phase 1", "cleaning", "48 features"])
+_box(ax, 0.365, ref_y, 0.125, ref_h, ["Phase 2", "K-Means", "k = 8"])
+_box(ax, 0.505, ref_y, 0.125, ref_h, ["Phases 3–4", "XGBoost", "weights · SHAP"])
+_box(ax, 0.645, ref_y, 0.115, ref_h, ["Phase 5", "IForest", "+ LOF"])
+
+# distributed lane, one row of three
+d_y, d_h = 0.10, 0.28
+_box(ax, 0.225, d_y, 0.170, d_h, ["HDFS warehouse", "9 datanodes · repl. 2",
+                                  "partitioned by division"], fc="#fdf6e8", ec="#d9a62e")
+_box(ax, 0.415, d_y, 0.160, d_h, ["Spark SQL", "distributed cleaning",
+                                  "grid densities"], fc="#fdf6e8", ec="#d9a62e")
+_box(ax, 0.595, d_y, 0.165, d_h, ["Spark MLlib", "phases 2–5", "pruned regional runs"],
+     fc="#fdf6e8", ec="#d9a62e")
+
+# flows
+_arrow(ax, 0.17, 0.56, 0.225, 0.72)
+_arrow(ax, 0.17, 0.44, 0.225, 0.26)
+_arrow(ax, 0.35, 0.74, 0.365, 0.74)
+_arrow(ax, 0.49, 0.74, 0.505, 0.74)
+_arrow(ax, 0.63, 0.74, 0.645, 0.74)
+_arrow(ax, 0.395, 0.24, 0.415, 0.24, color="#c19a37")
+_arrow(ax, 0.575, 0.24, 0.595, 0.24, color="#c19a37")
+_arrow(ax, 0.76, 0.72, 0.815, 0.55)
+_arrow(ax, 0.76, 0.26, 0.815, 0.45, color="#c19a37")
+# cross-validation between the lanes (kept clear of the lane titles)
+ax.annotate("", xy=(0.24, 0.545), xytext=(0.24, 0.46),
+            arrowprops=dict(arrowstyle="<->", color="#9aa7b4", lw=0.8, ls=(0, (3, 2))))
 save(fig, "f15_architecture.png")
+
+# F0 — overall methodology: six steps, one row
+steps = [
+    ("1", "Dataset", "Mendeley CC BY 4.0\n3 CSVs · 832,881 rows"),
+    ("2", "Ingest & store", "HDFS, 9 datanodes\npartitioned by division"),
+    ("3", "Clean & engineer", "GPS validation, dedup\n48 features / shop"),
+    ("4", "Model RQ1–RQ4", "K-Means · XGBoost\nweights · IForest+LOF"),
+    ("5", "Evaluate", "Optuna TPE · 5-fold CV\n47 automated tests"),
+    ("6", "Deliver", "dashboard · report\naudit lists"),
+]
+fig, ax = _diagram_axes(COL_W * 2.0, 1.55)
+bw, gap = 0.148, 0.0206
+x = 0.005
+for i, (num, title, body) in enumerate(steps):
+    _box(ax, x, 0.06, bw, 0.62, [title] + body.split("\n"),
+         fc="#eef4fb" if i not in (0, 5) else ("#f5f7fa" if i == 0 else "#e8f5ee"),
+         ec="#2a78d6" if i not in (0, 5) else ("#5B6B7C" if i == 0 else "#1baf7a"))
+    ax.scatter([x + bw / 2], [0.84], s=105, color="#1c2a3a", zorder=3)  # aspect-free circle
+    ax.text(x + bw / 2, 0.833, num, ha="center", va="center", fontsize=6.2,
+            color="white", fontweight="bold", zorder=4)
+    if i < len(steps) - 1:
+        _arrow(ax, x + bw, 0.37, x + bw + gap, 0.37)
+    x += bw + gap
+save(fig, "f_overview.png")
 print("architecture figure written")
 
 # ------------------------------------------------ professional EDA upgrades
