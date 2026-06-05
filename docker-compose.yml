@@ -79,22 +79,22 @@ services:
     depends_on:
       - namenode
 
+  # Uploads via the native-arm64 Spark image: the emulated hadoop CLI
+  # intermittently aborts (qemu signal 6) on multi-hundred-MB transfers.
   hdfs-ingest:
-    image: apache/hadoop:3.4.1
-    platform: linux/amd64
+    image: smart-retail-spark:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.spark
     profiles: ["spark-jobs"]
-    command: ["bash", "-c",
-      "for i in $(seq 1 30); do hdfs dfs -ls / >/dev/null 2>&1 && break; echo waiting for namenode…; sleep 3; done; hdfs dfs -mkdir -p /smart_retail/raw && hdfs dfs -D dfs.replication=2 -put -f /data/dataset/*.csv /smart_retail/raw/ && hdfs dfs -ls -h /smart_retail/raw"]
-    environment:
-      - CORE-SITE.XML_fs.default.name=hdfs://namenode:8020
-      - CORE-SITE.XML_fs.defaultFS=hdfs://namenode:8020
-      - HDFS-SITE.XML_dfs.replication=1
-      - HDFS-SITE.XML_dfs.permissions.enabled=false
+    command: >
+      /opt/spark/bin/spark-submit --master local[1] /opt/jobs/hdfs_upload.py
     depends_on:
       - namenode
       - datanode
     volumes:
       - ./dataset:/data/dataset:ro
+      - ./spark_jobs:/opt/jobs:ro
 
   spark-master:
     image: smart-retail-spark:latest
