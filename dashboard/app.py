@@ -115,17 +115,45 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div {
 .section-title { font-size: 1.22rem; font-weight: 650; color: #16385C; margin: 0; }
 .section-desc { font-size: 0.86rem; color: #5B6B7C; margin: 0.15rem 0 0.7rem 0; }
 
-.readout {
-  font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: #5B6B7C;
-  border-top: 1px solid #E5EAF0; border-bottom: 1px solid #E5EAF0;
-  padding: 0.45rem 0.1rem; margin: 0.6rem 0 1rem 0; letter-spacing: 0.02em;
+.hdr {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.35rem 0 0.9rem 0;
 }
-.readout b { color: #1C2A3A; font-weight: 500; }
+.hdr-left { display: flex; align-items: center; gap: 0.8rem; }
+.hdr-logo {
+  width: 40px; height: 40px; border-radius: 9px; flex: none;
+  background: #16385C; display: flex; align-items: flex-end;
+  justify-content: center; gap: 3px; padding-bottom: 9px;
+}
+.hdr-logo i { display: block; width: 5px; border-radius: 2px; background: #7FB1E8; }
+.hdr-logo i:nth-child(1) { height: 9px; }
+.hdr-logo i:nth-child(2) { height: 16px; background: #fff; }
+.hdr-logo i:nth-child(3) { height: 12px; }
+.wordmark { font-size: 1.32rem; font-weight: 700; color: #16385C;
+            letter-spacing: -0.015em; line-height: 1.15; }
+.hdr-sub { font-size: 0.82rem; color: #5B6B7C; margin-top: 1px; }
+.hdr-chips { display: flex; gap: 6px; flex: none; }
+.hdr-chip {
+  font-size: 0.7rem; color: #41556E; background: #F1F5F9;
+  border: 1px solid #E5EAF0; border-radius: 999px; padding: 3px 11px;
+  white-space: nowrap;
+}
 
-.topbar { display: flex; justify-content: space-between; align-items: baseline; }
-.wordmark { font-size: 1.45rem; font-weight: 700; color: #16385C; letter-spacing: -0.015em; }
-.wordmark small { font-size: 0.9rem; font-weight: 400; color: #5B6B7C; margin-left: 0.9rem; }
-.topmeta { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; color: #5B6B7C; text-align: right; }
+.readout {
+  display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  margin: 0 0 1.05rem 0;
+}
+.readout-tag {
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.64rem;
+  text-transform: uppercase; letter-spacing: 0.07em; color: #5B6B7C;
+  margin-right: 2px;
+}
+.readout-pill {
+  display: inline-flex; align-items: baseline; gap: 5px;
+  border: 1px solid #E5EAF0; border-radius: 6px; background: #fff;
+  padding: 3px 10px; font-size: 0.74rem; color: #5B6B7C;
+}
+.readout-pill b { color: #1C2A3A; font-weight: 600; font-variant-numeric: tabular-nums; }
 </style>
 """,
     unsafe_allow_html=True,
@@ -370,12 +398,19 @@ art = load_artifacts()
 
 st.markdown(
     """
-<div class="topbar">
-  <div class="wordmark">Smart Retail Intelligence
-    <small>Bangladesh FMCG distribution network</small>
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="hdr-logo"><i></i><i></i><i></i></div>
+    <div>
+      <div class="wordmark">Smart Retail Intelligence</div>
+      <div class="hdr-sub">Bangladesh FMCG distribution network · 719,817 GPS-tagged outlets</div>
+    </div>
   </div>
-  <div class="topmeta">MITE 431 · Big Data Analytics<br>
-  Mendeley mgzvngzng2 · CC BY 4.0 · R. Sikder &amp; F. Rahman</div>
+  <div class="hdr-chips">
+    <span class="hdr-chip">MITE 431 · Big Data Analytics</span>
+    <span class="hdr-chip">Mendeley · CC BY 4.0</span>
+    <span class="hdr-chip">R. Sikder &amp; F. Rahman</span>
+  </div>
 </div>
 """,
     unsafe_allow_html=True,
@@ -390,15 +425,19 @@ if _m:
     _dur = sum(_m.get("durations_sec", {}).values())
     _reg_best = _r.get("models", {}).get(_r.get("best_model", ""), {})
     _clf_best = _cl.get("models", {}).get(_cl.get("best_model", ""), {})
+    _pills = [
+        ("outlets", f"{_q.get('n_final_shops', 0):,}"),
+        ("features", _q.get("n_feature_columns", "—")),
+        ("archetypes", f"k = {_c.get('best_k', '—')}"),
+        ("sales R²", f"{_reg_best.get('r2', float('nan')):.2f}"),
+        ("risk AUC", f"{_clf_best.get('roc_auc', float('nan')):.3f}"),
+        ("full run", f"{_dur:.0f} s"),
+    ]
     st.markdown(
-        '<div class="readout">'
-        f'PIPELINE&nbsp;&nbsp;<b>{_q.get("n_final_shops", 0):,}</b> outlets · '
-        f'<b>{_q.get("n_feature_columns", "—")}</b> features · '
-        f'k = <b>{_c.get("best_k", "—")}</b> archetypes · '
-        f'sales R² <b>{_reg_best.get("r2", float("nan")):.2f}</b> · '
-        f'risk AUC <b>{_clf_best.get("roc_auc", float("nan")):.3f}</b> · '
-        f'full run <b>{_dur:.0f}s</b>'
-        "</div>",
+        '<div class="readout"><span class="readout-tag">Latest run</span>'
+        + "".join(f'<span class="readout-pill">{label} <b>{value}</b></span>'
+                  for label, value in _pills)
+        + "</div>",
         unsafe_allow_html=True,
     )
 
