@@ -16,6 +16,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 @dataclass
 class Config:
     # --- paths ---
+    raw_dir: Path = PROJECT_ROOT / "dataset"
     data_dir: Path = PROJECT_ROOT / "data"
     models_dir: Path = PROJECT_ROOT / "models"
     reports_dir: Path = PROJECT_ROOT / "reports"
@@ -45,16 +46,14 @@ class Config:
     n_jobs: int = -1
 
     @property
-    def raw_dir(self) -> Path:
-        return self.data_dir / "raw"
-
-    @property
     def processed_dir(self) -> Path:
         return self.data_dir / "processed"
 
     @classmethod
     def from_env(cls) -> "Config":
         cfg = cls()
+        if raw_dir := os.environ.get("SMART_RETAIL_RAW_DIR"):
+            cfg.raw_dir = Path(raw_dir)
         if data_dir := os.environ.get("SMART_RETAIL_DATA_DIR"):
             cfg.data_dir = Path(data_dir)
         if models_dir := os.environ.get("SMART_RETAIL_MODELS_DIR"):

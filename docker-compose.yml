@@ -1,0 +1,35 @@
+services:
+  pipeline:
+    build: .
+    image: smart-retail:latest
+    volumes:
+      - ./dataset:/app/dataset:ro
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./reports:/app/reports
+    command: python -m smart_retail.pipeline
+
+  dashboard:
+    image: smart-retail:latest
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./dataset:/app/dataset:ro
+      - ./data:/app/data:ro
+      - ./models:/app/models:ro
+      - ./reports:/app/reports:ro
+    command: streamlit run dashboard/app.py --server.address=0.0.0.0 --server.port=8501 --server.headless=true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  test:
+    image: smart-retail:latest
+    build: .
+    volumes:
+      - ./dataset:/app/dataset:ro
+      - ./tests:/app/tests:ro
+    command: pytest -v

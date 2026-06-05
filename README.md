@@ -20,10 +20,10 @@ Course: **MITE 431 — Big Data Analytics** · Ratul Sikder (2506102) & Fahim Ra
 [Comprehensive Retail Network Dataset of Bangladesh](https://data.mendeley.com/datasets/mgzvngzng2/1)
 (Shahin, Swarna & Farid, 2025) — CC BY 4.0, DOI `10.17632/mgzvngzng2.1`.
 
-Download the three CSVs from Mendeley and place them in `data/raw/`:
+Download the three CSVs from Mendeley and place them in `dataset/`:
 
 ```
-data/raw/
+dataset/
 ├── shop_info_with_geo.csv        (~117 MB, 719,817 shops)
 ├── product_target_for_shop.csv   (~89 MB, 613,656 shops × 17 products)
 └── product_info.csv              (~4 KB, 42 SKUs)
