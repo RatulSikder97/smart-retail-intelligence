@@ -9,7 +9,7 @@
   },
   "durations_sec": {
     "phase_1": 35.0,
-    "phase_2": 43.9,
+    "phase_2": 28.8,
     "phase_3": 164.0,
     "phase_4": 158.0,
     "phase_5": 58.0
@@ -22,11 +22,11 @@
       },
       "4": {
         "silhouette": 0.14181635432229936,
-        "davies_bouldin": 2.4059436539667325
+        "davies_bouldin": 2.405943653966732
       },
       "5": {
         "silhouette": 0.16174400814254064,
-        "davies_bouldin": 2.2508296709410414
+        "davies_bouldin": 2.250829670941041
       },
       "6": {
         "silhouette": 0.16236887673925743,
@@ -47,7 +47,7 @@
     },
     "agglomerative": {
       "silhouette": 0.14499898344020418,
-      "davies_bouldin": 1.8016763382126715
+      "davies_bouldin": 1.8016763359680208
     },
     "dbscan": {
       "silhouette": NaN,
@@ -56,7 +56,24 @@
       "noise_share": 0.9865
     },
     "best_k": 8,
-    "chosen_algorithm": "kmeans"
+    "chosen_algorithm": "kmeans",
+    "stability": {
+      "n_bootstraps": 10,
+      "sample_size": 100000,
+      "ari_mean": 0.525,
+      "ari_std": 0.1484,
+      "ari_min": 0.2766,
+      "per_cluster_jaccard": {
+        "0": 0.619,
+        "1": 1.0,
+        "2": 0.3057,
+        "3": 0.8109,
+        "4": 0.4804,
+        "5": 0.1641,
+        "6": 0.6483,
+        "7": 0.1669
+      }
+    }
   },
   "phase_3_regression": {
     "models": {

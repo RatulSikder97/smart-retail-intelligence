@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 from sklearn.cluster import DBSCAN, AgglomerativeClustering, KMeans
-from sklearn.metrics import davies_bouldin_score, silhouette_score
+from sklearn.metrics import adjusted_rand_score, davies_bouldin_score, silhouette_score
 from sklearn.preprocessing import StandardScaler
 
 from smart_retail.config import Config
@@ -63,6 +63,49 @@ def _profile_clusters(features: pd.DataFrame, labels: pd.Series) -> pd.DataFrame
     return profile.reset_index()
 
 
+def bootstrap_stability(
+    X: np.ndarray, reference: np.ndarray, k: int, config: Config
+) -> dict:
+    # refit K-Means on bootstrap resamples; ARI against the reference partition
+    # measures how much the taxonomy depends on the particular sample drawn
+    rng = np.random.default_rng(config.random_state)
+    n = int(min(len(X), config.stability_sample_size))
+    idx = rng.choice(len(X), n, replace=False)
+    Xs, ref = X[idx], reference[idx]
+
+    aris: list[float] = []
+    cluster_ids = np.unique(ref)
+    jaccard_runs: dict[int, list[float]] = {int(c): [] for c in cluster_ids}
+    for b in range(config.stability_bootstraps):
+        boot = rng.choice(n, n, replace=True)
+        km = KMeans(n_clusters=k, n_init=3, random_state=config.random_state + b)
+        km.fit(Xs[boot])
+        pred = km.predict(Xs)
+        aris.append(float(adjusted_rand_score(ref, pred)))
+        # per-archetype recovery: best Jaccard overlap with any bootstrap cluster
+        for c in cluster_ids:
+            ref_mask = ref == c
+            best = 0.0
+            for p in np.unique(pred):
+                pred_mask = pred == p
+                inter = int(np.logical_and(ref_mask, pred_mask).sum())
+                union = int(np.logical_or(ref_mask, pred_mask).sum())
+                if union:
+                    best = max(best, inter / union)
+            jaccard_runs[int(c)].append(best)
+
+    return {
+        "n_bootstraps": config.stability_bootstraps,
+        "sample_size": n,
+        "ari_mean": round(float(np.mean(aris)), 4),
+        "ari_std": round(float(np.std(aris)), 4),
+        "ari_min": round(float(np.min(aris)), 4),
+        "per_cluster_jaccard": {
+            str(c): round(float(np.mean(v)), 4) for c, v in jaccard_runs.items()
+        },
+    }
+
+
 def run_clustering(features: pd.DataFrame, config: Config) -> ClusteringResult:
     X_df = feature_matrix(features)
     scaler = StandardScaler()
@@ -102,6 +145,7 @@ def run_clustering(features: pd.DataFrame, config: Config) -> ClusteringResult:
         },
         "best_k": best_k,
         "chosen_algorithm": "kmeans",
+        "stability": bootstrap_stability(X, labels.to_numpy(), best_k, config),
     }
 
     return ClusteringResult(

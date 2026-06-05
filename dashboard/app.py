@@ -1206,6 +1206,30 @@ with tab_rq1:
         )
         section("Interpretation", interpretation)
 
+        stability = clustering.get("stability")
+        if stability:
+            with st.expander("How stable is this taxonomy? — bootstrap check"):
+                st.markdown(
+                    f"K-Means was refitted on **{stability['n_bootstraps']} bootstrap "
+                    f"resamples** of {stability['sample_size']:,} shops and each refit "
+                    "compared with the reference partition. Adjusted Rand Index: "
+                    f"**{stability['ari_mean']:.3f} ± {stability['ari_std']:.3f}** "
+                    f"(worst run {stability['ari_min']:.3f}). An ARI of 1.0 means an "
+                    "identical partition; 0 means chance agreement."
+                )
+                jac = pd.DataFrame(
+                    [{"cluster": f"Cluster {c}", "mean Jaccard recovery": round(v, 3)}
+                     for c, v in sorted(stability["per_cluster_jaccard"].items(),
+                                        key=lambda kv: -kv[1])]
+                )
+                st.dataframe(jac, width="stretch", hide_index=True)
+                st.caption(
+                    "Per-archetype recovery: how much of each reference cluster the "
+                    "best-matching bootstrap cluster overlaps (1.0 = recovered "
+                    "perfectly in every resample). High-recovery clusters are real "
+                    "structure; lower ones share blurred boundaries with neighbours."
+                )
+
 # ==========================================================================
 with tab_rq2:
     if require(art, "predictions", "metrics"):

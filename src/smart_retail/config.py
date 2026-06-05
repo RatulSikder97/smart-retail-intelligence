@@ -29,6 +29,8 @@ class Config:
     hierarchical_sample_size: int = 20_000
     dbscan_eps: float = 0.5
     dbscan_min_samples: int = 50
+    stability_bootstraps: int = 10
+    stability_sample_size: int = 100_000
 
     # --- phase 3: regression ---
     test_size: float = 0.2
