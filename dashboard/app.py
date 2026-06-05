@@ -15,7 +15,7 @@ import pandas as pd
 import streamlit as st
 from streamlit_folium import st_folium
 
-from smart_retail import pipeline
+from smart_retail import pipeline, reporting
 from smart_retail.config import Config
 
 # Validated categorical palette (fixed slot order — clusters keep their color
@@ -115,8 +115,9 @@ st.caption(
     "MITE 431, Ratul Sikder & Fahim Rahman"
 )
 
-tab_overview, tab_clusters, tab_sales, tab_risk, tab_anomaly = st.tabs(
-    ["Overview", "Shop archetypes", "Sales prediction", "Target-miss risk", "Anomalies"]
+tab_overview, tab_clusters, tab_sales, tab_risk, tab_anomaly, tab_report = st.tabs(
+    ["Overview", "Shop archetypes", "Sales prediction", "Target-miss risk",
+     "Anomalies", "Full report"]
 )
 
 with tab_overview:
@@ -164,6 +165,13 @@ with tab_overview:
             if quality:
                 st.subheader("Data quality (phase 1)")
                 st.json(quality)
+                st.caption(
+                    "`n_invalid_or_missing_gps`: rows whose latitude/longitude "
+                    "cells are empty in the raw CSV (`geometry = POINT EMPTY`) — "
+                    "the 13.6% missing-GPS rate documented by the dataset "
+                    "authors. Removing them leaves exactly the paper's "
+                    "published count of 719,817 shops; no valid shop is dropped."
+                )
 
 with tab_clusters:
     if require(art, "clusters", "profiles", "metrics"):
@@ -348,3 +356,42 @@ with tab_anomaly:
         )
         st.subheader("Ranked anomalies")
         st.dataframe(top.head(500), width='stretch', hide_index=True)
+
+with tab_report:
+    if require(art, "metrics"):
+        risk_by_division = None
+        if "risk" in art and "features" in art:
+            risk_by_division = (
+                art["risk"]
+                .merge(
+                    art["features"][["shop_code", "division"]],
+                    on="shop_code", how="left",
+                )
+                .groupby("division")["at_risk"].mean()
+            )
+        sections = reporting.build_report(
+            metrics=art["metrics"],
+            profiles=art.get("profiles"),
+            shap_importance=art.get("shap"),
+            risk_by_division=risk_by_division,
+            top_anomalies=art.get("top_anomalies"),
+        )
+
+        st.subheader("Analysis report — all four research questions")
+        st.download_button(
+            "Download report (markdown)",
+            data=reporting.report_markdown(sections),
+            file_name="smart_retail_analysis_report.md",
+            mime="text/markdown",
+        )
+        for section_md in sections.values():
+            st.markdown(section_md)
+            st.divider()
+
+        durations = art["metrics"].get("durations_sec", {})
+        if durations:
+            st.caption(
+                "Pipeline durations — "
+                + " · ".join(f"{k.replace('_', ' ')}: {v:.0f}s" for k, v in durations.items())
+                + f" · total {sum(durations.values()):.0f}s"
+            )

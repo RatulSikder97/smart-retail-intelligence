@@ -12,7 +12,7 @@
     "phase_2": 29.1,
     "phase_3": 65.0,
     "phase_4": 70.2,
-    "phase_5": 38.9
+    "phase_5": 41.6
   },
   "phase_2_clustering": {
     "kmeans": {
