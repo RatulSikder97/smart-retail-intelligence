@@ -23,6 +23,14 @@ class Config:
 
     # --- phase 1: preprocessing / features ---
     density_radii_km: tuple[float, ...] = (0.5, 1.0, 5.0)
+    # k-NN imputation (sensitivity experiment; off by default so the
+    # reference run keeps missingness explicit — see README):
+    # geo fields are always safe (~99.8% accurate); shop_style only when
+    # >= impute_knn_confidence of neighbours agree; shop_type/importance
+    # are never imputed (measured at/below the majority-class baseline)
+    impute_knn: bool = False
+    impute_knn_k: int = 10
+    impute_knn_confidence: float = 0.7
 
     # --- phase 2: clustering ---
     kmeans_k_range: tuple[int, int] = (3, 9)  # inclusive

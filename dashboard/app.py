@@ -59,6 +59,7 @@ def load_artifacts() -> dict:
     for key, path in {
         "metrics": CFG.reports_dir / pipeline.METRICS_JSON,
         "dataset_profile": CFG.reports_dir / "dataset_profile.json",
+        "imputation_sensitivity": CFG.reports_dir / "imputation_sensitivity.json",
     }.items():
         if path.exists():
             art[key] = json.loads(path.read_text())
@@ -665,6 +666,44 @@ shops whose local neighbourhood density differs from their neighbours'. The
 final rank is the mean of the two percentile ranks.
 """
             )
+        sensitivity = art.get("imputation_sensitivity")
+        if sensitivity:
+            st.divider()
+            st.subheader("Missing-value sensitivity — k-NN imputation experiment")
+            ref, imp = sensitivity["reference_no_imputation"], sensitivity["with_knn_imputation"]
+            details = sensitivity["imputation_details"]
+            st.markdown(
+                f"Gaps are kept as an explicit 'Unknown' by default. As a controlled "
+                f"experiment (`--impute-knn`), geo fields and high-confidence shop_style "
+                f"were filled from each shop's {details['k']} nearest neighbours "
+                f"({details['imputed']['shop_style']:,} styles at ≥{details['confidence_threshold']:.0%} "
+                f"agreement, {details['imputed']['division']} geo fields); shop_type and "
+                "shop_importance were never filled (measured at or below the "
+                "majority-class baseline)."
+            )
+            comparison = pd.DataFrame(
+                [
+                    {"metric": "clustering best k", "reference": ref["best_k"], "with imputation": imp["best_k"]},
+                    {"metric": "silhouette", "reference": round(ref["silhouette"], 3), "with imputation": round(imp["silhouette"], 3)},
+                    {"metric": "regression R² (XGBoost)", "reference": round(ref["regression_r2"], 3), "with imputation": round(imp["regression_r2"], 3)},
+                    {"metric": "regression RMSE", "reference": round(ref["regression_rmse"], 1), "with imputation": round(imp["regression_rmse"], 1)},
+                    {"metric": "risk ROC-AUC (XGBoost)", "reference": round(ref["roc_auc"], 3), "with imputation": round(imp["roc_auc"], 3)},
+                    {"metric": "risk F1", "reference": round(ref["f1"], 3), "with imputation": round(imp["f1"], 3)},
+                ]
+            )
+            st.dataframe(comparison, width="stretch", hide_index=True)
+            st.markdown(
+                "**Reading the trade-off.** Imputation improves the supervised "
+                "metrics (risk AUC 0.857 → 0.881) but collapses the archetype "
+                "structure from 8 clusters to 3 — filling in shop_style blends "
+                "the data-poor 'ghost' segment into ordinary archetypes, hiding "
+                "exactly the population the audit use-case needs to see. The "
+                "risk numbers are also not strictly comparable: the proxy label "
+                "is defined relative to cluster peers, and the clusters changed. "
+                "The reference pipeline therefore keeps imputation **off**; the "
+                "flag exists for prediction-focused deployments."
+            )
+
         st.divider()
 
         st.subheader("Distributed run — Hadoop HDFS + Spark MLlib")

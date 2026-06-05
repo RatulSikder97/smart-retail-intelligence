@@ -191,11 +191,19 @@ def main() -> None:
         default=None,
         help="Limit raw shop rows for a quick run (default: full dataset)",
     )
+    parser.add_argument(
+        "--impute-knn",
+        action="store_true",
+        help="Sensitivity experiment: k-NN impute geo fields + high-confidence "
+             "shop_style (see README; off by default)",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     phases = [int(p) for p in args.phases.split(",") if p.strip()]
     config = Config.from_env()
+    if args.impute_knn:
+        config.impute_knn = True
     run(phases, config, nrows=args.nrows)
     log.info("pipeline complete — metrics in %s", config.reports_dir / METRICS_JSON)
 

@@ -34,6 +34,24 @@ dataset/
 > when its total target is below 80% of the median of its (cluster × shop type)
 > peer group.
 
+### Missing-value policy (and the k-NN imputation experiment)
+
+Categorical gaps are kept as an explicit `Unknown` level by default — the
+85,167 shops missing type/style/importance *together* are the ghost-shop
+signal, not noise to paper over. `--impute-knn` enables a measured
+sensitivity experiment instead of a silent change:
+
+| Column | 10-NN accuracy (held-out) | Baseline | Policy |
+|---|---|---|---|
+| zila / upazila / division | 99.8% | 11.3% | imputed (location determines them) |
+| shop_style | 96.5% | 65.2% | imputed only at ≥70% neighbour agreement |
+| shop_type | 62.5% | 51.6% | never — wrong for 1 in 3 shops |
+| shop_importance | 86.9% | 87.9% | never — worse than the baseline |
+
+Every filled value gets a `*_was_imputed` flag column (visible to the models),
+and `reports/imputation_sensitivity.json` compares model metrics with vs
+without imputation.
+
 ## Quick start (Docker)
 
 ```bash

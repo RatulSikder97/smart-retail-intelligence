@@ -62,6 +62,56 @@ def _dist_to_district_centre(shops: pd.DataFrame) -> pd.Series:
     )
 
 
+def _impute_knn(shops: pd.DataFrame, config: Config, report: dict) -> pd.DataFrame:
+    """Nearest-neighbour imputation for the columns where it is justified.
+
+    Geo-administrative fields are location-determined (measured 99.8%
+    accurate on held-out known shops); shop_style carries real spatial
+    signal (96.5% vs 65.2% baseline) and is filled only when neighbours
+    agree strongly. shop_type and shop_importance are deliberately NOT
+    imputed: measured at +11pts and -1pt against the majority-class
+    baseline respectively, and their joint missingness IS the ghost-shop
+    signal the analysis needs to preserve.
+    """
+    coords = np.radians(shops[["latitude", "longitude"]].to_numpy())
+    always = ["zila", "upazila", "division"]
+    conditional = ["shop_style"]
+    imputed_counts: dict[str, int] = {}
+
+    for col in always + conditional:
+        missing_mask = shops[col].isna().to_numpy()
+        if not missing_mask.any():
+            shops[f"{col}_was_imputed"] = np.zeros(len(shops), dtype=np.uint8)
+            imputed_counts[col] = 0
+            continue
+        known_mask = ~shops[col].isna().to_numpy()
+        tree = BallTree(coords[known_mask], metric="haversine")
+        _, idx = tree.query(coords[missing_mask], k=config.impute_knn_k)
+        neighbour_values = shops.loc[known_mask, col].to_numpy()[idx]
+
+        votes = pd.DataFrame(neighbour_values)
+        majority = votes.mode(axis=1)[0].to_numpy()
+        agreement = (neighbour_values == majority[:, None]).mean(axis=1)
+        threshold = config.impute_knn_confidence if col in conditional else 0.5
+
+        fill = np.where(agreement >= threshold, majority, None)
+        flag = np.zeros(len(shops), dtype=np.uint8)
+        target_rows = shops.index[missing_mask]
+        accepted = pd.notna(fill)
+        shops.loc[target_rows[accepted], col] = fill[accepted]
+        flag[np.flatnonzero(missing_mask)[accepted]] = 1
+        shops[f"{col}_was_imputed"] = flag
+        imputed_counts[col] = int(accepted.sum())
+
+    report["knn_imputation"] = {
+        "k": config.impute_knn_k,
+        "confidence_threshold": config.impute_knn_confidence,
+        "imputed": imputed_counts,
+        "never_imputed": ["shop_type", "shop_importance"],
+    }
+    return shops
+
+
 def run_preprocessing(
     shops: pd.DataFrame, targets: pd.DataFrame, config: Config
 ) -> tuple[pd.DataFrame, dict]:
@@ -80,6 +130,11 @@ def run_preprocessing(
     )
     report["n_invalid_or_missing_gps"] = int((~valid_gps).sum())
     shops = shops[valid_gps].copy()
+
+    # 2b. optional k-NN imputation (geo fields + high-confidence style);
+    # runs before the Unknown fill so only justified gaps get values
+    if config.impute_knn:
+        shops = _impute_knn(shops, config, report)
 
     # 3. categorical gaps → explicit "Unknown" level
     for col in schema.SHOP_CATEGORICAL + ["zila", "upazila", "division"]:

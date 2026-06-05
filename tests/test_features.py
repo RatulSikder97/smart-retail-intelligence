@@ -61,3 +61,30 @@ def test_feature_matrix_is_numeric_and_nan_free(preprocessed):
     assert not X.isna().any().any()
     assert TARGET_COLUMN not in X.columns
     assert schema.SHOP_ID not in X.columns
+
+
+def test_knn_imputation_fills_geo_and_confident_style_only(shops_sample, targets_sample, config):
+    from smart_retail.config import Config
+
+    cfg = Config(impute_knn=True)
+    features, report = run_preprocessing(shops_sample, targets_sample, cfg)
+    imp = report["knn_imputation"]
+
+    # business attributes stay untouched: Unknown level survives, no flag column
+    assert "shop_type" in imp["never_imputed"]
+    assert "shop_type_was_imputed" not in features.columns
+
+    # geo fields: every accepted fill is flagged, flags match the report
+    for col in ("zila", "upazila", "division"):
+        flag = f"{col}_was_imputed"
+        assert flag in features.columns
+        assert int(features[flag].sum()) == imp["imputed"][col]
+    # style honours the confidence threshold: anything below it stays Unknown
+    assert imp["imputed"]["shop_style"] >= 0
+    assert (features.loc[features["shop_style_was_imputed"] == 1, "shop_style"] != "Unknown").all()
+
+
+def test_knn_imputation_off_by_default(shops_sample, targets_sample, config):
+    features, report = run_preprocessing(shops_sample, targets_sample, config)
+    assert "knn_imputation" not in report
+    assert not any(c.endswith("_was_imputed") for c in features.columns)
