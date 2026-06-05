@@ -33,3 +33,8 @@ venv/
 
 # Spark artifacts (regenerable)
 data/spark/
+
+# report build intermediates
+report/_chunks/
+report/_chunks_rewritten/
+report/_docx_source.html
