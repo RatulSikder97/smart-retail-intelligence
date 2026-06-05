@@ -45,115 +45,106 @@ INK, MUTED, HAIRLINE, PANEL, NAVY = "#1C2A3A", "#5B6B7C", "#E5EAF0", "#F7F9FB", 
 st.markdown(
     """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
-
-html, body, [data-testid="stAppViewContainer"] * { font-family: 'IBM Plex Sans', sans-serif; }
-/* restore Streamlit's icon font (the override above would garble icons) */
+:root {
+  --ground: #F8F9FB; --surface: #FFFFFF; --border: #E4E7EC;
+  --ink: #101828; --ink-2: #475467; --ink-3: #667085;
+  --accent: #175CD3; --shadow: 0 1px 2px rgba(16,24,40,.05);
+}
+html, body, [data-testid="stAppViewContainer"] * {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+}
 [data-testid="stIconMaterial"], span[class*="material-symbols"] {
   font-family: 'Material Symbols Rounded' !important;
 }
+[data-testid="stAppViewContainer"] { background: var(--ground); }
+[data-testid="stHeader"] { background: transparent; }
 code, kbd, pre, [data-testid="stMetricValue"] { font-variant-numeric: tabular-nums; }
 
-.block-container { max-width: 1260px; padding-top: 0.8rem; padding-bottom: 3rem; }
+.block-container { max-width: 1220px; padding-top: 0.7rem; padding-bottom: 3rem; }
 #MainMenu, footer, [data-testid="stToolbar"], [data-testid="stDecoration"] { display: none; }
 
-h1, h2, h3 { color: #16385C; letter-spacing: -0.01em; }
+h1, h2, h3 { color: var(--ink); letter-spacing: -0.01em; }
+p, li { color: #344054; }
 
-/* tabs as quiet mono nav */
+/* tabs: plain production nav */
 button[data-baseweb="tab"] p {
-  font-family: 'IBM Plex Mono', monospace !important;
-  font-size: 0.72rem !important; text-transform: uppercase; letter-spacing: 0.06em;
-  color: #5B6B7C;
+  font-size: 0.83rem !important; color: var(--ink-3); font-weight: 500;
 }
-button[data-baseweb="tab"][aria-selected="true"] p { color: #1C2A3A; font-weight: 600; }
-div[data-baseweb="tab-highlight"] { background-color: #2A78D6; height: 2px; }
-div[data-baseweb="tab-border"] { background-color: #E5EAF0; }
+button[data-baseweb="tab"][aria-selected="true"] p { color: var(--ink); font-weight: 600; }
+div[data-baseweb="tab-highlight"] { background-color: var(--accent); height: 2px; }
+div[data-baseweb="tab-border"] { background-color: var(--border); }
 
-/* dataframe headers in mono */
+/* dataframes: quiet headers, white surface */
+[data-testid="stDataFrame"] { background: var(--surface); border-radius: 8px; }
 [data-testid="stDataFrame"] thead th, [data-testid="stDataFrame"] [role="columnheader"] {
-  font-family: 'IBM Plex Mono', monospace !important;
-  font-size: 0.68rem !important; text-transform: uppercase; letter-spacing: 0.05em;
-  color: #5B6B7C !important;
+  font-size: 0.76rem !important; font-weight: 600; color: var(--ink-2) !important;
 }
 
-/* bordered containers: subtler radius + hairline */
+/* cards: bordered containers + expanders on white */
 div[data-testid="stVerticalBlockBorderWrapper"] > div {
-  border-color: #E5EAF0 !important; border-radius: 8px;
+  border-color: var(--border) !important; border-radius: 10px;
+  background: var(--surface); box-shadow: var(--shadow);
 }
-
-/* metric fallback styling where st.metric remains */
-[data-testid="stMetricLabel"] p {
-  font-family: 'IBM Plex Mono', monospace !important;
-  font-size: 0.68rem !important; text-transform: uppercase;
-  letter-spacing: 0.05em; color: #5B6B7C !important;
+details[data-testid="stExpander"] {
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface); box-shadow: var(--shadow);
 }
-[data-testid="stMetricValue"] { font-size: 1.65rem; font-weight: 600; color: #1C2A3A; }
-[data-testid="stMetricDelta"] { font-size: 0.72rem; }
+details[data-testid="stExpander"] summary p { font-size: 0.85rem; font-weight: 500; color: var(--ink-2); }
 
-.stat-row { display: grid; gap: 12px; margin: 0.35rem 0 0.9rem 0; }
+[data-testid="stMetricLabel"] p { font-size: 0.8rem !important; color: var(--ink-2) !important; }
+[data-testid="stMetricValue"] { font-size: 1.6rem; font-weight: 600; color: var(--ink); }
+[data-testid="stMetricDelta"] { font-size: 0.74rem; }
+
+/* KPI cards */
+.stat-row { display: grid; gap: 12px; margin: 0.35rem 0 1rem 0; }
 .stat-tile {
-  border: 1px solid #E5EAF0; border-radius: 8px; background: #fff;
-  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--surface);
+  box-shadow: var(--shadow); padding: 0.8rem 1rem;
 }
-.stat-tile.accent { border-left: 3px solid #2A78D6; }
-.stat-label {
-  font-family: 'IBM Plex Mono', monospace; font-size: 0.66rem;
-  text-transform: uppercase; letter-spacing: 0.06em; color: #5B6B7C;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.stat-value {
-  font-size: 1.55rem; font-weight: 600; color: #1C2A3A;
-  font-variant-numeric: tabular-nums; line-height: 1.25; margin-top: 0.1rem;
-}
-.stat-context { font-size: 0.72rem; color: #5B6B7C; margin-top: 0.05rem; }
+.stat-tile.accent { border-left: 3px solid var(--accent); }
+.stat-label { font-size: 0.8rem; font-weight: 500; color: var(--ink-2);
+              white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat-value { font-size: 1.6rem; font-weight: 600; color: var(--ink);
+              font-variant-numeric: tabular-nums; line-height: 1.3; margin-top: 0.15rem; }
+.stat-context { font-size: 0.75rem; color: var(--ink-3); margin-top: 0.1rem; }
 
+/* section headers: neutral badge + title */
 .eyebrow {
-  font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem;
-  text-transform: uppercase; letter-spacing: 0.09em; color: #2A78D6;
-  margin-bottom: 0.1rem;
+  display: inline-block; font-size: 0.72rem; font-weight: 600; color: var(--ink-2);
+  background: #F2F4F7; border: 1px solid var(--border); border-radius: 6px;
+  padding: 2px 8px; margin-bottom: 0.35rem;
 }
-.section-title { font-size: 1.22rem; font-weight: 650; color: #16385C; margin: 0; }
-.section-desc { font-size: 0.86rem; color: #5B6B7C; margin: 0.15rem 0 0.7rem 0; }
+.section-title { font-size: 1.15rem; font-weight: 650; color: var(--ink); margin: 0; }
+.section-desc { font-size: 0.86rem; color: var(--ink-2); margin: 0.2rem 0 0.75rem 0; }
+.panel-label { font-size: 0.8rem; font-weight: 600; color: var(--ink-2); margin-bottom: 0.2rem; }
 
+/* header bar */
 .hdr {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 0.35rem 0 0.9rem 0;
+  padding: 0.3rem 0 0.75rem 0; border-bottom: 1px solid var(--border);
+  margin-bottom: 0.7rem;
 }
-.hdr-left { display: flex; align-items: center; gap: 0.8rem; }
+.hdr-left { display: flex; align-items: center; gap: 0.75rem; }
 .hdr-logo {
-  width: 40px; height: 40px; border-radius: 9px; flex: none;
-  background: #16385C; display: flex; align-items: flex-end;
-  justify-content: center; gap: 3px; padding-bottom: 9px;
+  width: 36px; height: 36px; border-radius: 8px; flex: none;
+  background: var(--ink); display: flex; align-items: flex-end;
+  justify-content: center; gap: 3px; padding-bottom: 8px;
 }
-.hdr-logo i { display: block; width: 5px; border-radius: 2px; background: #7FB1E8; }
-.hdr-logo i:nth-child(1) { height: 9px; }
-.hdr-logo i:nth-child(2) { height: 16px; background: #fff; }
-.hdr-logo i:nth-child(3) { height: 12px; }
-.wordmark { font-size: 1.32rem; font-weight: 700; color: #16385C;
-            letter-spacing: -0.015em; line-height: 1.15; }
-.hdr-sub { font-size: 0.82rem; color: #5B6B7C; margin-top: 1px; }
-.hdr-chips { display: flex; gap: 6px; flex: none; }
-.hdr-chip {
-  font-size: 0.7rem; color: #41556E; background: #F1F5F9;
-  border: 1px solid #E5EAF0; border-radius: 999px; padding: 3px 11px;
-  white-space: nowrap;
-}
+.hdr-logo i { display: block; width: 4px; border-radius: 2px; background: #98A2B3; }
+.hdr-logo i:nth-child(1) { height: 8px; }
+.hdr-logo i:nth-child(2) { height: 15px; background: #fff; }
+.hdr-logo i:nth-child(3) { height: 11px; }
+.wordmark { font-size: 1.12rem; font-weight: 650; color: var(--ink);
+            letter-spacing: -0.01em; line-height: 1.2; }
+.hdr-sub { font-size: 0.8rem; color: var(--ink-3); margin-top: 1px; }
+.hdr-meta { font-size: 0.78rem; color: var(--ink-3); text-align: right; line-height: 1.5; }
+.hdr-meta b { color: var(--ink-2); font-weight: 600; }
 
-.readout {
-  display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
-  margin: 0 0 1.05rem 0;
-}
-.readout-tag {
-  font-family: 'IBM Plex Mono', monospace; font-size: 0.64rem;
-  text-transform: uppercase; letter-spacing: 0.07em; color: #5B6B7C;
-  margin-right: 2px;
-}
-.readout-pill {
-  display: inline-flex; align-items: baseline; gap: 5px;
-  border: 1px solid #E5EAF0; border-radius: 6px; background: #fff;
-  padding: 3px 10px; font-size: 0.74rem; color: #5B6B7C;
-}
-.readout-pill b { color: #1C2A3A; font-weight: 600; font-variant-numeric: tabular-nums; }
+/* latest-run line */
+.runline { font-size: 0.8rem; color: var(--ink-3); margin: 0 0 1rem 0; }
+.runline b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.runline .sep { margin: 0 7px; color: #D0D5DD; }
 </style>
 """,
     unsafe_allow_html=True,
@@ -161,19 +152,19 @@ div[data-testid="stVerticalBlockBorderWrapper"] > div {
 
 
 def _plex_theme():
-    axis = {"labelColor": MUTED, "titleColor": MUTED, "labelFont": "IBM Plex Sans",
-            "titleFont": "IBM Plex Sans", "labelFontSize": 11, "titleFontSize": 11,
+    axis = {"labelColor": MUTED, "titleColor": MUTED, "labelFont": "Helvetica Neue",
+            "titleFont": "Helvetica Neue", "labelFontSize": 11, "titleFontSize": 11,
             "gridColor": "#EEF2F6", "domain": False, "tickColor": "#EEF2F6",
             "labelLimit": 180}
     return {
         "config": {
-            "font": "IBM Plex Sans",
+            "font": "Helvetica Neue",
             "axis": axis,
             # never drop category labels on y; keep smart thinning on x
             "axisY": {"labelOverlap": False},
             "view": {"stroke": None},
             "title": {"anchor": "start", "fontSize": 13, "fontWeight": 600,
-                      "color": INK, "font": "IBM Plex Sans"},
+                      "color": INK, "font": "Helvetica Neue"},
             "legend": {"labelColor": MUTED, "titleColor": MUTED},
         }
     }
@@ -408,10 +399,9 @@ st.markdown(
       <div class="hdr-sub">Bangladesh FMCG distribution network · 719,817 GPS-tagged outlets</div>
     </div>
   </div>
-  <div class="hdr-chips">
-    <span class="hdr-chip">MITE 431 · Big Data Analytics</span>
-    <span class="hdr-chip">Mendeley · CC BY 4.0</span>
-    <span class="hdr-chip">R. Sikder &amp; F. Rahman</span>
+  <div class="hdr-meta">
+    <b>MITE 431 · Big Data Analytics</b><br>
+    Mendeley dataset (CC BY 4.0) · R. Sikder &amp; F. Rahman
   </div>
 </div>
 """,
@@ -424,7 +414,6 @@ if _m:
     _c = _m.get("phase_2_clustering", {})
     _r = _m.get("phase_3_regression", {})
     _cl = _m.get("phase_4_classification", {})
-    _dur = sum(_m.get("durations_sec", {}).values())
     _reg_best = _r.get("models", {}).get(_r.get("best_model", ""), {})
     _clf_best = _cl.get("models", {}).get(_cl.get("best_model", ""), {})
     _pills = [
@@ -433,12 +422,10 @@ if _m:
         ("archetypes", f"k = {_c.get('best_k', '—')}"),
         ("sales R²", f"{_reg_best.get('r2', float('nan')):.2f}"),
         ("risk AUC", f"{_clf_best.get('roc_auc', float('nan')):.3f}"),
-        ("full run", f"{_dur:.0f} s"),
     ]
     st.markdown(
-        '<div class="readout"><span class="readout-tag">Latest run</span>'
-        + "".join(f'<span class="readout-pill">{label} <b>{value}</b></span>'
-                  for label, value in _pills)
+        '<div class="runline">Latest run<span class="sep">·</span>'
+        + '<span class="sep">·</span>'.join(f'{label} <b>{value}</b>' for label, value in _pills)
         + "</div>",
         unsafe_allow_html=True,
     )
@@ -450,7 +437,7 @@ if "features" not in art:
 base = build_base(tuple(sorted(art.keys())))
 
 with st.container(border=True):
-    st.markdown('<div class="eyebrow">Filters — apply to every analysis view</div>',
+    st.markdown('<div class="panel-label">Filters · apply to every analysis view</div>',
                 unsafe_allow_html=True)
     fc1, fc2, fc3, fc4, fc5 = st.columns([2, 2, 2, 2, 1.6])
     sel_divisions = fc1.multiselect(
