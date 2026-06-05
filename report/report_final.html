@@ -100,8 +100,8 @@
     <tr><td>8.&emsp;Full-pipeline sensitivity of enabling k-NN imputation</td><td class="pg">15</td></tr>
     <tr><td>9.&emsp;Algorithm selection rationale per research question</td><td class="pg">16</td></tr>
     <tr><td>10.&emsp;Internal criteria for the K-Means k scan</td><td class="pg">17</td></tr>
-    <tr><td>11.&emsp;Cluster profiles (medians over the full dataset)</td><td class="pg">18</td></tr>
-    <tr><td>12.&emsp;Rejected alternatives trained on a common 50,000-shop subsample</td><td class="pg">21</td></tr>
+    <tr><td>11.&emsp;Cluster profiles (medians over the full dataset)</td><td class="pg">19</td></tr>
+    <tr><td>12.&emsp;All candidate families trained on a common 50,000-shop subsample</td><td class="pg">21</td></tr>
     <tr><td>13.&emsp;Hyperparameter search space and selected values (regression)</td><td class="pg">22</td></tr>
     <tr><td>14.&emsp;Regression performance on the held-out test set</td><td class="pg">22</td></tr>
     <tr><td>15.&emsp;Regression performance under 5-fold cross-validation</td><td class="pg">23</td></tr>
@@ -125,7 +125,7 @@
     <tr><td>7.&emsp;Distribution of the monthly total target</td><td class="pg">13</td></tr>
     <tr><td>8.&emsp;Monthly target by division (median and IQR)</td><td class="pg">14</td></tr>
     <tr><td>9.&emsp;Missing values per raw column</td><td class="pg">14</td></tr>
-    <tr><td>10.&emsp;Model selection for the number of clusters</td><td class="pg">17</td></tr>
+    <tr><td>10.&emsp;Model selection for the number of clusters</td><td class="pg">18</td></tr>
     <tr><td>11.&emsp;Archetype sizes</td><td class="pg">19</td></tr>
     <tr><td>12.&emsp;Spatial map of the eight archetypes</td><td class="pg">20</td></tr>
     <tr><td>13.&emsp;Training time versus accuracy of all candidate families</td><td class="pg">21</td></tr>
@@ -187,7 +187,7 @@
   <tr><th>File</th><th class="num">Rows</th><th>Content</th></tr>
   <tr><td><code>shop_info_with_geo.csv</code></td><td class="num">832,881</td>
       <td>One record per shop registration: GPS coordinates, business type (12 categories), style (3), company importance tier (3), place nature, administrative location (division / zila / upazila), and operational fields.</td></tr>
-  <tr><td><code>product_target_for_shop.csv</code></td><td class="num">853,732</td>
+  <tr><td><code>product_target_for_shop.csv</code></td><td class="num">853,731</td>
       <td>Monthly sales target for 17 products per shop (<code>prod_1</code> &hellip; <code>prod_17</code>) and their monthly <code>Total</code>.</td></tr>
   <tr><td><code>product_info.csv</code></td><td class="num">42</td>
       <td>SKU catalogue: 42 variants over 24 base products, 5 brands, 9 flavour/variant types, with shop-style and importance-tier price columns, packaging, and volumes.</td></tr>
@@ -217,7 +217,7 @@
   <tr><td>zila / upazila / division</td><td>categorical</td><td class="num">13.59%</td><td class="num">64 / 515 / 8</td><td>Administrative location</td></tr>
 </table>
 
-<p class="tcaption">TABLE 3<br>Variables of <code>product_target_for_shop.csv</code> (853,732 Rows)</p>
+<p class="tcaption">TABLE 3<br>Variables of <code>product_target_for_shop.csv</code> (853,731 Rows)</p>
 <table class="data">
   <tr><th>Variable</th><th>Type</th><th>Definition</th></tr>
   <tr><td>shop_code</td><td>string</td><td>Shop reference key; 2.4% duplicated, valued rows kept</td></tr>
@@ -288,7 +288,7 @@
 <div class="figure"><img src="figures/f2_target_distribution.png" style="width: 5.9in;">
 <p class="figcaption">Fig. 7. Distribution of the monthly total target among joined shops: (a) linear scale clipped at the 99th percentile; (b) full range on a log scale, exposing the wholesale tail that reaches 91,283.</p></div>
 
-<p class="noindent">Fig. 8 completes the exploratory picture with the geography of the targets themselves. Median monthly targets turn out to be surprisingly uniform across divisions (10&ndash;17). Dhaka&rsquo;s wider inter-quartile range reflects its mix of metro key accounts and ordinary shops. Taken together, this tells us that division alone is a weak predictor and shop-level features are needed, which Section 4.3 confirms.</p>
+<p class="noindent">Fig. 8 completes the exploratory picture with the geography of the targets themselves. Median monthly targets stay in a fairly narrow band across divisions (roughly 11 in Rangpur to 20 in Dhaka). Dhaka&rsquo;s wider inter-quartile range reflects its mix of metro key accounts and ordinary shops. Taken together, this tells us that division alone is a weak predictor and shop-level features are needed, which Section 4.3 confirms.</p>
 
 <div class="figure"><img src="figures/f16_target_by_division.png">
 <p class="figcaption">Fig. 8. Monthly total target by division: median (dot) and inter-quartile range (band) among joined shops.</p></div>
@@ -330,7 +330,7 @@
 
 <h3 class="sub">4.1 Experimental Setup</h3>
 
-<p class="noindent">We fixed the random seed to 42 everywhere, end to end. Supervised models are scored on a held-out 20% test split, and on top of that we re-run every algorithm under 5-fold cross-validation (Section 4.7), taking care to fit resampling and scaling inside the training folds only. All of our code is Python 3.11 and runs inside Docker containers. The reference lane runs the exact algorithms from our proposal using scikit-learn [14], XGBoost [7], LightGBM [8], imbalanced-learn, SHAP [9], and Optuna [13]; the distributed lane uses Spark MLlib [17]. Appendices A and B give the full source layout and the commands to reproduce everything; the whole five-phase reference pipeline finishes in roughly six minutes on a single machine.</p>
+<p class="noindent">We fixed the random seed to 42 everywhere, end to end. Supervised models are scored on a held-out 20% test split, and on top of that we re-run every algorithm under 5-fold cross-validation (Section 4.7), taking care to fit resampling and scaling inside the training folds only. All of our code is Python 3.11 and runs inside Docker containers. The reference lane runs the exact algorithms from our proposal using scikit-learn [14], XGBoost [7], LightGBM [8], imbalanced-learn, SHAP [9], and Optuna [13]; the distributed lane uses Spark MLlib [17]. Appendices A and B give the full source layout and the commands to reproduce everything; the whole five-phase reference pipeline finishes in roughly seven and a half minutes (444 s) on a single machine.</p>
 
 <p>Choosing an algorithm is itself a methodological decision, so before going model by model we summarise our reasoning in one place. Table 9 lists, for each research question, the model we picked, the main alternatives we thought about, and the property of this particular dataset that settled the choice. The subsections after it explain each decision in detail.</p>
 
@@ -344,8 +344,8 @@
       <td>SVR, k-NN regression, neural networks</td>
       <td>Mixed one-hot + count features with strong interactions; boosted trees dominate medium-size tabular data and need no feature scaling</td></tr>
   <tr><td>RQ3 imbalance</td><td>class weights (negative/positive ratio in the loss)</td>
-      <td>Class weighting, random undersampling</td>
-      <td>Moderate 37/63 imbalance in a dense standardized space where interpolation is meaningful; weighting used in the Spark lane as the distributed equivalent</td></tr>
+      <td>SMOTE, random undersampling</td>
+      <td>Measured head-to-head in Section 4.4: weights match SMOTE&rsquo;s AUC with better recall and F1, train on real rows only, and run unchanged in the Spark lane</td></tr>
   <tr><td>RQ4 anomalies</td><td>Isolation Forest + LOF, per cluster</td>
       <td>One-class SVM, autoencoders, parametric z-scores</td>
       <td>No labels; heavy non-Gaussian tails rule out parametric scores; kernel methods do not scale to 719,817 points</td></tr>
@@ -355,9 +355,9 @@
 
 <p class="noindent"><i>How the algorithm works.</i> K-Means keeps one centroid per cluster and alternates two steps until the assignments stop changing: it assigns each shop to its nearest centroid, then moves each centroid to the mean of the shops assigned to it. Every iteration is guaranteed to lower the within-cluster sum of squared distances. Each iteration also costs time linear in the number of shops, clusters, and features, and that linearity is the reason the method stays practical at 719,817 &times; 48. The algorithm has two well-known weaknesses. It is sensitive to where the centroids start, which we handle with ten independent restarts per k, and it cannot pick k on its own, which we handle with two independent internal criteria described below.</p>
 
-<p><i>Why this model and not another.</i> Table 9 lists what else we considered; the deciding evidence is in the cross-checks we actually ran below. DBSCAN collapses to one cluster with 98.7% noise, so there are no density-separated islands for it to find, and Ward&rsquo;s clustering lands on the same structure as K-Means (silhouette 0.145 at k = 8). Gaussian mixtures and spectral clustering fell on scale alone &mdash; both need pairwise or covariance structure that has no chance at 719,817 &times; 48 &mdash; while K-Means centroids double as the archetype profiles of Table 11.</p>
+<p><i>Why this model and not another.</i> Table 9 lists what else we considered; the deciding evidence is in the cross-checks we actually ran below. DBSCAN collapses to one cluster with 98.7% noise, so there are no density-separated islands for it to find, and Ward&rsquo;s clustering lands on the same structure as K-Means (silhouette 0.145 at k = 8). Gaussian mixtures and spectral clustering fell on scale alone &mdash; both need pairwise or covariance structure that has no chance at 719,817 &times; 48 &mdash; while K-Means centroids double directly as the archetype profiles.</p>
 
-<p>To find natural outlet archetypes we standardised the 48 features to zero mean and unit variance and ran K-Means [2] for every k from 3 to 9, with 10 random restarts per k. There is no ground-truth segmentation to compare against, so we scored each k with two independent internal criteria: the silhouette coefficient [3], computed on a 10,000-shop subsample to keep it tractable, and the Davies&ndash;Bouldin index [4] on all rows. Table 10 lists the scores and Fig. 10 plots them. The two criteria agree on <b>k = 8</b> (silhouette 0.187, Davies&ndash;Bouldin 1.94).</p>
+<p>To find natural outlet archetypes we standardised the 48 features to zero mean and unit variance and ran K-Means [2] for every k from 3 to 9, with 10 random restarts per k. There is no ground-truth segmentation to compare against, so we scored each k with two independent internal criteria: the silhouette coefficient [3], computed on a 10,000-shop subsample to keep it tractable, and the Davies&ndash;Bouldin index [4] on all rows. Table 10 lists the scores and Fig. 10 plots them. The silhouette clearly peaks at <b>k = 8</b> (0.187), and the Davies&ndash;Bouldin index is close to its best there (1.94, against a minimum of 1.81 at k = 9), so we selected k = 8 on the silhouette&rsquo;s clear verdict with Davies&ndash;Bouldin near-optimal.</p>
 
 <p class="tcaption">TABLE 10<br>Internal Criteria for the K-Means k Scan</p>
 <table class="data">
@@ -367,13 +367,13 @@
 </table>
 
 <div class="figure"><img src="figures/f3_k_selection.png">
-<p class="figcaption">Fig. 10. Model selection for the number of clusters. Both internal criteria favour k = 8 (dotted line).</p></div>
+<p class="figcaption">Fig. 10. Model selection for the number of clusters (dotted line: chosen k = 8). The silhouette peaks at 8; Davies&ndash;Bouldin is near its minimum there.</p></div>
 
-<p>We ran two more algorithms as structural cross-checks. Agglomerative clustering with Ward&rsquo;s linkage on a 20,000-shop subsample supports the K-Means structure (silhouette 0.145, Davies&ndash;Bouldin 1.80 at k = 8). DBSCAN [5] at default settings (&epsilon; = 0.5, minPts = 50 in the standardised space) collapses to a single cluster with 98.7% of points marked as noise. We report this outcome rather than hide it, because it actually tells us something. The retail network is one dense continuous fabric, not a set of separated islands. That also explains the modest silhouette: the archetypes blend into each other at their boundaries. Anyone who has walked a Dhaka street where three mudi shops share one block would find this unsurprising.</p>
+<p>We ran two more algorithms as structural cross-checks. Agglomerative clustering with Ward&rsquo;s linkage on a 20,000-shop subsample supports the K-Means structure (silhouette 0.145, Davies&ndash;Bouldin 1.80 at k = 8). DBSCAN [5] (&epsilon; = 0.5, minPts = 50 in the standardised space) collapses to a single cluster with 98.7% of points marked as noise. We report this outcome rather than hide it, because it actually tells us something. The retail network is one dense continuous fabric, not a set of separated islands. That also explains the modest silhouette: the archetypes blend into each other at their boundaries. Anyone who has walked a Dhaka street where three mudi shops share one block would find this unsurprising.</p>
 
-<p>Internal criteria and cross-check algorithms still leave one question open: would a different sample of shops give a different taxonomy? To answer it we refitted K-Means on 10 bootstrap resamples of a 100,000-shop subsample and compared each refit against the reference partition. The overall Adjusted Rand Index is 0.53 &plusmn; 0.15, which is the moderate agreement the continuous-fabric picture predicts. The per-archetype view (rightmost column of Table 11, mean best-match Jaccard overlap) is the more useful reading, because the stability is not spread evenly. The ghost-shop segment C1 is recovered <i>perfectly in all ten resamples</i> (1.00) &mdash; it is real, separated structure, not an artefact of one run &mdash; and the metro-Dhaka core C3 is nearly as firm (0.81). The soft spots are the rural pockets C5 and C7 (0.16&ndash;0.17), whose boundaries blur into the neighbouring regional segments exactly where DBSCAN told us the fabric is continuous. So the archetypes that carry business decisions &mdash; the audit list and the metro core &mdash; are stable, and the uncertainty is confined to where one rural region shades into the next.
+<p>Internal criteria and cross-check algorithms still leave one question open: would a different sample of shops give a different taxonomy? To answer it we refitted K-Means on 10 bootstrap resamples of a 100,000-shop subsample and compared each refit against the reference partition. The overall Adjusted Rand Index is 0.53 &plusmn; 0.15, which is the moderate agreement the continuous-fabric picture predicts. The per-archetype view (the Stability column of Table 11, mean best-match Jaccard overlap) is the more useful reading, because the stability is not spread evenly. The ghost-shop segment C1 is recovered <i>perfectly in all ten resamples</i> (1.00) &mdash; it is real, separated structure, not an artefact of one run &mdash; and the metro-Dhaka core C3 is nearly as firm (0.81). The soft spots are the rural pockets C5 and C7 (0.16&ndash;0.17), whose boundaries blur into the neighbouring regional segments exactly where DBSCAN told us the fabric is continuous. So the archetypes that carry business decisions &mdash; the audit list and the metro core &mdash; are stable, and the uncertainty is confined to where one rural region shades into the next.</p>
 
-<p>Table 11 profiles the eight archetypes by their median feature values, Fig. 11 shows their sizes, and Fig. 12 maps a 60,000-shop sample coloured by archetype. The clusters turn out to be strongly geographic, which is what the density and position features would suggest. Reading the taxonomy is straightforward. Cluster C4 (28.5% of shops) is the typical semi-urban outlet of the Dhaka belt. C3 is the metro-Dhaka core, with a median of 869 neighbours within one kilometre, only 8.2 km from the district centre, and elevated targets. C2 is small (1.4%) but it is the key-account tier; its median monthly target of 90.0 is six to eight times that of any other archetype. The one that surprised us most is C1 (85,167 shops, 11.8%): it is exactly the population with <code>Unknown</code> business attributes and zero targeted products, the data-poor &ldquo;ghost-shop&rdquo; segment. So the clustering turned a data-quality gap into a machine-generated audit list, and we consider this one of the principal findings of the project.</p>
+<p>Table 11 profiles the eight archetypes by their median feature values, Fig. 11 shows their sizes, and Fig. 12 maps a 60,000-shop sample coloured by archetype. The clusters turn out to be strongly geographic, which is what the density and position features would suggest. Reading the taxonomy is straightforward. Cluster C4 (28.5% of shops) is the typical semi-urban outlet of the Dhaka belt. C3 is the metro-Dhaka core, with a median of 869 neighbours within one kilometre, only 8.2 km from the district centre, and elevated targets. C2 is small (1.4%) but it is the key-account tier; its median monthly target of 90.0 is between three-and-a-half and eight-and-a-half times that of any other archetype. The one that surprised us most is C1 (85,167 shops, 11.8%): it is exactly the population with <code>Unknown</code> business attributes and zero targeted products, the data-poor &ldquo;ghost-shop&rdquo; segment. So the clustering turned a data-quality gap into a machine-generated audit list, and we consider this one of the principal findings of the project.</p>
 
 <p class="tcaption">TABLE 11<br>Cluster Profiles (Medians Over the Full Dataset)</p>
 <table class="data">
@@ -396,7 +396,7 @@
 <p class="figcaption">Fig. 12. Spatial map of the eight archetypes (60,000-shop sample). The segmentation follows the country&rsquo;s regional structure, with the metro-Dhaka core (C3) and the Chittagong corridor (C6) clearly visible.</p></div>
 <h3 class="sub">4.3 Supervised Learning: Sales-Target Regression (RQ2)</h3>
 
-<p class="noindent">The 613,660 shops that carry a target were split 80/20 into training and test sets. We benchmarked four models of increasing capacity. <i>Linear regression</i> on standardised inputs is our baseline; we keep it mainly as a diagnostic, to see how much of the signal is linear in the first place. <i>Random Forest</i> [6] (100 trees, depth &le; 20, minimum leaf 5) controls variance through bagging. <i>XGBoost</i> [7] (300 trees, depth 8, learning rate 0.1) and <i>LightGBM</i> [8] (300 trees, 63 leaves) are gradient-boosted alternatives that grow their trees differently (level-wise versus leaf-wise).</p>
+<p class="noindent">The 613,660 shops that carry a target were split 80/20 into training and test sets. We benchmarked four models of increasing capacity. <i>Linear regression</i> on standardised inputs is our baseline; we keep it mainly as a diagnostic, to see how much of the signal is linear in the first place. <i>Random Forest</i> [6] (100 trees, depth &le; 20, minimum leaf 5) controls variance through bagging. <i>XGBoost</i> [7] (300 trees, depth 8, learning rate 0.1 &mdash; the fixed un-tuned baseline our tables label &ldquo;defaults&rdquo;, as opposed to the Optuna-tuned variant) and <i>LightGBM</i> [8] (300 trees, 63 leaves) are gradient-boosted alternatives that grow their trees differently (level-wise versus leaf-wise).</p>
 
 <p><i>How the algorithms work.</i> A random forest grows many deep trees on bootstrap samples with random feature subsets and averages them. Its remaining error is mostly bias, because the averaging bags the variance away. Gradient boosting builds one additive model stage by stage: each new shallow tree fits the gradient of the loss at the current predictions, so the ensemble spends its capacity exactly where it is still wrong. XGBoost adds explicit regularisation (shrinkage, minimum child weight, L2 penalties) and grows trees level-wise. LightGBM grows leaf-wise, always expanding the leaf that cuts the loss most, which adapts faster to skewed targets. That property matters for our data, and it shows up later in the cross-validated ranking (Section 4.7).</p>
 
@@ -404,7 +404,7 @@
 
 
 
-<p class="tcaption">TABLE 12<br>Rejected Alternatives Trained on a Common 50,000-Shop Subsample</p>
+<p class="tcaption">TABLE 12<br>All Candidate Families Trained on a Common 50,000-Shop Subsample</p>
 <table class="data">
   <tr><th>Model</th><th class="num">Train rows</th><th class="num">Test R&sup2;</th><th class="num">RMSE</th><th class="num">Fit time (s)</th><th class="num">Predict time (s)</th></tr>
   <tr><td>Linear regression</td><td class="num">50,000</td><td class="num">0.033</td><td class="num">277.5</td><td class="num">0.0</td><td class="num">0.00</td></tr>
@@ -440,7 +440,7 @@
   <tr><th>Model</th><th class="num">RMSE</th><th class="num">MAE</th><th class="num">R&sup2;</th></tr>
   <tr><td>Linear regression (baseline)</td><td class="num">272.70</td><td class="num">23.78</td><td class="num">0.024</td></tr>
   <tr><td>Random Forest</td><td class="num">224.31</td><td class="num">17.58</td><td class="num">0.340</td></tr>
-  <tr><td><b>XGBoost (defaults)</b></td><td class="num"><b>204.44</b></td><td class="num"><b>18.12</b></td><td class="num"><b>0.452</b></td></tr>
+  <tr><td><b>XGBoost (defaults)</b></td><td class="num"><b>204.44</b></td><td class="num">18.12</td><td class="num"><b>0.452</b></td></tr>
   <tr><td>LightGBM</td><td class="num">219.78</td><td class="num">19.93</td><td class="num">0.366</td></tr>
   <tr><td>XGBoost (Optuna-tuned)</td><td class="num">227.45</td><td class="num">18.71</td><td class="num">0.321</td></tr>
 </table>
@@ -478,7 +478,7 @@
   <tr><td>reg_lambda</td><td>0.1 &ndash; 10 (log)</td><td class="num">1.68</td></tr>
 </table>
 
-<p><i>Which balancing strategy, measured.</i> SMOTE creates synthetic minority shops by interpolating between minority neighbours; class weighting rescales the loss instead, and undersampling throws majority rows away. Rather than pick one on theory, we ran all four options on the same split with the same XGBoost: no balancing reaches ROC-AUC 0.863, class weights 0.862, random undersampling 0.861, and SMOTE 0.858 &mdash; a spread of only 0.006 &mdash; while class weights lift recall to 0.795 and F1 to 0.720, against 0.646 and 0.691 with no balancing and 0.677 and 0.696 with SMOTE. Class weights also fit in 2.1 s against SMOTE&rsquo;s 11.8 s, and they train on real shops only, with not a single synthetic row anywhere in the project. On this evidence we use class weighting in both lanes &mdash; the scikit-learn reference and Spark MLlib &mdash; and keep SMOTE in the comparison as the tested-and-rejected alternative.</p>
+<p><i>Which balancing strategy, measured.</i> SMOTE creates synthetic minority shops by interpolating between minority neighbours; class weighting rescales the loss instead, and undersampling throws majority rows away. Rather than pick one on theory, we ran all four options on the same split with the same XGBoost: no balancing reaches ROC-AUC 0.863, class weights 0.862, random undersampling 0.861, and SMOTE 0.858 &mdash; a spread of only 0.005 &mdash; while class weights lift recall to 0.795 and F1 to 0.720, against 0.646 and 0.691 with no balancing and 0.677 and 0.696 with SMOTE. Class weights also fit in 2.1 s against SMOTE&rsquo;s 11.8 s, and they train on real shops only, with not a single synthetic row anywhere in the project. On this evidence we use class weighting in both lanes &mdash; the scikit-learn reference and Spark MLlib &mdash; and keep SMOTE in the comparison as the tested-and-rejected alternative.</p>
 
 <p>Table 17 gives the test-set results. Bayesian optimization clearly pays off here: the tuned XGBoost beats every candidate on every metric (ROC-AUC 0.875 against 0.862 for the defaults). We ran five-fold cross-validation on the winner to check the result was not just split luck, and it holds (ROC-AUC 0.876 &plusmn; 0.001, F1 0.736 &plusmn; 0.001). The stability surprised us after the regression task, but it makes sense: the binary peer-relative label simply does not feel the extreme values of the raw target. Fig. 16 shows the out-of-fold ROC curves of all four classifiers, computed so that every shop&rsquo;s score comes from a model that never saw it during training. Table 18 gives the confusion matrix of the winner at the 0.5 threshold. Fig. 17 shows how the labelled risk spreads geographically, from 27.8% in Barisal to 48.5% in Khulna &mdash; a ready-made priority order for field teams.</p>
 
@@ -522,7 +522,7 @@
 
 <h3 class="sub">4.6 Distributed Execution on the Spark Cluster</h3>
 
-<p class="noindent">After the distributed preparation of Section 3.5, we ran the modelling phases on the Spark lane as well, using MLlib [17]: K-Means and Bisecting K-Means for clustering, gradient-boosted trees for regression and class-weighted classification, and a centroid-distance ranking for anomalies. MLlib does not ship XGBoost, SHAP, Isolation Forest, or LOF, so on the distributed lane we picked the nearest equivalents and kept the scikit-learn lane as the reference for the exact algorithms in our proposal. Table 19 puts the two side by side. Partition pruning turned out to be a real saving for regional work: a run scoped to Khulna and Barisal covered 115,742 shops in 598 s, against 1,112 s for the national run, because Spark read only the requested partitions. The runtimes also taught us an honest lesson. At 206 MB the whole dataset sits in memory, and the single-node reference pipeline finishes in roughly six minutes end to end. Distributed execution starts paying only at volumes larger than ours, and the sensible architecture, which we follow, is distributed storage and preparation feeding a single-node training stage.</p>
+<p class="noindent">After the distributed preparation of Section 3.5, we ran the modelling phases on the Spark lane as well, using MLlib [17]: K-Means and Bisecting K-Means for clustering, gradient-boosted trees for regression and class-weighted classification, and a centroid-distance ranking for anomalies. MLlib does not ship XGBoost, SHAP, Isolation Forest, or LOF, so on the distributed lane we picked the nearest equivalents and kept the scikit-learn lane as the reference for the exact algorithms in our proposal. Table 19 puts the two side by side. Partition pruning turned out to be a real saving for regional work: a run scoped to Khulna and Barisal covered 115,742 shops in 598 s, against 1,112 s for the national run, because Spark read only the requested partitions. The runtimes also taught us an honest lesson. At 206 MB the whole dataset sits in memory, and the single-node reference pipeline finishes in roughly seven and a half minutes (444 s) end to end. Distributed execution starts paying only at volumes larger than ours, and the sensible architecture, which we follow, is distributed storage and preparation feeding a single-node training stage.</p>
 
 <p class="tcaption">TABLE 19<br>Reference Versus Distributed Execution</p>
 <table class="data">
@@ -531,7 +531,7 @@
   <tr><td>Clean shops / with target</td><td class="num">719,817 / 613,660</td><td class="num">719,817 / 613,660 (identical)</td></tr>
   <tr><td>Clustering</td><td>K-Means, best k = 8 (silhouette 0.187)</td><td>MLlib K-Means, best k = 3 (silhouette 0.295, grid densities)</td></tr>
   <tr><td>Regression / classification</td><td>XGBoost R&sup2; 0.45 / AUC 0.875</td><td>GBT R&sup2; 0.313 / AUC 0.821</td></tr>
-  <tr><td>National runtime</td><td>&asymp; 6 min (one node)</td><td>1,112 s (1 worker, 4 cores)</td></tr>
+  <tr><td>National runtime</td><td>444 s (one node)</td><td>1,112 s (1 worker, 4 cores)</td></tr>
   <tr><td>Regional run (Khulna + Barisal)</td><td>&mdash;</td><td>598 s over 115,742 shops via partition pruning</td></tr>
 </table>
 
@@ -539,7 +539,7 @@
 
 <h3 class="sub">4.7 Summary Comparison Under Cross-Validation</h3>
 
-<p class="noindent">To report every algorithm under one common resampling protocol, Table 20 collects all candidates of both supervised tasks under the same 5-fold cross-validation (resampling inside folds only; out-of-fold scores). We draw three observations from it. Tree ensembles beat the linear baselines on both tasks by wide margins. On the heavy-tailed regression target, the ranking by a single split and the ranking by cross-validation disagree &mdash; the default XGBoost wins the split yet is the least stable model in the table &mdash; while on the bounded classification task the two protocols agree. The cross-validated ranking also rewards stability. LightGBM, whose leaf-wise trees handle the tail best, reaches the highest mean R&sup2; (0.373 &plusmn; 0.078); the Bayesian-tuned XGBoost is the most stable competitive regressor (&plusmn; 0.062); and the split-winning default XGBoost is the least stable model in the table. For classification, where the label is bounded, the split and cross-validated rankings agree and the Bayesian-tuned XGBoost is simply the best classifier.</p>
+<p class="noindent">To report every algorithm under one common resampling protocol, Table 20 collects all candidates of both supervised tasks under the same 5-fold cross-validation (resampling inside folds only; out-of-fold scores). We draw three observations from it. Tree ensembles beat the linear baselines on both tasks by wide margins. On the heavy-tailed regression target the single-split and cross-validated rankings disagree, and the disagreement rewards stability: LightGBM, whose leaf-wise trees handle the tail best, reaches the highest mean R&sup2; (0.373 &plusmn; 0.078); the Bayesian-tuned XGBoost is the most stable competitive regressor (&plusmn; 0.062); and the split-winning default XGBoost turns out to be the least stable model in the table. For classification, where the label is bounded, the two protocols agree and the Bayesian-tuned XGBoost is simply the best classifier.</p>
 
 <p class="tcaption">TABLE 20<br>All Algorithms Under 5-Fold Cross-Validation</p>
 <table class="data">
@@ -557,12 +557,12 @@
 
 <h3 class="sub">4.8 Threats to Validity</h3>
 
-<p class="noindent">Following standard empirical-research practice, we state plainly what could weaken or invalidate our conclusions. <i>Construct validity:</i> the dataset carries assigned targets, not realised sales, so RQ2 predicts the distributor&rsquo;s allocation function rather than actual consumer demand at the shop counter. Likewise, the RQ3 label flags shops that under-index their peers&rsquo; targets, not shops that will verifiably miss quotas; we state both readings wherever the results appear. <i>Internal validity:</i> the risk label is built from the same feature space the classifier learns from (through the cluster peer groups), which inflates separability compared with an externally observed label. The out-of-fold protocol stops train&ndash;test leakage but cannot remove this construct-level circularity, and we accept that as a limitation. <i>External validity:</i> everything we find comes from one distributor&rsquo;s network in one country over 2022&ndash;2024, so the archetype taxonomy in particular should be re-estimated before anyone applies it elsewhere. <i>Statistical validity:</i> the heavy-tailed target makes squared-error comparisons fold-sensitive, which is exactly why every headline number in this report carries its cross-validated dispersion.</p>
+<p class="noindent">Following standard empirical-research practice, we state plainly what could weaken or invalidate our conclusions. <i>Construct validity:</i> the dataset carries assigned targets, not realised sales, so RQ2 predicts the distributor&rsquo;s allocation function rather than actual consumer demand at the shop counter. Likewise, the RQ3 label flags shops that under-index their peers&rsquo; targets, not shops that will verifiably miss quotas; we state both readings wherever the results appear. A related caveat: one predictive feature, the assortment breadth <code>n_products_targeted</code>, is derived from the same targets file that supplies the label, so part of the supervised signal reflects the distributor&rsquo;s own assortment decision rather than pure location and structure &mdash; SHAP ranks it second, and a deployment scoring genuinely new shops would have to drop it. <i>Internal validity:</i> the risk label is built from the same feature space the classifier learns from (through the cluster peer groups), which inflates separability compared with an externally observed label. The out-of-fold protocol stops train&ndash;test leakage but cannot remove this construct-level circularity, and we accept that as a limitation. <i>External validity:</i> everything we find comes from one distributor&rsquo;s network in one country over 2022&ndash;2024, so the archetype taxonomy in particular should be re-estimated before anyone applies it elsewhere. <i>Statistical validity:</i> the heavy-tailed target makes squared-error comparisons fold-sensitive, which is exactly why every headline number in this report carries its cross-validated dispersion.</p>
 <h2 class="sec">5. Conclusion</h2>
 
 <p class="noindent">We ran a combined supervised, unsupervised, and clustering pipeline on Bangladesh&rsquo;s national retail dataset, and in the end we were able to answer all four research questions from our proposal. What we found:</p>
 
-<p class="noindent">1) <i>Archetypes (RQ1).</i> The 719,817 analysable outlets fall into 8 archetypes that we can actually name and explain, among them a metro-Dhaka core and a small key-account tier that carries six-to-eight-fold targets. The one that mattered most to us is an 85,167-shop segment where the same attributes are missing together and the product mix is empty. That segment is, in effect, a machine-generated candidate list of the duplicate and ghost entries that pushed us to do this study in the first place.</p>
+<p class="noindent">1) <i>Archetypes (RQ1).</i> The 719,817 analysable outlets fall into 8 archetypes that we can actually name and explain, among them a metro-Dhaka core and a small key-account tier whose median target is several times every other archetype&rsquo;s. The one that mattered most to us is an 85,167-shop segment where the same attributes are missing together and the product mix is empty. That segment is, in effect, a machine-generated candidate list of the duplicate and ghost entries that pushed us to do this study in the first place.</p>
 <p class="noindent">2) <i>Sales prediction (RQ2).</i> Monthly targets can be predicted far beyond a linear baseline (test R&sup2; 0.45 versus 0.02). SHAP tells us where the signal comes from: assortment breadth, importance tier, and micro-location. Cross-validation taught us something we did not expect. Single-split metrics on this heavy-tailed target are unreliable, and the Bayesian-tuned configuration turned out roughly ten times more stable across folds than the split winner.</p>
 <p class="noindent">3) <i>Risk (RQ3).</i> Our peer-relative risk classifier reaches ROC-AUC 0.875 on the held-out split and 0.876 out-of-fold. It orders the divisions from 27.8% to 48.5% labelled risk, which reads directly as a geographic priority map for field teams.</p>
 <p class="noindent">4) <i>Anomalies (RQ4).</i> Running Isolation Forest and LOF per cluster gives a ranked 71,982-shop audit list, with full triage context attached to each shop.</p>
@@ -599,7 +599,7 @@
   <tr><td><code>dashboard/app.py</code></td><td>Interactive Streamlit dashboard (8 views, global filters, live cluster topology)</td></tr>
   <tr><td><code>spark_jobs/</code></td><td>Distributed jobs: HDFS upload, Spark SQL ETL, division-partitioned warehouse builder, 5-phase MLlib pipeline</td></tr>
   <tr><td><code>docker-compose.yml</code>, <code>Dockerfile</code>, <code>Dockerfile.spark</code></td><td>Containers: pipeline, dashboard, tests, HDFS namenode + 9 datanodes, Spark master + workers</td></tr>
-  <tr><td><code>tests/</code> (46 tests)</td><td>Automated tests running against slices of the real dataset</td></tr>
+  <tr><td><code>tests/</code> (47 tests)</td><td>Automated tests running against slices of the real dataset</td></tr>
   <tr><td><code>reports/metrics.json</code>, <code>reports/dataset_profile.json</code>, <code>report/cv_all_models.json</code></td><td>Every experimental number in this report, machine-readable</td></tr>
   <tr><td><code>report/make_figures.py</code>, <code>report/make_cv_extras.py</code></td><td>Scripts that regenerate all figures and cross-validation tables from the artifacts</td></tr>
 </table>

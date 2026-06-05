@@ -1,6 +1,5 @@
 # Data & artifacts (large / regenerable)
 dataset/
-data/raw/*.csv
 data/processed/
 /models/
 reports/figures/

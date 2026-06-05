@@ -1,4 +1,4 @@
-"""Phase 3 (RQ2) — predict a shop's monthly sales target from its location, type, importance, and density."""
+"""Phase 3 (RQ2) — predict a shop's monthly sales target from its location, type, importance, density, and assortment breadth."""
 
 from __future__ import annotations
 

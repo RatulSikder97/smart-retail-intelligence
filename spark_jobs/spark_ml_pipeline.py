@@ -232,14 +232,16 @@ def phase4_classification(df, metrics):
     ).withColumn(
         "label", (F.col("total_target") < RISK_THRESHOLD * F.col("peer_median")).cast("double")
     )
-    base_rate = labelled.agg(F.avg("label")).first()[0]
-    # class weights instead of SMOTE (not available distributed in MLlib)
-    labelled = labelled.withColumn(
+    train, test = labelled.randomSplit([0.8, 0.2], seed=SEED)
+    # class weights instead of SMOTE (not available distributed in MLlib);
+    # base rate comes from the training split only — the test rows never leak in
+    base_rate = train.agg(F.avg("label")).first()[0]
+    weigh = lambda df: df.withColumn(
         "weight",
         F.when(F.col("label") == 1.0, float(1 / max(base_rate, 1e-9)))
         .otherwise(float(1 / max(1 - base_rate, 1e-9))),
     )
-    train, test = labelled.randomSplit([0.8, 0.2], seed=SEED)
+    train, test = weigh(train), weigh(test)
     models = {
         "logistic_regression": LogisticRegression(featuresCol="features", weightCol="weight"),
         "random_forest": RandomForestClassifier(
@@ -254,11 +256,13 @@ def phase4_classification(df, metrics):
         pred = fitted.transform(test)
         results[name] = {
             "roc_auc": float(BinaryClassificationEvaluator().evaluate(pred)),
-            "f1": float(MulticlassClassificationEvaluator(metricName="f1").evaluate(pred)),
-            "precision": float(
+            # weighted multiclass averages — NOT comparable with the sklearn lane's
+            # positive-class f1/precision/recall, so the keys say so
+            "f1_weighted": float(MulticlassClassificationEvaluator(metricName="f1").evaluate(pred)),
+            "precision_weighted": float(
                 MulticlassClassificationEvaluator(metricName="weightedPrecision").evaluate(pred)
             ),
-            "recall": float(
+            "recall_weighted": float(
                 MulticlassClassificationEvaluator(metricName="weightedRecall").evaluate(pred)
             ),
         }

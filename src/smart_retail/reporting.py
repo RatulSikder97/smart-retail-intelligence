@@ -41,7 +41,7 @@ def data_quality_section(metrics: dict) -> str:
 **Comprehensive Retail Network Dataset of Bangladesh** (Shahin, Swarna & Farid,
 2025) — Mendeley `mgzvngzng2` v1, CC BY 4.0, collected Feb 2022 – Oct 2024.
 Three files: shop records with GPS and structure ({n_raw:,} rows), monthly
-sales targets for 17 products per shop (853,732 rows), and a 42-SKU product
+sales targets for 17 products per shop (853,731 rows), and a 42-SKU product
 catalogue (5 brands, 9 product types) with price tiers.
 
 ### Data quality & preprocessing
@@ -185,7 +185,7 @@ def rq2_section(metrics: dict, shap_importance: pd.DataFrame | None) -> str:
         for name, m in sorted(models.items(), key=lambda kv: kv[1]["rmse"], reverse=True)
     )
     text = f"""
-### RQ2 — Can monthly sales be predicted from location, type, and density?
+### RQ2 — Can monthly sales be predicted from location, type, density, and assortment?
 
 | Model | RMSE | MAE | R² |
 |---|---|---|---|
@@ -252,7 +252,7 @@ under-indexes its (cluster × shop-type) peers. Base rate:
 
 **Comment.** The best model ({best}) reaches ROC-AUC
 {winner.get('roc_auc', float('nan')):.3f} — {_auc_reading(winner.get('roc_auc', 0))}
-discrimination from structural features alone; with realized sales data the
+discrimination from structural and assortment features; with realized sales data the
 same pipeline retrains unchanged into a true "will miss next quarter" model.
 """
     if c.get("tuning"):
@@ -273,7 +273,7 @@ same pipeline retrains unchanged into a true "will miss next quarter" model.
         lo_name, lo = known.index[0], known.iloc[0]
         hi_name, hi = known.index[-1], known.iloc[-1]
         text += f"""
-Predicted at-risk share is geographically uneven: from **{lo:.1%} in {lo_name}**
+The labelled at-risk share is geographically uneven: from **{lo:.1%} in {lo_name}**
 to **{hi:.1%} in {hi_name}** — a concrete prioritisation map for field teams.
 """
     return text

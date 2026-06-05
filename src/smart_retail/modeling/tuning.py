@@ -122,12 +122,13 @@ def cv_regression(model_factory, X: pd.DataFrame, y: pd.Series, config: Config) 
 
 
 def cv_classification(pipeline_factory, X: pd.DataFrame, y: pd.Series, config: Config) -> dict:
-    # factory returns a fresh weighted estimator; nothing is resampled, evaluation folds stay raw
+    # factory(y_train_fold) returns a fresh weighted estimator with weights from that
+    # fold only; nothing is resampled, evaluation folds stay raw and never leak in
     folds = StratifiedKFold(n_splits=config.cv_folds, shuffle=True,
                             random_state=config.random_state)
     aucs, f1s = [], []
     for train_idx, val_idx in folds.split(X, y):
-        pipe = pipeline_factory()
+        pipe = pipeline_factory(y.iloc[train_idx])
         pipe.fit(X.iloc[train_idx], y.iloc[train_idx])
         proba = pipe.predict_proba(X.iloc[val_idx])[:, 1]
         aucs.append(roc_auc_score(y.iloc[val_idx], proba))

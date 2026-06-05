@@ -36,5 +36,6 @@ spark-etl:        ## Run the distributed ETL job on the Spark cluster
 spark-down:       ## Stop the Spark cluster
 	docker compose --profile spark down
 
-clean:            ## Remove generated artifacts (keeps raw data)
-	rm -rf data/processed models reports
+clean:            ## Remove generated artifacts (keeps raw data and the committed reports)
+	rm -rf data/processed models
+	git checkout -- reports 2>/dev/null || true

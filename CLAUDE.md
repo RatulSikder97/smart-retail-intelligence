@@ -14,7 +14,7 @@
 - **Never create synthetic/sample data** — the user requires all code and tests to run
   against the real Mendeley CSVs in `dataset/` (user downloads them manually).
 - Raw data lives in `dataset/` (git-ignored), not `data/raw/`.
-- Always read CSVs through `smart_retail.data.loader` — it pins `shop_code` to str
+- Always read CSVs through `smart_retail.preprocessing.loader` — it pins `shop_code` to str
   (slice-dependent int64 inference otherwise breaks joins silently).
 
 ## Dataset gotchas

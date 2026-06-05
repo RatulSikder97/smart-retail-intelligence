@@ -260,7 +260,7 @@ def load_artifacts() -> dict:
 
 
 @st.cache_data(show_spinner="Joining analysis layers…")
-def build_base(_art_keys: tuple) -> pd.DataFrame:
+def build_base(art_keys: tuple) -> pd.DataFrame:
     """One row per shop: features + cluster + risk + anomaly + prediction."""
     art = load_artifacts()
     base = art["features"]
@@ -750,7 +750,7 @@ ALGORITHM_CARDS = [
         "why": "Density and centrality turn 'urban over-stock vs rural stock-out' "
                "into measurable inputs; BallTree answers all 719,817 neighbour "
                "queries in seconds (n log n, not n²).",
-        "input": "shop_info_with_geo.csv (832,881 rows) + product_target_for_shop.csv (853,732 rows)",
+        "input": "shop_info_with_geo.csv (832,881 rows) + product_target_for_shop.csv (853,731 rows)",
         "output": "features.parquet — 719,817 shops × 48 features",
         "steps": [
             "Drop duplicate shop_code rows (keep first).",
@@ -769,7 +769,7 @@ ALGORITHM_CARDS = [
         "title": "Archetype clustering",
         "algorithm": "K-Means (selected) · Agglomerative + DBSCAN cross-checks",
         "why": "k is not assumed: every k from 3–9 is scored on two independent "
-               "criteria, and both point to 8. DBSCAN collapsing to one cluster "
+               "criteria — the silhouette peaks at 8 and Davies–Bouldin is near its minimum there. DBSCAN collapsing to one cluster "
                "(98.7% noise) is reported — the network is a continuous fabric — "
                "and 10 bootstrap refits confirm the taxonomy is not a one-run artifact.",
         "input": "Standard-scaled 48-feature matrix (719,817 × 48)",
@@ -809,7 +809,7 @@ ALGORITHM_CARDS = [
     {
         "phase": "Phase 4", "rq": "RQ3",
         "title": "Target-miss risk classification",
-        "algorithm": "Class-weighted Logistic Regression · Random Forest · XGBoost",
+        "algorithm": "Class-weighted Logistic Regression · Random Forest · XGBoost (+ Optuna-tuned XGBoost)",
         "why": "The dataset has assigned targets, not realized sales, so the label "
                "is an explicit peer-relative proxy. Class weights handle the 37/63 "
                "imbalance with real rows only — we measured SMOTE and it was worse.",
@@ -820,7 +820,8 @@ ALGORITHM_CARDS = [
             "Stratified 80/20 split (seed 42).",
             "Weight the minority class (scale_pos_weight ≈ 1.7 / class_weight=balanced): "
             "the loss changes, the data never does.",
-            "Fit LogisticRegression (scaled), RandomForest, XGBoost.",
+            "Fit LogisticRegression (scaled), RandomForest, XGBoost — plus the "
+            "Optuna-tuned XGBoost as a separate fourth candidate when tuning is on.",
             "Score ROC-AUC / F1 / precision / recall on the raw test set.",
             "Pick the highest-AUC model; predict_proba → risk_score ∈ [0, 1].",
         ],
@@ -1219,7 +1220,7 @@ with tab_rq1:
                 "list for the ghost-shop audit. "
             )
         interpretation += (
-            "DBSCAN finding one big cluster (98.7% noise at default settings) "
+            "DBSCAN finding one big cluster (98.7% noise at ε = 0.5, minPts = 50) "
             "says the network is a continuous fabric rather than isolated "
             "islands — archetypes overlap at the edges, which the silhouette "
             "of ~0.19 also reflects."
@@ -1263,10 +1264,10 @@ with tab_rq2:
         with st.expander("Method"):
             st.markdown(
                 "The 613,660 shops with a target are split 80/20. A linear "
-                "regression baseline is benchmarked against Random Forest, XGBoost "
-                "and LightGBM on identical features; the winner (lowest test RMSE) "
-                "is explained with SHAP, which decomposes each prediction into "
-                "per-feature contributions."
+                "regression baseline is benchmarked against Random Forest, XGBoost, "
+                "LightGBM, and an Optuna-tuned XGBoost on identical features; the "
+                "winner (lowest test RMSE) is explained with SHAP, which decomposes "
+                "each prediction into per-feature contributions."
             )
 
         section_header("RQ2 · Result", f"Best model: {reg.get('best_model', '?')}")
@@ -1316,7 +1317,7 @@ with tab_rq2:
                     .mark_circle(size=90)
                     .encode(
                         x=alt.X("fit_seconds", scale=alt.Scale(type="log"),
-                                title="fit time on the common 50k subsample (s, log)"),
+                                title="training time (s, log) — SVR fitted on 10k rows only"),
                         y=alt.Y("r2", title="test R²"),
                         color=alt.Color("family", scale=alt.Scale(
                             domain=["tree ensemble", "rejected alternative"],
@@ -1398,9 +1399,10 @@ with tab_rq3:
                 f"is an explicit proxy: `{clf.get('label_definition', '')}` "
                 f"(threshold {clf.get('risk_threshold', 0.8)}). Base rate "
                 f"{clf.get('label_rate', 0):.1%}. Logistic regression, Random Forest "
-                "and XGBoost are trained on a stratified 80/20 split with class "
-                "weighting — the imbalance is handled in the loss function, so "
-                "every training row stays a real shop."
+                "and XGBoost — plus a separately tuned XGBoost (Optuna TPE) — are "
+                "trained on a stratified 80/20 split with class weighting: the "
+                "imbalance is handled in the loss function, so every training row "
+                "stays a real shop."
             )
 
         section_header("RQ3 · Result", f"Best model: {clf.get('best_model', '?')}")
@@ -1485,13 +1487,13 @@ with tab_rq3:
         if not risk_all.empty:
             by_div_all = risk_all.groupby("division")["at_risk"].mean().drop("Unknown", errors="ignore").sort_values()
             geo_note = (
-                f" Geographically, predicted risk runs from {by_div_all.iloc[0]:.0%} in "
+                f" Geographically, the at-risk label share runs from {by_div_all.iloc[0]:.0%} in "
                 f"{by_div_all.index[0]} to {by_div_all.iloc[-1]:.0%} in {by_div_all.index[-1]} — "
                 "a ready-made priority order for field teams."
             )
         section(
             "Interpretation",
-            f"ROC-AUC {best_auc:.2f} from structural features alone is strong "
+            f"ROC-AUC {best_auc:.2f} from structural and assortment features is strong "
             "discrimination for a proxy label, and the class weighting is doing its "
             "job where it counts: at the 0.5 threshold the model catches ~80 of every "
             "100 truly at-risk shops (recall 0.80), the expensive error for a "
@@ -1587,7 +1589,7 @@ with tab_rq4:
                         y=alt.Y("division", sort=None, title=None),
                         tooltip=["division", alt.Tooltip("flag_rate", format=".1%")],
                     )
-                    .properties(height=260, title="Top-decile flag rate by division (baseline 10%)")
+                    .properties(height=260, title="Top-decile flag rate by division — full run, unfiltered (baseline 10%)")
                 )
                 st.altair_chart(share_bars, width="stretch")
                 st.caption(

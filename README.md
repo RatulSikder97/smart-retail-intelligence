@@ -11,15 +11,15 @@ We work on the national retail dataset of Bangladesh: 719,817 GPS-tagged shops, 
 
 ```
 dataset/
-├── shop_info_with_geo.csv        (~117 MB, 719,817 shops)
-├── product_target_for_shop.csv   (~89 MB, 613,656 shops × 17 products)
+├── shop_info_with_geo.csv        (~117 MB, 832,881 rows → 719,817 unique clean shops)
+├── product_target_for_shop.csv   (~89 MB, 853,731 rows → 613,656 shops with a valued target)
 └── product_info.csv              (~4 KB, 42 SKUs)
 ```
 
 ## Run the standard pipeline (single machine)
 
 1. `make build` — builds the Docker image. The first build takes a few minutes while pip pulls the dependencies.
-2. `make pipeline` — runs all five phases (preprocessing, clustering, regression, classification, anomaly detection). It writes cleaned data to `data/processed/`, trained models to `models/`, and every metric to `reports/`. On our machines it takes about 6 minutes end to end.
+2. `make pipeline` — runs all five phases (preprocessing, clustering, regression, classification, anomaly detection). It writes cleaned data to `data/processed/`, trained models to `models/`, and every metric to `reports/`. On our machines it takes about seven and a half minutes end to end.
 3. `make dashboard` — serves the Streamlit dashboard at http://localhost:8501. Run this after the pipeline so it has results to show. Stop it with Ctrl+C.
 4. `make test` — runs the pytest suite inside the container. We use this to check nothing broke after a change.
 
@@ -51,7 +51,7 @@ While the cluster is up you can watch it work: the namenode web UI is at http://
 
   `--tune` runs the Optuna search and `--cv` adds 5-fold cross-validation of the best model. This is slow, so we kept it out of the default run.
 - The k-NN imputation sensitivity experiment: add `--impute-knn` to the same command. By default we keep missing categories as an explicit `Unknown` level, because the shops with missing fields turned out to be a signal in themselves. The flag fills geo fields and high-confidence categoricals instead, marks every filled value with a flag column, and writes the comparison to `reports/imputation_sensitivity.json`.
-- Regenerating the report figures after a full pipeline run: `report/make_figures.py` (along with `report/make_cv_extras.py` and `report/make_alternatives.py`) rebuilds the PNGs in `report/figures/` from the saved metrics.
+- Regenerating the report figures after a full pipeline run: `report/make_figures.py` (along with `report/make_cv_extras.py`, `report/make_alternatives.py`, `report/make_imbalance.py`, and `report/make_anomaly_map.py`) rebuilds the PNGs in `report/figures/` and the evidence JSONs from the saved metrics.
 
 ## Project layout
 

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
@@ -146,10 +145,19 @@ def run_classification(
 
         from smart_retail.modeling.tuning import cv_classification
 
-        cv_summary = cv_classification(lambda: clone(best_model), X, y, config)
+        def weighted_clone(model):
+            # scale_pos_weight is recomputed from each CV training fold, not the 80/20 split
+            def factory(y_fold):
+                m = clone(model)
+                if "scale_pos_weight" in m.get_params():
+                    m.set_params(scale_pos_weight=pos_weight_ratio(y_fold))
+                return m
+            return factory
+
+        cv_summary = cv_classification(weighted_clone(best_model), X, y, config)
         if "xgboost_tuned" in fitted and best_model_name != "xgboost_tuned":
             cv_tuned_summary = cv_classification(
-                lambda: clone(fitted["xgboost_tuned"]), X, y, config
+                weighted_clone(fitted["xgboost_tuned"]), X, y, config
             )
 
     risk_scores = pd.DataFrame(

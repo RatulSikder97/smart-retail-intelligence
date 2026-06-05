@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 
 from smart_retail.config import Config

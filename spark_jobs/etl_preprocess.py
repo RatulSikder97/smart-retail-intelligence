@@ -6,7 +6,7 @@ from pyspark.sql import functions as F
 DATASET_DIR = "/data/dataset"
 OUT_DIR = "/data/out/spark"
 
-# Bangladesh bounding box (must match smart_retail.data.schema.BD_BBOX)
+# Bangladesh bounding box (must match smart_retail.preprocessing.schema.BD_BBOX)
 LAT_MIN, LAT_MAX, LON_MIN, LON_MAX = 20.5, 26.7, 88.0, 92.7
 PRODUCT_COLS = [f"prod_{i}" for i in range(1, 18)]
 
@@ -28,7 +28,7 @@ def main() -> None:
 
     n_raw = shops.count()
 
-    # same cleaning rules as smart_retail.features.engineering, expressed as distributed Spark SQL
+    # same cleaning rules as smart_retail.preprocessing.features, expressed as distributed Spark SQL
     shops = shops.dropDuplicates(["shop_code"])
     n_unique = shops.count()
 
