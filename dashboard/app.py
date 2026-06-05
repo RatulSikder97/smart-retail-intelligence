@@ -1,10 +1,10 @@
 """Smart Retail Intelligence dashboard.
 
-Reads the artifacts produced by `python -m smart_retail.pipeline` and renders
-seven views: network overview, pipeline & feature engineering, shop archetypes
-(RQ1), sales prediction (RQ2), target-miss risk (RQ3), anomalies (RQ4), and a
-full start-to-end analysis report. Sidebar filters (division / archetype /
-shop type / target coverage) apply to every view.
+Eight views over the pipeline artifacts: overview, in-depth dataset
+description, method & pipeline (including the Hadoop/Spark distributed run),
+one tab per research question structured as cause → method → result →
+interpretation, and the full written report. Sidebar filters apply to every
+analytical view.
 """
 
 from __future__ import annotations
@@ -28,8 +28,8 @@ CLUSTER_COLORS = [
     "#2a78d6", "#1baf7a", "#eda100", "#008300",
     "#4a3aa7", "#e34948", "#e87ba4", "#eb6834",
 ]
-SEQUENTIAL_HUE = "#2a78d6"   # magnitude bars: one hue, not one-per-bar
-STATUS_SERIOUS = "#e34948"   # reserved for risk/anomaly marks only
+SEQUENTIAL_HUE = "#2a78d6"
+STATUS_SERIOUS = "#e34948"
 MAP_SAMPLE = 3_000
 
 st.set_page_config(page_title="Smart Retail Intelligence", layout="wide")
@@ -56,44 +56,40 @@ def load_artifacts() -> dict:
         path = CFG.processed_dir / filename
         if path.exists():
             art[key] = pd.read_parquet(path)
-    metrics_path = CFG.reports_dir / pipeline.METRICS_JSON
-    if metrics_path.exists():
-        art["metrics"] = json.loads(metrics_path.read_text())
-    profiles_path = CFG.reports_dir / "cluster_profiles.csv"
-    if profiles_path.exists():
-        art["profiles"] = pd.read_csv(profiles_path)
-    shap_path = CFG.reports_dir / "shap_importance.csv"
-    if shap_path.exists():
-        art["shap"] = pd.read_csv(shap_path)
+    for key, path in {
+        "metrics": CFG.reports_dir / pipeline.METRICS_JSON,
+        "dataset_profile": CFG.reports_dir / "dataset_profile.json",
+        "spark_metrics": CFG.data_dir / "spark" / "spark_metrics.json",
+    }.items():
+        if path.exists():
+            art[key] = json.loads(path.read_text())
+    for key, path in {
+        "profiles": CFG.reports_dir / "cluster_profiles.csv",
+        "shap": CFG.reports_dir / "shap_importance.csv",
+    }.items():
+        if path.exists():
+            art[key] = pd.read_csv(path)
     try:
         art["products"] = loader.load_products(CFG)
     except (FileNotFoundError, ValueError):
-        pass  # raw dataset not mounted — dataset KPIs fall back to metrics only
+        pass
     return art
 
 
 @st.cache_data(show_spinner="Joining analysis layers…")
 def build_base(_art_keys: tuple) -> pd.DataFrame:
-    """One row per shop: features + cluster + risk + anomaly score."""
+    """One row per shop: features + cluster + risk + anomaly + prediction."""
     art = load_artifacts()
     base = art["features"]
-    if "clusters" in art:
-        base = base.merge(art["clusters"], on="shop_code", how="left")
-    if "risk" in art:
-        base = base.merge(
-            art["risk"][["shop_code", "at_risk", "risk_score"]],
-            on="shop_code", how="left",
-        )
-    if "anomalies" in art:
-        base = base.merge(
-            art["anomalies"][["shop_code", "combined_score"]],
-            on="shop_code", how="left",
-        )
-    if "predictions" in art:
-        base = base.merge(
-            art["predictions"][["shop_code", "predicted"]],
-            on="shop_code", how="left",
-        )
+    joins = {
+        "clusters": ["shop_code", "cluster"],
+        "risk": ["shop_code", "at_risk", "risk_score"],
+        "anomalies": ["shop_code", "combined_score"],
+        "predictions": ["shop_code", "predicted"],
+    }
+    for key, cols in joins.items():
+        if key in art:
+            base = base.merge(art[key][cols], on="shop_code", how="left")
     return base
 
 
@@ -101,135 +97,11 @@ def require(art: dict, *keys: str) -> bool:
     missing = [k for k in keys if k not in art]
     if missing:
         st.info(
-            "No pipeline artifacts found yet for this view "
-            f"(missing: {', '.join(missing)}). Run:\n\n"
-            "```\ndocker compose run --rm pipeline\n```"
+            "This view needs pipeline artifacts that are not present yet "
+            f"({', '.join(missing)}). Run: `docker compose run --rm pipeline`"
         )
         return False
     return True
-
-
-# --------------------------------------------------------------------------
-# algorithm walkthrough cards (phase → input / internal steps / output)
-# --------------------------------------------------------------------------
-
-ALGORITHM_CARDS = [
-    {
-        "phase": "Phase 1",
-        "title": "Preprocessing & feature engineering",
-        "algorithm": "BallTree (haversine) · vectorized great-circle geometry",
-        "input": "`shop_info_with_geo.csv` (832,881 rows) + "
-                 "`product_target_for_shop.csv` (853,732 rows)",
-        "steps": [
-            "Drop duplicate `shop_code` rows (keep first occurrence).",
-            "Validate GPS: latitude/longitude must exist and fall inside the "
-            "Bangladesh bounding box (20.5–26.7°N, 88.0–92.7°E); "
-            "`POINT EMPTY` rows are removed.",
-            "Fill missing categoricals with an explicit `Unknown` level "
-            "instead of dropping rows.",
-            "Build a BallTree on radian coordinates and count neighbours "
-            "within 500 m / 1 km / 5 km (haversine metric, self excluded).",
-            "Compute each shop's great-circle distance to the centroid of its "
-            "district's shops.",
-            "Join monthly targets (valued rows preferred over NaN duplicates); "
-            "derive `n_products_targeted` and `has_target`.",
-            "One-hot encode shop type, style, importance, place nature, "
-            "division → 48 numeric features.",
-        ],
-        "output": "`features.parquet` — 719,817 shops × 48 model features "
-                  "+ identifiers and target",
-    },
-    {
-        "phase": "Phase 2 · RQ1",
-        "title": "Archetype clustering",
-        "algorithm": "K-Means (selected) · Agglomerative + DBSCAN cross-checks",
-        "input": "Standard-scaled 48-feature matrix (719,817 × 48)",
-        "steps": [
-            "Standardize every feature (zero mean, unit variance).",
-            "Fit K-Means for k = 3…9 with 10 restarts each (seed 42).",
-            "Score every k: silhouette on a 10k subsample (higher better) and "
-            "Davies–Bouldin on the full matrix (lower better).",
-            "Select the k with the best silhouette → k = 8.",
-            "Cross-check structure: Agglomerative (Ward) on a 20k subsample, "
-            "DBSCAN (eps 0.5, min 50) on the same subsample.",
-            "Profile each cluster: median density, distance, target, size, "
-            "dominant division/type/importance.",
-        ],
-        "output": "`clusters.parquet` (shop → cluster id) · "
-                  "`cluster_profiles.csv` · `clustering_kmeans.joblib`",
-    },
-    {
-        "phase": "Phase 3 · RQ2",
-        "title": "Sales-target regression",
-        "algorithm": "Linear baseline vs Random Forest · XGBoost · LightGBM + SHAP",
-        "input": "Features of the 613,660 shops with a target; "
-                 "label y = `total_target`",
-        "steps": [
-            "Split 80/20 train/test (seed 42).",
-            "Fit four models: LinearRegression (scaled pipeline), "
-            "RandomForest (100 trees, depth ≤ 20), XGBoost (300 × depth 8), "
-            "LightGBM (300 trees, 63 leaves).",
-            "Evaluate each on the untouched test set: RMSE, MAE, R².",
-            "Pick the lowest-RMSE model → XGBoost.",
-            "Explain it with SHAP TreeExplainer on ≤ 2,000 test rows; "
-            "rank features by mean |SHAP value|.",
-            "Predict all labelled shops with the winner.",
-        ],
-        "output": "`predictions.parquet` (actual vs predicted per shop) · "
-                  "`shap_importance.csv` · `regression_best.joblib`",
-    },
-    {
-        "phase": "Phase 4 · RQ3",
-        "title": "Target-miss risk classification",
-        "algorithm": "SMOTE + Logistic Regression · Random Forest · XGBoost",
-        "input": "Features + cluster id of labelled shops; proxy label "
-                 "`at_risk = total_target < 0.8 × median(total_target | cluster, shop_type)`",
-        "steps": [
-            "Build the peer-relative label per (cluster × shop type) group "
-            "→ 36.6% base rate.",
-            "Stratified 80/20 split (seed 42).",
-            "Wrap every model in an imblearn pipeline `[SMOTE → model]` so "
-            "minority oversampling happens ONLY inside fit() — the test set "
-            "is never resampled.",
-            "Fit LogisticRegression (scaled), RandomForest, XGBoost.",
-            "Score on the raw test set: ROC-AUC, F1, precision, recall.",
-            "Pick the highest ROC-AUC → XGBoost; score every labelled shop "
-            "with predict_proba → risk_score ∈ [0, 1].",
-        ],
-        "output": "`risk.parquet` (at_risk label + risk_score per shop) · "
-                  "`classification_best.joblib`",
-    },
-    {
-        "phase": "Phase 5 · RQ4",
-        "title": "Per-cluster anomaly detection",
-        "algorithm": "Isolation Forest + Local Outlier Factor, combined by rank",
-        "input": "Features + cluster labels for all 719,817 shops",
-        "steps": [
-            "For each cluster with ≥ 20 shops (smaller ones are skipped):",
-            "— standardize the cluster's feature block;",
-            "— Isolation Forest (200 trees): negate `score_samples` so higher "
-            "= more anomalous, convert to percentile rank within the cluster;",
-            "— LOF (20 neighbours): same negate-and-rank treatment;",
-            "Combine: `combined_score` = mean of the two percentile ranks.",
-            "Sort descending and export the top decile with full context "
-            "(division, type, density, target) for manual triage into "
-            "fraud / data error / hidden opportunity.",
-        ],
-        "output": "`anomalies.parquet` (scores for all shops) · "
-                  "`top_anomalies.parquet` (71,982 ranked shops)",
-    },
-]
-
-
-def render_algorithm_card(card: dict) -> None:
-    with st.container(border=True):
-        st.markdown(f"**{card['phase']} — {card['title']}**")
-        st.caption(card["algorithm"])
-        st.markdown(f"📥 **Input:** {card['input']}")
-        with st.expander("Internal steps", expanded=False):
-            for i, step in enumerate(card["steps"], start=1):
-                st.markdown(f"{i}. {step}")
-        st.markdown(f"📤 **Output:** {card['output']}")
 
 
 # --------------------------------------------------------------------------
@@ -254,22 +126,20 @@ def cluster_legend(cluster_ids) -> str:
 
 def hbar(df: pd.DataFrame, value: str, label: str, color=SEQUENTIAL_HUE,
          value_title: str | None = None, fmt: str = ",.3f") -> alt.Chart:
-    """Horizontal magnitude bars: one hue, sorted, direct value labels."""
-    base = alt.Chart(df).encode(
+    base_chart = alt.Chart(df).encode(
         x=alt.X(value, title=value_title or value),
         y=alt.Y(label, sort="-x", title=None),
         tooltip=list(df.columns),
     )
     return (
-        base.mark_bar(color=color, cornerRadiusEnd=4, height={"band": 0.6})
-        + base.mark_text(align="left", dx=4, color="#555").encode(
+        base_chart.mark_bar(color=color, cornerRadiusEnd=4, height={"band": 0.6})
+        + base_chart.mark_text(align="left", dx=4, color="#555").encode(
             text=alt.Text(value, format=fmt)
         )
     )
 
 
 def histogram(df: pd.DataFrame, column: str, title: str, clip_q: float = 0.99) -> alt.Chart:
-    """Distribution of one engineered feature, clipped at the 99th percentile."""
     values = df[[column]].dropna()
     cap = float(values[column].quantile(clip_q))
     clipped = values[values[column] <= cap]
@@ -300,6 +170,12 @@ def shop_map(df: pd.DataFrame, color_fn, popup_cols: list[str]) -> folium.Map:
     return m
 
 
+def section(title: str, body: str) -> None:
+    """A labelled prose block used for the cause / interpretation passages."""
+    st.markdown(f"**{title}**")
+    st.markdown(body)
+
+
 # --------------------------------------------------------------------------
 # load + global filters
 # --------------------------------------------------------------------------
@@ -320,24 +196,18 @@ base = build_base(tuple(sorted(art.keys())))
 
 with st.sidebar:
     st.header("Filters")
-    st.caption("Empty selection = everything. Filters apply to every tab.")
-
-    sel_divisions = st.multiselect(
-        "Division", sorted(base["division"].unique()),
-    )
+    st.caption("Empty selection = everything. Filters apply to the analysis tabs.")
+    sel_divisions = st.multiselect("Division", sorted(base["division"].unique()))
     cluster_options = (
         sorted(base["cluster"].dropna().unique().astype(int))
         if "cluster" in base else []
     )
     sel_clusters = st.multiselect(
-        "Archetype (cluster)", cluster_options,
-        format_func=lambda c: f"Cluster {c}",
+        "Archetype (cluster)", cluster_options, format_func=lambda c: f"Cluster {c}"
     )
-    sel_types = st.multiselect(
-        "Shop type", sorted(base["shop_type"].unique()),
-    )
+    sel_types = st.multiselect("Shop type", sorted(base["shop_type"].unique()))
     sel_importance = st.multiselect(
-        "Shop importance", sorted(base["shop_importance"].unique()),
+        "Shop importance", sorted(base["shop_importance"].unique())
     )
     only_target = st.checkbox("Only shops with a sales target", value=False)
 
@@ -355,36 +225,32 @@ with st.sidebar:
 
     f = base[mask]
     st.divider()
-    st.metric(
-        "Shops in view", f"{len(f):,}",
-        f"{len(f) / len(base):.1%} of {len(base):,}",
-    )
+    st.metric("Shops in view", f"{len(f):,}", f"{len(f) / len(base):.1%} of {len(base):,}")
 
 if f.empty:
     st.warning("The current filter combination matches no shops — clear a filter.")
     st.stop()
 
-(tab_overview, tab_pipeline, tab_clusters, tab_sales,
- tab_risk, tab_anomaly, tab_report) = st.tabs(
-    ["Overview", "Pipeline & features", "Shop archetypes", "Sales prediction",
-     "Target-miss risk", "Anomalies", "Full report"]
+(tab_overview, tab_dataset, tab_method, tab_rq1, tab_rq2,
+ tab_rq3, tab_rq4, tab_report) = st.tabs(
+    ["Overview", "Dataset", "Method & pipeline", "RQ1 · Archetypes",
+     "RQ2 · Sales prediction", "RQ3 · Target-miss risk", "RQ4 · Anomalies", "Report"]
 )
 
-# --------------------------------------------------------------------------
+# ==========================================================================
 with tab_overview:
+    quality = art.get("metrics", {}).get("phase_1_preprocessing", {})
+
     st.subheader("Dataset at a glance")
     st.caption(
-        "Full dataset — these counts describe the source data and are not "
-        "affected by the sidebar filters. Source: Mendeley `mgzvngzng2` v1 "
-        "(Shahin, Swarna & Farid, 2025), collected Feb 2022 – Oct 2024."
+        "Full dataset — not affected by the sidebar filters. Source: Mendeley "
+        "`mgzvngzng2` v1 (Shahin, Swarna & Farid, 2025), collected Feb 2022 – Oct 2024."
     )
-    quality = art.get("metrics", {}).get("phase_1_preprocessing", {})
     d1, d2, d3, d4, d5 = st.columns(5)
     d1.metric("Raw shop records", f"{quality.get('n_raw_shop_rows', len(base)):,}")
     d2.metric(
         "Outlets analysed", f"{quality.get('n_final_shops', len(base)):,}",
-        f"-{quality.get('n_invalid_or_missing_gps', 0):,} missing GPS",
-        delta_color="off",
+        f"-{quality.get('n_invalid_or_missing_gps', 0):,} missing GPS", delta_color="off",
     )
     d3.metric(
         "Shops with sales target",
@@ -408,85 +274,144 @@ with tab_overview:
     g2.metric("Districts (zila)", base["zila"].nunique())
     g3.metric("Sub-districts (upazila)", base["upazila"].nunique())
     g4.metric("Model features", quality.get("n_feature_columns", "—"))
-
-    with st.expander("Source files"):
-        st.markdown(
-            f"""
-| File | Rows | Content |
-|---|---|---|
-| `{schema.SHOP_FILE}` | {quality.get('n_raw_shop_rows', 0):,} | Shop location (GPS), type, style, importance, division/zila/upazila |
-| `{schema.TARGET_FILE}` | 853,732 | Monthly sales target per shop for {len(schema.PRODUCT_TARGET_COLUMNS)} products + `Total` |
-| `{schema.PRODUCT_FILE}` | {len(art['products']) if 'products' in art else 42} | SKU catalogue: brand, type, packaging, price tiers, volume |
-
-License CC BY 4.0 · DOI [10.17632/mgzvngzng2.1](https://data.mendeley.com/datasets/mgzvngzng2/1) ·
-article DOI [10.1016/j.dib.2025.112326](https://doi.org/10.1016/j.dib.2025.112326)
-"""
-        )
     st.divider()
 
     st.subheader("Current view")
     c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Shops in view", f"{len(f):,}")
     c2.metric("Divisions", f["division"].nunique())
-    c3.metric("Districts (zila)", f["zila"].nunique())
-    c4.metric(
-        "With sales target",
-        f"{int(f['has_target'].sum()):,}",
-        f"{f['has_target'].mean():.0%} coverage",
-    )
+    c3.metric("Districts", f["zila"].nunique())
+    c4.metric("With target", f"{int(f['has_target'].sum()):,}",
+              f"{f['has_target'].mean():.0%}", delta_color="off")
     if "risk_score" in f:
         c5.metric("Mean predicted risk", f"{f['risk_score'].mean():.1%}")
-    st.divider()
 
     left, right = st.columns([3, 2])
     with left:
-        st.subheader("Network map")
+        st.markdown("**Network map**")
         sample = f.sample(min(MAP_SAMPLE, len(f)), random_state=0)
         if "cluster" in sample:
-            st.caption(f"{len(sample):,}-shop random sample of the current view, colored by archetype")
-            st.markdown(
-                cluster_legend(sample["cluster"].dropna().unique()),
-                unsafe_allow_html=True,
-            )
+            st.caption(f"{len(sample):,}-shop random sample, colored by archetype")
+            st.markdown(cluster_legend(sample["cluster"].dropna().unique()),
+                        unsafe_allow_html=True)
             color_fn = lambda row: cluster_color(row.get("cluster"))
         else:
-            st.caption(f"{len(sample):,}-shop random sample of the current view")
             color_fn = lambda row: SEQUENTIAL_HUE
         st_folium(
             shop_map(sample, color_fn, ["shop_code", "division", "shop_type"]),
-            height=480, use_container_width=True, returned_objects=[],
+            height=460, use_container_width=True, returned_objects=[],
         )
     with right:
-        st.subheader("Shops per division")
-        counts = (
-            f["division"].value_counts().rename_axis("division")
-            .reset_index(name="shops")
-        )
+        st.markdown("**Shops per division**")
+        counts = f["division"].value_counts().rename_axis("division").reset_index(name="shops")
         st.altair_chart(
-            hbar(counts, "shops", "division", value_title="shops", fmt=",")
-            .properties(height=300),
+            hbar(counts, "shops", "division", value_title="shops", fmt=",").properties(height=280),
             width="stretch",
         )
-        st.subheader("Shops per type")
+        st.markdown("**Shops per type (top 12)**")
         type_counts = (
             f["shop_type"].value_counts().head(12).rename_axis("shop_type")
             .reset_index(name="shops")
         )
         st.altair_chart(
-            hbar(type_counts, "shops", "shop_type", value_title="shops", fmt=",")
-            .properties(height=300),
+            hbar(type_counts, "shops", "shop_type", value_title="shops", fmt=",").properties(height=280),
             width="stretch",
         )
 
-# --------------------------------------------------------------------------
-with tab_pipeline:
+# ==========================================================================
+with tab_dataset:
+    st.subheader("In-depth dataset description")
+    profile = art.get("dataset_profile")
+    if not profile:
+        st.info(
+            "Column-level profile not generated yet — re-run phase 1: "
+            "`docker compose run --rm pipeline python -m smart_retail.pipeline --phases 1`"
+        )
+    else:
+        ts = profile["target_summary"]
+        cat = profile["catalogue_summary"]
+        st.markdown(
+            "Three interlinked files describe the network: where every shop is "
+            "and what kind of shop it is (`shop_info_with_geo`), how much each "
+            "shop is expected to sell per product per month "
+            "(`product_target_for_shop`), and what the products are "
+            "(`product_info`). The tables below profile every column of every "
+            "file: completeness, cardinality, ranges, and example values — "
+            "computed from the actual files, not copied from the paper."
+        )
+
+        k1, k2, k3, k4, k5 = st.columns(5)
+        k1.metric("Target rows with a Total", f"{ts['rows_with_total']:,}")
+        k2.metric("Target rows all-NaN", f"{ts['rows_all_nan']:,}")
+        k3.metric("Duplicate shop codes (targets)", f"{ts['duplicate_shop_codes']:,}")
+        k4.metric("Median monthly Total", f"{ts['total_median']:,.2f}")
+        k5.metric("95th percentile Total", f"{ts['total_p95']:,.2f}")
+        st.caption(
+            f"The Total target is heavily right-skewed: median {ts['total_median']:,.2f} "
+            f"vs mean {ts['total_mean']:,.2f} vs max {ts['total_max']:,.0f} — a few "
+            "wholesale-style outlets carry targets thousands of times the typical shop."
+        )
+        st.divider()
+
+        for filename, file_profile in profile["files"].items():
+            cols_df = pd.DataFrame(file_profile["columns"])
+            ordered = [c for c in ("column", "description", "dtype", "non_null",
+                                   "missing_pct", "unique", "min", "median",
+                                   "mean", "max", "examples") if c in cols_df.columns]
+            st.markdown(f"**`{filename}`** — {file_profile['rows']:,} rows, "
+                        f"{len(cols_df)} columns")
+            st.dataframe(
+                cols_df[ordered], width="stretch", hide_index=True,
+                height=min(420, 42 + 35 * len(cols_df)),
+                column_config={
+                    "missing_pct": st.column_config.NumberColumn("missing %", format="%.2f%%"),
+                    "non_null": st.column_config.NumberColumn("non-null", format="%d"),
+                },
+            )
+
+        if "products" in art:
+            st.markdown(
+                f"**Product catalogue** — {cat['skus']} SKUs, {cat['brands']} brands, "
+                f"{cat['product_types']} flavour/variant types, {cat['base_products']} base products"
+            )
+            st.dataframe(art["products"], width="stretch", hide_index=True, height=300)
+
+# ==========================================================================
+with tab_method:
+    st.subheader("How the analysis is produced")
+    st.graphviz_chart("""
+digraph pipeline {
+  rankdir=LR; bgcolor=transparent;
+  node [shape=box, style="rounded,filled", fillcolor="#eef4fb", color="#2a78d6",
+        fontname="Helvetica", fontsize=11];
+  edge [color="#8a8a8a", fontname="Helvetica", fontsize=9];
+  raw [label="Raw CSVs\\n832,881 shops · 42 SKUs"];
+  hdfs [label="HDFS\\nnamenode + datanode", fillcolor="#fdf3e2", color="#eda100"];
+  spark [label="Spark cluster\\ndistributed ETL + MLlib", fillcolor="#fdf3e2", color="#eda100"];
+  p1 [label="Phase 1\\ncleaning + features"];
+  p2 [label="Phase 2 (RQ1)\\nclustering"];
+  p3 [label="Phase 3 (RQ2)\\nregression"];
+  p4 [label="Phase 4 (RQ3)\\nrisk classification"];
+  p5 [label="Phase 5 (RQ4)\\nanomaly detection"];
+  dash [label="Dashboard + report", fillcolor="#e8f5ee", color="#1baf7a"];
+  raw -> p1 -> p2;
+  p2 -> p3; p2 -> p4; p2 -> p5;
+  p3 -> dash; p4 -> dash; p5 -> dash;
+  raw -> hdfs -> spark;
+  spark -> dash [label="distributed run"];
+}
+""")
+    st.caption(
+        "Two execution paths over the same data: the scikit-learn pipeline "
+        "(reference implementation, exact algorithms from the proposal) and "
+        "the Hadoop/Spark path (distributed storage + MLlib) for the big-data "
+        "requirement. Both start from the same raw CSVs."
+    )
+    st.divider()
+
     if require(art, "metrics"):
         quality = art["metrics"].get("phase_1_preprocessing", {})
-        st.subheader("Preprocessing funnel (phase 1)")
-        st.caption(
-            "Every stage of the cleaning pipeline, from the raw CSV to the "
-            "model-ready shop table — full dataset, not affected by filters."
-        )
+        st.subheader("Data preparation, step by step")
         funnel = pd.DataFrame(
             [
                 {"stage": "1 · Raw shop records", "shops": quality.get("n_raw_shop_rows", 0)},
@@ -498,88 +423,158 @@ with tab_pipeline:
         bars = (
             alt.Chart(funnel)
             .mark_bar(color=SEQUENTIAL_HUE, cornerRadiusEnd=4, height={"band": 0.55})
-            .encode(
-                x=alt.X("shops", title="shops"),
-                y=alt.Y("stage", sort=None, title=None),
-                tooltip=["stage", "shops"],
-            )
+            .encode(x=alt.X("shops", title="shops"),
+                    y=alt.Y("stage", sort=None, title=None),
+                    tooltip=["stage", "shops"])
         )
         labels = (
-            alt.Chart(funnel)
-            .mark_text(align="left", dx=4, color="#555")
-            .encode(x="shops", y=alt.Y("stage", sort=None), text=alt.Text("shops", format=","))
+            alt.Chart(funnel).mark_text(align="left", dx=4, color="#555")
+            .encode(x="shops", y=alt.Y("stage", sort=None),
+                    text=alt.Text("shops", format=","))
         )
-        st.altair_chart((bars + labels).properties(height=220), width="stretch")
-
-        dropped = quality.get("n_invalid_or_missing_gps", 0)
+        st.altair_chart((bars + labels).properties(height=210), width="stretch")
         st.markdown(
-            f"**Why {dropped:,} rows drop at stage 3.** Their latitude/longitude "
-            "cells are empty in the raw CSV (`geometry = POINT EMPTY`) — the "
-            "13.6% missing-GPS rate documented by the dataset authors. After "
-            "removal the count equals the paper's published 719,817 exactly; "
-            "zero valid coordinates fall outside Bangladesh."
+            f"The {quality.get('n_invalid_or_missing_gps', 0):,} rows removed at "
+            "stage 3 have empty latitude/longitude in the raw file "
+            "(`geometry = POINT EMPTY`) — the missing-GPS rate the dataset "
+            "authors themselves report. What remains equals the paper's "
+            "published outlet count exactly, so no valid shop is lost."
         )
         st.divider()
 
-        st.subheader("Algorithm walkthrough — every step, input → output")
-        st.caption(
-            "What each phase consumes, what it computes internally, and what "
-            "it hands to the next phase. Expand a card for the in-depth steps."
+        st.subheader("Methods, phase by phase")
+        st.markdown(
+            "Each phase consumes the previous phase's output. The table gives "
+            "the one-line view; the notes underneath explain how each method "
+            "works and why it was chosen."
         )
-        row1 = st.columns(2)
-        row2 = st.columns(2)
-        row3 = st.columns(2)
-        slots = [row1[0], row1[1], row2[0], row2[1], row3[0]]
-        for slot, card in zip(slots, ALGORITHM_CARDS):
-            with slot:
-                render_algorithm_card(card)
+        methods = pd.DataFrame(
+            [
+                {"phase": "1 · Preparation", "input": "raw CSVs",
+                 "method": "dedup, GPS validation, BallTree neighbour densities, district-centroid distance, one-hot encoding",
+                 "output": "features.parquet (719,817 × 48)"},
+                {"phase": "2 · Archetypes (RQ1)", "input": "scaled feature matrix",
+                 "method": "K-Means scanned k=3…9, scored by silhouette + Davies-Bouldin; hierarchical & DBSCAN as cross-checks",
+                 "output": "cluster per shop, profiles"},
+                {"phase": "3 · Sales (RQ2)", "input": "features of 613,660 labelled shops",
+                 "method": "linear baseline vs Random Forest, XGBoost, LightGBM on an 80/20 split; SHAP on the winner",
+                 "output": "predictions, feature attributions"},
+                {"phase": "4 · Risk (RQ3)", "input": "features + cluster",
+                 "method": "peer-relative miss label; SMOTE inside the training fold; LogReg / RF / XGBoost",
+                 "output": "risk score per shop"},
+                {"phase": "5 · Anomalies (RQ4)", "input": "features + cluster",
+                 "method": "Isolation Forest + LOF fitted per cluster, combined by percentile rank",
+                 "output": "ranked top decile for triage"},
+            ]
+        )
+        st.dataframe(methods, width="stretch", hide_index=True)
+
+        with st.expander("Notes on the methods (read before interpreting results)"):
+            st.markdown(
+                """
+The **density features** count how many other shops sit within 500 m, 1 km and
+5 km of each outlet. A BallTree with the haversine metric answers all 719,817
+queries in seconds and, unlike a naive pairwise scan, scales as *n log n*.
+Density is the pipeline's proxy for local competition and urbanisation.
+
+The **cluster count k = 8** is not assumed — K-Means is fitted for every k from
+3 to 9 and judged on two independent criteria. Silhouette rewards tight,
+well-separated clusters; Davies–Bouldin penalises overlapping ones. Both point
+to 8. DBSCAN collapsing to one cluster with 98.7% noise is reported rather than
+hidden: it says the retail fabric is continuous, which is itself a finding.
+
+For **sales prediction** the linear baseline exists to prove non-linearity: it
+manages R² 0.02 where XGBoost reaches 0.45 with identical inputs. SHAP values
+are computed on the winner because gradient-boosted trees are otherwise opaque;
+they decompose every single prediction into per-feature contributions.
+
+The **risk label is a proxy** and is labelled as such everywhere: the dataset
+carries assigned targets, not realized sales, so a shop is flagged when its
+target sits far below what shops of the same archetype and type receive. SMOTE
+runs strictly inside the training fold — resampling before the split would leak
+synthetic copies of test shops into training and inflate every metric.
+
+**Anomaly scores are computed within each cluster**, never globally: a rural
+kiosk compared against metro superstores would always look anomalous. Isolation
+Forest catches shops that are easy to isolate in feature space; LOF catches
+shops whose local neighbourhood density differs from their neighbours'. The
+final rank is the mean of the two percentile ranks.
+"""
+            )
+        st.divider()
+
+        st.subheader("Distributed run — Hadoop HDFS + Spark MLlib")
+        spark_metrics = art.get("spark_metrics")
+        if not spark_metrics:
+            st.info(
+                "No distributed-run metrics yet. Start the cluster and run: "
+                "`make spark-up && make spark-pipeline` — results appear here."
+            )
+        else:
+            st.markdown(
+                f"Storage: `{spark_metrics.get('storage', '')}` · every phase "
+                "below read its input from and wrote its output to HDFS."
+            )
+            rows = []
+            for key in ("phase_1_spark", "phase_2_spark", "phase_3_spark",
+                        "phase_4_spark", "phase_5_spark"):
+                p = spark_metrics.get(key)
+                if p:
+                    rows.append({
+                        "phase": key.replace("_spark", "").replace("_", " "),
+                        "engine": p.get("engine", ""),
+                        "duration (s)": p.get("duration_sec"),
+                        "headline": p.get("best_model")
+                        or (f"best k = {p['best_k']}" if "best_k" in p else "")
+                        or (f"{p.get('n_top_decile', ''):,} top-decile" if p.get("n_top_decile") else ""),
+                    })
+            st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
+            with st.expander("Full distributed-run metrics (JSON)"):
+                st.json(spark_metrics)
+            st.caption(
+                "MLlib offers no XGBoost/SHAP/SMOTE/Isolation-Forest, so the "
+                "distributed run uses the nearest equivalents (GBT, class "
+                "weights, centroid distance). The scikit-learn pipeline stays "
+                "the reference for the exact proposal algorithms; matching row "
+                "counts across both paths cross-validate the data preparation."
+            )
         st.divider()
 
         st.subheader("Engineered feature attributes")
         feature_cols = numeric_feature_columns(art["features"])
-        onehot_families = {}
+        onehot_families: dict[str, list] = {}
         core = []
         for col in feature_cols:
             family = next(
                 (p for p in ("shop_type_", "shop_style_", "shop_importance_",
-                             "place_nature_", "division_") if col.startswith(p)),
-                None,
+                             "place_nature_", "division_") if col.startswith(p)), None,
             )
             if family:
                 onehot_families.setdefault(family.rstrip("_"), []).append(col)
             else:
                 core.append(col)
-
         descriptions = {
             "density_500m": "Shops within 500 m (BallTree haversine, self excluded)",
             "density_1km": "Shops within 1 km",
             "density_5km": "Shops within 5 km",
-            "dist_to_district_centre_km": "Great-circle distance to the district's shop centroid",
+            "dist_to_district_centre_km": "Distance to the district's shop centroid",
             "n_products_targeted": "Products (of 17) with a positive monthly target",
             "latitude": "Validated GPS latitude",
             "longitude": "Validated GPS longitude",
         }
         dictionary = pd.DataFrame(
-            [
-                {"feature": c, "group": "engineered / spatial"
-                 if c.startswith(("density", "dist")) else "core",
-                 "description": descriptions.get(c, "")}
-                for c in core
-            ]
-            + [
-                {"feature": f"{family}_* ({len(cols)} columns)",
-                 "group": "one-hot structural",
-                 "description": f"Indicator per {family.replace('_', ' ')} level, "
-                                "'Unknown' kept as an explicit level"}
-                for family, cols in onehot_families.items()
-            ]
+            [{"feature": c, "group": "spatial" if c.startswith(("density", "dist"))
+              else "core", "description": descriptions.get(c, "")} for c in core]
+            + [{"feature": f"{fam}_* ({len(cols)} columns)", "group": "one-hot",
+                "description": f"Indicator per {fam.replace('_', ' ')} level; 'Unknown' kept explicit"}
+               for fam, cols in onehot_families.items()]
         )
         c1, c2 = st.columns([2, 3])
         with c1:
             st.metric("Model features", len(feature_cols))
-            st.dataframe(dictionary, width="stretch", hide_index=True, height=380)
+            st.dataframe(dictionary, width="stretch", hide_index=True, height=360)
         with c2:
-            st.caption("Distributions in the current filter view (clipped at the 99th percentile)")
+            st.caption("Distributions in the current filter view (clipped at p99)")
             hist_sample = f.sample(min(50_000, len(f)), random_state=0)
             g1, g2 = st.columns(2)
             g1.altair_chart(histogram(hist_sample, "density_1km", "shops within 1 km"), width="stretch")
@@ -592,34 +587,34 @@ with tab_pipeline:
                     width="stretch",
                 )
 
-        st.subheader("Categorical completeness")
-        st.caption("Share of shops with an 'Unknown' (originally missing) value, current view")
-        unknown_share = pd.DataFrame(
-            [
-                {"attribute": col, "unknown share": float((f[col] == "Unknown").mean())}
-                for col in ("shop_type", "shop_style", "shop_importance", "place_nature", "division")
-            ]
-        )
-        st.altair_chart(
-            hbar(unknown_share, "unknown share", "attribute", fmt=".1%")
-            .properties(height=200),
-            width="stretch",
-        )
-
-# --------------------------------------------------------------------------
-with tab_clusters:
+# ==========================================================================
+with tab_rq1:
     if require(art, "profiles", "metrics") and "cluster" in f:
         clustering = art["metrics"].get("phase_2_clustering", {})
-        st.subheader(f"K-Means archetypes — best k = {clustering.get('best_k', '?')}")
+        best_k = clustering.get("best_k", "?")
 
+        section(
+            "Why this question",
+            "Planning across 720,000 outlets treats a Dhaka wholesale hub and a "
+            "rural kiosk the same way. If natural shop archetypes exist, targets, "
+            "logistics and field visits can be planned per archetype instead of "
+            "one-size-fits-all.",
+        )
+        with st.expander("Method"):
+            st.markdown(
+                "All 48 features are standardized and K-Means is fitted for every "
+                "k from 3 to 9 (10 restarts each, seed 42). Each k is scored with "
+                "silhouette (cluster separation, higher better) and Davies–Bouldin "
+                "(cluster overlap, lower better). Agglomerative clustering and "
+                "DBSCAN run on a 20k subsample as structural cross-checks."
+            )
+
+        st.subheader(f"Result — {best_k} archetypes")
         km = clustering.get("kmeans", {})
         if km:
             selection = pd.DataFrame(
-                [
-                    {"k": int(k), "silhouette": v["silhouette"],
-                     "davies_bouldin": v["davies_bouldin"]}
-                    for k, v in km.items()
-                ]
+                [{"k": int(k), "silhouette": v["silhouette"],
+                  "davies_bouldin": v["davies_bouldin"]} for k, v in km.items()]
             ).sort_values("k")
             c1, c2 = st.columns(2)
             for col, metric, better in (
@@ -630,12 +625,9 @@ with tab_clusters:
                     alt.Chart(selection)
                     .mark_line(color=SEQUENTIAL_HUE, strokeWidth=2,
                                point=alt.OverlayMarkDef(size=80, color=SEQUENTIAL_HUE))
-                    .encode(
-                        x=alt.X("k:O", title="k"),
-                        y=alt.Y(metric, title=metric),
-                        tooltip=["k", metric],
-                    )
-                    .properties(height=220, title=f"{metric} ({better})")
+                    .encode(x=alt.X("k:O", title="k"), y=alt.Y(metric, title=metric),
+                            tooltip=["k", metric])
+                    .properties(height=210, title=f"{metric} ({better})")
                 )
                 col.altair_chart(line, width="stretch")
 
@@ -650,42 +642,65 @@ with tab_clusters:
             .encode(
                 x=alt.X("shops", title="shops"),
                 y=alt.Y("archetype", sort=None, title=None),
-                color=alt.Color(
-                    "archetype",
-                    scale=alt.Scale(
-                        domain=counts["archetype"].tolist(),
-                        range=[cluster_color(c) for c in counts["cluster"]],
-                    ),
-                    legend=None,
-                ),
+                color=alt.Color("archetype", legend=None,
+                                scale=alt.Scale(domain=counts["archetype"].tolist(),
+                                                range=[cluster_color(c) for c in counts["cluster"]])),
                 tooltip=["archetype", "shops"],
             )
             .properties(height=60 + 30 * len(counts), title="Cluster sizes (current view)")
         )
         labels = (
-            alt.Chart(counts)
-            .mark_text(align="left", dx=4, color="#555")
+            alt.Chart(counts).mark_text(align="left", dx=4, color="#555")
             .encode(x="shops", y=alt.Y("archetype", sort=None),
                     text=alt.Text("shops", format=","))
         )
         st.altair_chart(bars + labels, width="stretch")
-
-        st.subheader("Cluster profiles (medians, full dataset)")
+        st.markdown("**Cluster profiles (medians, full dataset)**")
         st.dataframe(art["profiles"], width="stretch", hide_index=True)
 
-        st.caption(
-            "Cross-checks — agglomerative silhouette: "
-            f"{clustering.get('agglomerative', {}).get('silhouette', float('nan')):.3f} · "
-            f"DBSCAN found {clustering.get('dbscan', {}).get('n_clusters_found', '?')} clusters "
-            f"({clustering.get('dbscan', {}).get('noise_share', 0):.0%} noise)"
+        profiles = art["profiles"]
+        key_account = profiles.loc[profiles[TARGET_COLUMN].idxmax()]
+        ghost = profiles[profiles["n_products_targeted"] == 0]
+        interpretation = (
+            f"The 8 archetypes map cleanly onto geography and function. Cluster "
+            f"{int(key_account['cluster'])} is the key-account tier — median target "
+            f"{key_account[TARGET_COLUMN]:,.0f}, several times every other cluster. "
         )
+        if not ghost.empty:
+            g = ghost.iloc[0]
+            interpretation += (
+                f"Cluster {int(g['cluster'])} ({g['share']:.0%} of shops) has zero "
+                "targeted products and unknown type — a machine-found candidate "
+                "list for the ghost-shop audit. "
+            )
+        interpretation += (
+            "DBSCAN finding one big cluster (98.7% noise at default settings) "
+            "says the network is a continuous fabric rather than isolated "
+            "islands — archetypes overlap at the edges, which the silhouette "
+            "of ~0.19 also reflects."
+        )
+        section("Interpretation", interpretation)
 
-# --------------------------------------------------------------------------
-with tab_sales:
+# ==========================================================================
+with tab_rq2:
     if require(art, "predictions", "metrics"):
         reg = art["metrics"].get("phase_3_regression", {})
-        st.subheader(f"Model benchmark — best: {reg.get('best_model', '?')}")
-        st.caption("Benchmark metrics come from the held-out test set of the full training run.")
+        section(
+            "Why this question",
+            "If a shop's expected monthly sales can be predicted from where it is "
+            "and what kind of shop it is, targets can be set from evidence — and "
+            "large gaps between model and book become a signal in themselves.",
+        )
+        with st.expander("Method"):
+            st.markdown(
+                "The 613,660 shops with a target are split 80/20. A linear "
+                "regression baseline is benchmarked against Random Forest, XGBoost "
+                "and LightGBM on identical features; the winner (lowest test RMSE) "
+                "is explained with SHAP, which decomposes each prediction into "
+                "per-feature contributions."
+            )
+
+        st.subheader(f"Result — best model: {reg.get('best_model', '?')}")
         models = pd.DataFrame(reg.get("models", {})).T.reset_index(names="model")
         st.dataframe(
             models.style.format({"rmse": "{:.3f}", "mae": "{:.3f}", "r2": "{:.3f}"}),
@@ -695,62 +710,78 @@ with tab_sales:
         with c1:
             st.altair_chart(
                 hbar(models[["model", "rmse"]], "rmse", "model").properties(
-                    height=220, title="Test RMSE (lower is better)"
-                ),
+                    height=220, title="Test RMSE (lower is better)"),
                 width="stretch",
             )
         with c2:
             if "shap" in art:
-                top_shap = art["shap"].head(15)
                 st.altair_chart(
-                    hbar(top_shap, "mean_abs_shap", "feature",
+                    hbar(art["shap"].head(15), "mean_abs_shap", "feature",
                          value_title="mean |SHAP|").properties(
-                        height=350, title="Top 15 feature attributions"
-                    ),
+                        height=340, title="Top 15 feature attributions"),
                     width="stretch",
                 )
 
-        st.subheader("Actual vs predicted (current view, sampled)")
         preds = f[f["has_target"] & f["predicted"].notna()]
-        if preds.empty:
-            st.info("No shops with predictions match the current filters.")
-        else:
+        if not preds.empty:
+            st.markdown("**Actual vs predicted (current view, sampled)**")
             preds = preds.sample(min(5_000, len(preds)), random_state=0)
             limit = float(preds[[TARGET_COLUMN, "predicted"]].quantile(0.99).max())
             scatter = (
                 alt.Chart(preds.rename(columns={TARGET_COLUMN: "actual"}))
                 .mark_circle(size=14, color=SEQUENTIAL_HUE, opacity=0.35)
-                .encode(
-                    x=alt.X("actual", scale=alt.Scale(domain=(0, limit), clamp=True)),
-                    y=alt.Y("predicted", scale=alt.Scale(domain=(0, limit), clamp=True)),
-                    tooltip=["shop_code", "division", "actual", "predicted"],
-                )
+                .encode(x=alt.X("actual", scale=alt.Scale(domain=(0, limit), clamp=True)),
+                        y=alt.Y("predicted", scale=alt.Scale(domain=(0, limit), clamp=True)),
+                        tooltip=["shop_code", "division", "actual", "predicted"])
             )
             diagonal = (
                 alt.Chart(pd.DataFrame({"v": [0, limit]}))
-                .mark_line(color="#999", strokeDash=[4, 4])
-                .encode(x="v", y="v")
+                .mark_line(color="#999", strokeDash=[4, 4]).encode(x="v", y="v")
             )
-            st.altair_chart((scatter + diagonal).properties(height=380), width="stretch")
+            st.altair_chart((scatter + diagonal).properties(height=360), width="stretch")
 
-# --------------------------------------------------------------------------
-with tab_risk:
+        baseline_r2 = reg.get("models", {}).get("linear_regression", {}).get("r2", float("nan"))
+        best_r2 = reg.get("models", {}).get(reg.get("best_model", ""), {}).get("r2", float("nan"))
+        section(
+            "Interpretation",
+            f"The linear baseline explains almost nothing (R² {baseline_r2:.2f}) while "
+            f"{reg.get('best_model', '?')} reaches R² {best_r2:.2f} on the same inputs — the "
+            "relationship is real but non-linear. SHAP puts assortment breadth and "
+            "importance tier first, then micro-location (density within 500 m, "
+            "coordinates, distance to the district centre). Shops far above the "
+            "diagonal in the scatter are under-targeted relative to their profile; "
+            "far below, over-targeted.",
+        )
+
+# ==========================================================================
+with tab_rq3:
     if require(art, "metrics") and "risk_score" in f:
         clf = art["metrics"].get("phase_4_classification", {})
-        st.subheader(f"Target-miss risk — best: {clf.get('best_model', '?')}")
-        st.caption(f"Label (proxy): `{clf.get('label_definition', '')}` · "
-                   f"base rate {clf.get('label_rate', 0):.1%}")
+        section(
+            "Why this question",
+            "Target shortfalls are currently discovered at quarter-end, after the "
+            "quarter is lost. A classifier that flags at-risk shops in advance "
+            "turns that from an autopsy into a to-do list.",
+        )
+        with st.expander("Method"):
+            st.markdown(
+                f"The dataset has assigned targets, not realized sales, so the label "
+                f"is an explicit proxy: `{clf.get('label_definition', '')}` "
+                f"(threshold {clf.get('risk_threshold', 0.8)}). Base rate "
+                f"{clf.get('label_rate', 0):.1%}. Logistic regression, Random Forest "
+                "and XGBoost are trained on a stratified 80/20 split; SMOTE "
+                "oversampling runs only inside the training fold so the test set "
+                "is never touched."
+            )
 
+        st.subheader(f"Result — best model: {clf.get('best_model', '?')}")
         models = pd.DataFrame(clf.get("models", {})).T.reset_index(names="model")
         st.dataframe(
             models.style.format("{:.3f}", subset=models.columns[1:].tolist()),
             width="stretch", hide_index=True,
         )
-
         risk_view = f[f["risk_score"].notna()]
-        if risk_view.empty:
-            st.info("No scored shops match the current filters.")
-        else:
+        if not risk_view.empty:
             c1, c2 = st.columns(2)
             with c1:
                 by_division = (
@@ -758,10 +789,8 @@ with tab_risk:
                     .rename("mean risk").rename_axis("division").reset_index()
                 )
                 st.altair_chart(
-                    hbar(by_division, "mean risk", "division",
-                         color=STATUS_SERIOUS, fmt=".1%").properties(
-                        height=280, title="Mean predicted risk by division (current view)"
-                    ),
+                    hbar(by_division, "mean risk", "division", color=STATUS_SERIOUS,
+                         fmt=".1%").properties(height=270, title="Mean predicted risk by division"),
                     width="stretch",
                 )
             with c2:
@@ -770,18 +799,14 @@ with tab_risk:
                         risk_view.groupby("cluster")["risk_score"].mean()
                         .rename("mean risk").rename_axis("cluster").reset_index()
                     )
-                    by_cluster["archetype"] = by_cluster["cluster"].map(
-                        lambda c: f"Cluster {int(c)}"
-                    )
+                    by_cluster["archetype"] = by_cluster["cluster"].map(lambda c: f"Cluster {int(c)}")
                     st.altair_chart(
-                        hbar(by_cluster[["archetype", "mean risk"]], "mean risk",
-                             "archetype", color=STATUS_SERIOUS, fmt=".1%").properties(
-                            height=280, title="Mean predicted risk by archetype (current view)"
-                        ),
+                        hbar(by_cluster[["archetype", "mean risk"]], "mean risk", "archetype",
+                             color=STATUS_SERIOUS, fmt=".1%").properties(
+                            height=270, title="Mean predicted risk by archetype"),
                         width="stretch",
                     )
-
-            st.subheader("Highest-risk shops (current view)")
+            st.markdown("**Highest-risk shops (current view)**")
             st.dataframe(
                 risk_view.sort_values("risk_score", ascending=False)
                 [["shop_code", "division", "zila", "shop_type", "shop_importance",
@@ -789,43 +814,77 @@ with tab_risk:
                 width="stretch", hide_index=True,
             )
 
-# --------------------------------------------------------------------------
-with tab_anomaly:
+        best_auc = clf.get("models", {}).get(clf.get("best_model", ""), {}).get("roc_auc", float("nan"))
+        risk_all = base[base["risk_score"].notna()] if "risk_score" in base else pd.DataFrame()
+        geo_note = ""
+        if not risk_all.empty:
+            by_div_all = risk_all.groupby("division")["at_risk"].mean().drop("Unknown", errors="ignore").sort_values()
+            geo_note = (
+                f" Geographically, predicted risk runs from {by_div_all.iloc[0]:.0%} in "
+                f"{by_div_all.index[0]} to {by_div_all.iloc[-1]:.0%} in {by_div_all.index[-1]} — "
+                "a ready-made priority order for field teams."
+            )
+        section(
+            "Interpretation",
+            f"ROC-AUC {best_auc:.2f} from structural features alone is strong "
+            "discrimination for a proxy label; with realized sales the identical "
+            "pipeline retrains into a true will-miss-next-quarter model." + geo_note,
+        )
+
+# ==========================================================================
+with tab_rq4:
     if require(art, "metrics") and "combined_score" in f:
         anom = art["metrics"].get("phase_5_anomaly", {})
+        section(
+            "Why this question",
+            "An unknown share of the distributor's book is duplicates, ghost shops "
+            "or mis-entered data, and a few legitimate shops behave so unlike their "
+            "peers that they signal either fraud or untapped demand. Ranking every "
+            "shop by peer-relative strangeness turns a 720k-row audit into a "
+            "prioritised worklist.",
+        )
+        with st.expander("Method"):
+            st.markdown(
+                "Isolation Forest and Local Outlier Factor are fitted separately "
+                "within each of the 8 archetypes, so every shop is compared only "
+                "with its own kind. Each method's score becomes a percentile rank "
+                "within the cluster; the final score is their mean. The top decile "
+                "is exported for manual triage."
+            )
+
         anomaly_view = f[f["combined_score"].notna()]
         c1, c2, c3 = st.columns(3)
         c1.metric("Shops scored (view)", f"{len(anomaly_view):,}")
-        top_decile = anomaly_view[anomaly_view["combined_score"] >= 0.90]
-        c2.metric("Top-decile anomalies (view)", f"{len(top_decile):,}")
-        c3.metric("Skipped small clusters (full run)", anom.get("n_skipped_small_clusters", 0))
+        c2.metric("Top decile in view", f"{len(anomaly_view[anomaly_view['combined_score'] >= 0.90]):,}")
+        c3.metric("Top decile (full run)", f"{anom.get('n_top_anomalies', 0):,}")
 
-        st.subheader("Anomaly map (highest combined score in view)")
-        st.caption(
-            "Isolation Forest + LOF fitted within each cluster; triage as "
-            "fraud / data error / hidden opportunity"
-        )
+        st.subheader("Result — ranked anomalies")
         map_top = (
             anomaly_view.sort_values("combined_score", ascending=False)
             .dropna(subset=["latitude", "longitude"]).head(MAP_SAMPLE)
         )
-        if map_top.empty:
-            st.info("No scored shops match the current filters.")
-        else:
+        if not map_top.empty:
             st_folium(
                 shop_map(map_top, lambda row: STATUS_SERIOUS,
                          ["shop_code", "division", "shop_type", "combined_score"]),
-                height=420, use_container_width=True, returned_objects=[],
+                height=400, use_container_width=True, returned_objects=[],
             )
-            st.subheader("Ranked anomalies (current view)")
             st.dataframe(
-                map_top[["shop_code", "cluster", "combined_score", "division",
-                         "zila", "shop_type", "shop_importance", "density_1km",
-                         TARGET_COLUMN]].head(500),
+                map_top[["shop_code", "cluster", "combined_score", "division", "zila",
+                         "shop_type", "shop_importance", "density_1km", TARGET_COLUMN]].head(500),
                 width="stretch", hide_index=True,
             )
+        section(
+            "Interpretation",
+            "A high combined score means both detectors agree the shop is unlike "
+            "its archetype peers. Field triage sorts these into three buckets: "
+            "data errors (wrong GPS, duplicate entry), fraud candidates (targets "
+            "or importance inconsistent with surroundings), and hidden "
+            "opportunities (thriving shops in thin markets). Shops that are "
+            "simultaneously in the RQ3 high-risk list deserve the first visits.",
+        )
 
-# --------------------------------------------------------------------------
+# ==========================================================================
 with tab_report:
     if require(art, "metrics"):
         risk_by_division = None
@@ -838,10 +897,9 @@ with tab_report:
             risk_by_division=risk_by_division,
             top_anomalies=art.get("top_anomalies"),
         )
-
-        st.subheader("Analysis report — dataset to conclusions, end to end")
+        st.subheader("Analysis report — dataset to conclusions")
         st.caption(
-            "Generated live from reports/metrics.json (full dataset, not filtered) "
+            "Generated live from reports/metrics.json (full dataset, not filtered), "
             "so the numbers always match the latest pipeline run."
         )
         st.download_button(
@@ -853,7 +911,6 @@ with tab_report:
         for section_md in sections.values():
             st.markdown(section_md)
             st.divider()
-
         durations = art["metrics"].get("durations_sec", {})
         if durations:
             st.caption(

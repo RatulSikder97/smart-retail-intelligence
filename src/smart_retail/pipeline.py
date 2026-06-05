@@ -26,6 +26,7 @@ from smart_retail.models.anomaly import run_anomaly
 from smart_retail.models.classification import run_classification
 from smart_retail.models.clustering import run_clustering
 from smart_retail.models.regression import run_regression
+from smart_retail.profiling import build_dataset_profile
 
 log = logging.getLogger("smart_retail")
 
@@ -62,6 +63,10 @@ def _load_cluster_labels(config: Config, features: pd.DataFrame) -> pd.Series:
 def phase_1_preprocess(config: Config, nrows: int | None) -> tuple[pd.DataFrame, dict]:
     shops = loader.load_shops(config, nrows=nrows)
     targets = loader.load_targets(config)
+
+    profile = build_dataset_profile(shops, targets, loader.load_products(config))
+    (config.reports_dir / "dataset_profile.json").write_text(json.dumps(profile, indent=2))
+
     features, report = run_preprocessing(shops, targets, config)
     features.to_parquet(config.processed_dir / FEATURES_PARQUET, index=False)
     return features, report

@@ -35,11 +35,67 @@ services:
     command: pytest -v
 
   # ---- big-data layer (start with: docker compose --profile spark up -d) ----
-  # Spark standalone cluster; Spark bundles the Hadoop 3 client libraries, so
-  # no separate HDFS/YARN is needed at this data size — the shared ./data
-  # volume plays the storage role.
+  # HDFS (namenode + datanode) is the storage layer; the Spark standalone
+  # cluster reads raw data from and writes every phase's output to HDFS.
+  # apache/hadoop ships amd64-only — Docker Desktop runs it via Rosetta.
+  namenode:
+    image: apache/hadoop:3.4.1
+    platform: linux/amd64
+    profiles: ["spark"]
+    hostname: namenode
+    command: ["hdfs", "namenode"]
+    environment:
+      - ENSURE_NAMENODE_DIR=/tmp/hadoop-hadoop/dfs/name
+      # non-blocking entropy: SecureRandom hangs the namenode under Rosetta
+      - HADOOP_OPTS=-Djava.security.egd=file:/dev/./urandom
+      - CORE-SITE.XML_fs.default.name=hdfs://namenode:8020
+      - CORE-SITE.XML_fs.defaultFS=hdfs://namenode:8020
+      - HDFS-SITE.XML_dfs.namenode.rpc-address=namenode:8020
+      - HDFS-SITE.XML_dfs.namenode.rpc-bind-host=0.0.0.0
+      - HDFS-SITE.XML_dfs.namenode.servicerpc-bind-host=0.0.0.0
+      - HDFS-SITE.XML_dfs.replication=1
+      - HDFS-SITE.XML_dfs.permissions.enabled=false
+    ports:
+      - "9870:9870"   # namenode web UI
+
+  datanode:
+    image: apache/hadoop:3.4.1
+    platform: linux/amd64
+    profiles: ["spark"]
+    hostname: datanode
+    command: ["hdfs", "datanode"]
+    environment:
+      - HADOOP_OPTS=-Djava.security.egd=file:/dev/./urandom
+      - CORE-SITE.XML_fs.default.name=hdfs://namenode:8020
+      - CORE-SITE.XML_fs.defaultFS=hdfs://namenode:8020
+      - HDFS-SITE.XML_dfs.namenode.rpc-address=namenode:8020
+      - HDFS-SITE.XML_dfs.replication=1
+      - HDFS-SITE.XML_dfs.permissions.enabled=false
+    depends_on:
+      - namenode
+
+  hdfs-ingest:
+    image: apache/hadoop:3.4.1
+    platform: linux/amd64
+    profiles: ["spark-jobs"]
+    command: ["bash", "-c",
+      "for i in $(seq 1 30); do hdfs dfs -ls / >/dev/null 2>&1 && break; echo waiting for namenode…; sleep 3; done; hdfs dfs -mkdir -p /smart_retail/raw && hdfs dfs -put -f /data/dataset/*.csv /smart_retail/raw/ && hdfs dfs -ls -h /smart_retail/raw"]
+    environment:
+      - CORE-SITE.XML_fs.default.name=hdfs://namenode:8020
+      - CORE-SITE.XML_fs.defaultFS=hdfs://namenode:8020
+      - HDFS-SITE.XML_dfs.replication=1
+      - HDFS-SITE.XML_dfs.permissions.enabled=false
+    depends_on:
+      - namenode
+      - datanode
+    volumes:
+      - ./dataset:/data/dataset:ro
+
   spark-master:
-    image: apache/spark:3.5.4
+    image: smart-retail-spark:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.spark
     profiles: ["spark"]
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
     environment:
@@ -53,7 +109,10 @@ services:
       - ./spark_jobs:/opt/jobs:ro
 
   spark-worker:
-    image: apache/spark:3.5.4
+    image: smart-retail-spark:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.spark
     profiles: ["spark"]
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
     environment:
@@ -70,7 +129,10 @@ services:
       - ./spark_jobs:/opt/jobs:ro
 
   spark-etl:
-    image: apache/spark:3.5.4
+    image: smart-retail-spark:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.spark
     profiles: ["spark-jobs"]
     command: >
       /opt/spark/bin/spark-submit
@@ -82,5 +144,27 @@ services:
       - spark-worker
     volumes:
       - ./dataset:/data/dataset:ro
+      - ./data:/data/out
+      - ./spark_jobs:/opt/jobs:ro
+
+  spark-pipeline:
+    image: smart-retail-spark:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.spark
+    profiles: ["spark-jobs"]
+    command: >
+      /opt/spark/bin/spark-submit
+      --master spark://spark-master:7077
+      --deploy-mode client
+      --driver-memory 3g
+      --conf spark.hadoop.fs.defaultFS=hdfs://namenode:8020
+      /opt/jobs/spark_ml_pipeline.py
+    depends_on:
+      - spark-master
+      - spark-worker
+      - namenode
+      - datanode
+    volumes:
       - ./data:/data/out
       - ./spark_jobs:/opt/jobs:ro
