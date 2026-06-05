@@ -10,8 +10,8 @@
   "durations_sec": {
     "phase_1": 35.0,
     "phase_2": 43.9,
-    "phase_3": 121.2,
-    "phase_4": 77.8,
+    "phase_3": 164.0,
+    "phase_4": 477.7,
     "phase_5": 58.0
   },
   "phase_2_clustering": {
@@ -114,6 +114,17 @@
         "mean": 236.7501,
         "std": 59.9073
       }
+    },
+    "cv_tuned": {
+      "folds": 5,
+      "r2": {
+        "mean": 0.3276,
+        "std": 0.0637
+      },
+      "rmse": {
+        "mean": 206.6782,
+        "std": 32.7426
+      }
     }
   },
   "phase_4_classification": {
@@ -135,12 +146,45 @@
         "f1": 0.6948209542998444,
         "precision": 0.7159844284534623,
         "recall": 0.674872684413014
+      },
+      "xgboost_tuned": {
+        "roc_auc": 0.8692912389308101,
+        "f1": 0.7116926973406501,
+        "precision": 0.7307079604554186,
+        "recall": 0.6936420041363667
       }
     },
-    "best_model": "xgboost",
+    "best_model": "xgboost_tuned",
     "label_definition": "at_risk = total_target < risk_threshold * median(total_target | cluster, shop_type)",
     "label_rate": 0.3663869243555063,
-    "risk_threshold": 0.8
+    "risk_threshold": 0.8,
+    "tuning": {
+      "engine": "Optuna TPE (Bayesian)",
+      "n_trials": 30,
+      "tuning_sample": 100000,
+      "objective": "3-fold CV ROC-AUC (maximized, SMOTE inside each fold)",
+      "best_cv_roc_auc": 0.8435,
+      "best_params": {
+        "n_estimators": 550,
+        "max_depth": 10,
+        "learning_rate": 0.04451836808538962,
+        "subsample": 0.8925117520309815,
+        "colsample_bytree": 0.9770744481113529,
+        "min_child_weight": 3,
+        "reg_lambda": 2.3824122438365998
+      }
+    },
+    "cv": {
+      "folds": 5,
+      "roc_auc": {
+        "mean": 0.8697,
+        "std": 0.0006
+      },
+      "f1": {
+        "mean": 0.712,
+        "std": 0.0011
+      }
+    }
   },
   "phase_5_anomaly": {
     "n_scored": 719817,
