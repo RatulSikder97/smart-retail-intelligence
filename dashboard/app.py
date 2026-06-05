@@ -64,7 +64,7 @@ html, body, [data-testid="stAppViewContainer"] * {
 [data-testid="stHeader"] { background: transparent; }
 code, kbd, pre, [data-testid="stMetricValue"] { font-variant-numeric: tabular-nums; }
 
-.block-container { max-width: 1240px; padding-top: 0.7rem; padding-bottom: 3.2rem; }
+.block-container { max-width: 1240px; padding-top: 0.55rem; padding-bottom: 3rem; }
 #MainMenu, footer, [data-testid="stToolbar"], [data-testid="stDecoration"] { display: none; }
 
 h1, h2, h3 { color: var(--ink); letter-spacing: -0.015em; }
@@ -73,7 +73,7 @@ p, li { color: #344054; }
 /* ---- segmented pill navigation ---- */
 div[data-baseweb="tab-list"] {
   gap: 2px; background: #EEF1F5; padding: 4px; border-radius: 12px;
-  width: fit-content; max-width: 100%; overflow-x: auto;
+  width: fit-content; max-width: 100%; overflow-x: auto; margin-bottom: 0.35rem;
 }
 button[data-baseweb="tab"] {
   border-radius: 9px !important; padding: 0 14px !important; height: 34px;
@@ -92,6 +92,7 @@ div[data-baseweb="tab-highlight"], div[data-baseweb="tab-border"] { display: non
 /* ---- inputs ---- */
 div[data-baseweb="select"] > div {
   background: #fff; border-color: var(--border) !important; border-radius: 9px;
+  min-height: 36px;
 }
 div[data-baseweb="select"] span { font-size: 0.84rem; }
 .stMultiSelect label p, .stSelectbox label p, .stToggle label p,
@@ -107,7 +108,9 @@ div[data-baseweb="select"] span { font-size: 0.84rem; }
 div[data-testid="stVerticalBlockBorderWrapper"] > div {
   border-color: var(--border) !important; border-radius: var(--radius);
   background: var(--surface); box-shadow: var(--shadow-sm);
+  padding: 0.85rem 1.05rem !important;
 }
+div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlock"] { gap: 0.6rem; }
 details[data-testid="stExpander"] {
   border: 1px solid var(--border); border-radius: var(--radius);
   background: var(--surface); box-shadow: var(--shadow-sm);
@@ -170,13 +173,18 @@ details[data-testid="stExpander"] summary:hover p { color: var(--ink); }
 .hdr-meta { font-size: 0.77rem; color: var(--ink-3); text-align: right; line-height: 1.5; }
 .hdr-meta b { color: var(--ink-2); font-weight: 600; }
 
-/* ---- latest-run line with live dot ---- */
-.runline {
-  display: flex; align-items: center; flex-wrap: wrap; gap: 2px;
-  font-size: 0.79rem; color: var(--ink-3); margin: 0 0 1.05rem 0;
-}
-.runline b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
-.runline .sep { margin: 0 8px; color: #D0D5DD; }
+/* ---- header stat group ---- */
+.hdr-right { display: flex; align-items: center; gap: 18px; }
+.hstat { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.25; }
+.hstat span { font-size: 0.68rem; font-weight: 500; color: var(--ink-3); }
+.hstat b { font-size: 0.98rem; font-weight: 650; color: var(--ink);
+           font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+/* ---- facts strip ---- */
+.facts { font-size: 0.8rem; color: var(--ink-2); margin: -0.2rem 0 1rem 0; }
+.facts b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.facts .sep { margin: 0 8px; color: #D0D5DD; }
+
 .live-dot {
   display: inline-flex; align-items: center; gap: 6px; margin-right: 10px;
   font-size: 0.74rem; font-weight: 600; color: #027A48;
@@ -234,8 +242,8 @@ def stat_row(tiles: list[tuple], accent: bool = False) -> None:
 
 def section_header(eyebrow: str, title: str, description: str = "") -> None:
     st.markdown(
-        f'<div class="eyebrow">{eyebrow}</div>'
-        f'<p class="section-title">{title}</p>'
+        (f'<div class="eyebrow">{eyebrow}</div>' if eyebrow else "")
+        + f'<p class="section-title">{title}</p>'
         + (f'<p class="section-desc">{description}</p>' if description else ""),
         unsafe_allow_html=True,
     )
@@ -431,46 +439,40 @@ def section(title: str, body: str) -> None:
 
 art = load_artifacts()
 
+_m = art.get("metrics", {})
+_q = _m.get("phase_1_preprocessing", {})
+_c = _m.get("phase_2_clustering", {})
+_r = _m.get("phase_3_regression", {})
+_cl = _m.get("phase_4_classification", {})
+_reg_best = _r.get("models", {}).get(_r.get("best_model", ""), {})
+_clf_best = _cl.get("models", {}).get(_cl.get("best_model", ""), {})
+_hstats = "".join(
+    f'<div class="hstat"><span>{label}</span><b>{value}</b></div>'
+    for label, value in [
+        ("Outlets", f"{_q.get('n_final_shops', 0):,}"),
+        ("Archetypes", f"k = {_c.get('best_k', '—')}"),
+        ("Sales R²", f"{_reg_best.get('r2', float('nan')):.2f}"),
+        ("Risk AUC", f"{_clf_best.get('roc_auc', float('nan')):.3f}"),
+    ]
+) if _m else ""
 st.markdown(
-    """
+    f"""
 <div class="hdr">
   <div class="hdr-left">
     <div class="hdr-logo"><i></i><i></i><i></i></div>
     <div>
       <div class="wordmark">Smart Retail Intelligence</div>
-      <div class="hdr-sub">Bangladesh FMCG distribution network · 719,817 GPS-tagged outlets</div>
+      <div class="hdr-sub">Bangladesh FMCG network · MITE 431 term project · R. Sikder &amp; F. Rahman · Mendeley (CC BY 4.0)</div>
     </div>
   </div>
-  <div class="hdr-meta">
-    <b>MITE 431 · Big Data Analytics</b><br>
-    Mendeley dataset (CC BY 4.0) · R. Sikder &amp; F. Rahman
+  <div class="hdr-right">
+    <span class="live-dot">Live</span>
+    {_hstats}
   </div>
 </div>
 """,
     unsafe_allow_html=True,
 )
-
-_m = art.get("metrics", {})
-if _m:
-    _q = _m.get("phase_1_preprocessing", {})
-    _c = _m.get("phase_2_clustering", {})
-    _r = _m.get("phase_3_regression", {})
-    _cl = _m.get("phase_4_classification", {})
-    _reg_best = _r.get("models", {}).get(_r.get("best_model", ""), {})
-    _clf_best = _cl.get("models", {}).get(_cl.get("best_model", ""), {})
-    _pills = [
-        ("outlets", f"{_q.get('n_final_shops', 0):,}"),
-        ("features", _q.get("n_feature_columns", "—")),
-        ("archetypes", f"k = {_c.get('best_k', '—')}"),
-        ("sales R²", f"{_reg_best.get('r2', float('nan')):.2f}"),
-        ("risk AUC", f"{_clf_best.get('roc_auc', float('nan')):.3f}"),
-    ]
-    st.markdown(
-        '<div class="runline"><span class="live-dot">Pipeline artifacts loaded</span>Latest run<span class="sep">·</span>'
-        + '<span class="sep">·</span>'.join(f'{label} <b>{value}</b>' for label, value in _pills)
-        + "</div>",
-        unsafe_allow_html=True,
-    )
 
 if "features" not in art:
     require(art, "features")
@@ -532,9 +534,8 @@ with tab_overview:
     quality = art.get("metrics", {}).get("phase_1_preprocessing", {})
 
     section_header(
-        "The network", "Dataset at a glance",
-        "Full dataset, independent of filters — Mendeley mgzvngzng2 v1 "
-        "(Shahin, Swarna & Farid, 2025), collected Feb 2022 – Oct 2024.",
+        "", "Dataset at a glance",
+        "Full dataset, independent of filters — Mendeley mgzvngzng2 v1, collected Feb 2022 – Oct 2024.",
     )
     n_products_cat = len(art["products"]) if "products" in art else 42
     brands = art["products"]["brand"].nunique() if "products" in art else 5
@@ -545,17 +546,23 @@ with tab_overview:
          f"{quality.get('n_invalid_or_missing_gps', 0):,} lacked GPS"),
         ("With sales target", f"{quality.get('n_shops_with_target', int(base['has_target'].sum())):,}",
          f"{quality.get('n_shops_with_target', 0) / max(quality.get('n_final_shops', 1), 1):.0%} of outlets"),
-        ("SKU variants", n_products_cat, f"{brands} brands · {types_} types"),
-        ("Targeted products", len(schema.PRODUCT_TARGET_COLUMNS), "per shop"),
-    ])
-    stat_row([
         ("Divisions", base["division"].nunique(), "incl. 'Unknown'"),
-        ("Districts · zila", base["zila"].nunique(), None),
-        ("Sub-districts · upazila", base["upazila"].nunique(), None),
-        ("Model features", quality.get("n_feature_columns", "—"), "engineered in phase 1"),
         ("Mean predicted risk", f"{base['risk_score'].mean():.1%}" if "risk_score" in base else "—",
          "across scored shops"),
     ])
+    _facts = [
+        ("Districts", base["zila"].nunique()),
+        ("Upazilas", base["upazila"].nunique()),
+        ("SKU variants", f"{n_products_cat} ({brands} brands · {types_} types)"),
+        ("Targeted products / shop", len(schema.PRODUCT_TARGET_COLUMNS)),
+        ("Model features", quality.get("n_feature_columns", "—")),
+    ]
+    st.markdown(
+        '<div class="facts">'
+        + '<span class="sep">·</span>'.join(f'{k} <b>{v}</b>' for k, v in _facts)
+        + "</div>",
+        unsafe_allow_html=True,
+    )
 
     if filters_active:
         st.markdown('<div style="height:0.4rem"></div>', unsafe_allow_html=True)
