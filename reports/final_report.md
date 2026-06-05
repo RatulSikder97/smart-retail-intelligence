@@ -7,7 +7,7 @@ Generated from `reports/metrics.json` — numbers always match the artifacts of 
 **Comprehensive Retail Network Dataset of Bangladesh** (Shahin, Swarna & Farid,
 2025) — Mendeley `mgzvngzng2` v1, CC BY 4.0, collected Feb 2022 – Oct 2024.
 Three files: shop records with GPS and structure (832,881 rows), monthly
-sales targets for 17 products per shop (853,732 rows), and a 42-SKU product
+sales targets for 17 products per shop (853,731 rows), and a 42-SKU product
 catalogue (5 brands, 9 product types) with price tiers.
 
 ### Data quality & preprocessing
@@ -69,7 +69,7 @@ network is dense and continuous rather than separated islands.
 
 ---
 
-### RQ2 — Can monthly sales be predicted from location, type, and density?
+### RQ2 — Can monthly sales be predicted from location, type, density, and assortment?
 
 | Model | RMSE | MAE | R² |
 |---|---|---|---|
@@ -108,7 +108,7 @@ under-indexes its (cluster × shop-type) peers. Base rate:
 
 **Comment.** The best model (xgboost_tuned) reaches ROC-AUC
 0.875 — strong
-discrimination from structural features alone; with realized sales data the
+discrimination from structural and assortment features; with realized sales data the
 same pipeline retrains unchanged into a true "will miss next quarter" model.
 
 Hyperparameters of the winner were selected by Optuna TPE (Bayesian) (30 trials, 3-fold CV ROC-AUC (maximized, class weights inside each fold)).
@@ -135,7 +135,7 @@ into: **8 interpretable archetypes**, a sales model
 (R² 0.45), a target-miss risk ranking
 (ROC-AUC 0.875), and
 71,982 triage-ready anomalies — in
-459s of compute.
+465s of compute.
 
 Recommended actions for the distributor:
 
