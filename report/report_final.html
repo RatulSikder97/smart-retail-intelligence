@@ -76,14 +76,14 @@
     <tr><td class="l1">4.2&emsp;Unsupervised Learning: Shop Archetypes (RQ1)</td><td class="pg">16</td></tr>
     <tr><td class="l1">4.3&emsp;Supervised Learning: Sales-Target Regression (RQ2)</td><td class="pg">20</td></tr>
     <tr><td class="l1">4.4&emsp;Supervised Learning: Target-Miss Risk Classification (RQ3)</td><td class="pg">24</td></tr>
-    <tr><td class="l1">4.5&emsp;Unsupervised Learning: Anomaly Detection (RQ4)</td><td class="pg">27</td></tr>
-    <tr><td class="l1">4.6&emsp;Distributed Execution on the Spark Cluster</td><td class="pg">28</td></tr>
-    <tr><td class="l1">4.7&emsp;Summary Comparison Under Cross-Validation</td><td class="pg">29</td></tr>
-    <tr><td class="l1">4.8&emsp;Threats to Validity</td><td class="pg">29</td></tr>
-    <tr><td>5&emsp;Conclusion</td><td class="pg">30</td></tr>
-    <tr><td>References</td><td class="pg">31</td></tr>
-    <tr><td>Appendix A: Files accompanying this report</td><td class="pg">32</td></tr>
-    <tr><td>Appendix B: Reproduction and key source code excerpts</td><td class="pg">32</td></tr>
+    <tr><td class="l1">4.5&emsp;Unsupervised Learning: Anomaly Detection (RQ4)</td><td class="pg">26</td></tr>
+    <tr><td class="l1">4.6&emsp;Distributed Execution on the Spark Cluster</td><td class="pg">27</td></tr>
+    <tr><td class="l1">4.7&emsp;Summary Comparison Under Cross-Validation</td><td class="pg">28</td></tr>
+    <tr><td class="l1">4.8&emsp;Threats to Validity</td><td class="pg">28</td></tr>
+    <tr><td>5&emsp;Conclusion</td><td class="pg">29</td></tr>
+    <tr><td>References</td><td class="pg">30</td></tr>
+    <tr><td>Appendix A: Files accompanying this report</td><td class="pg">31</td></tr>
+    <tr><td>Appendix B: Reproduction and key source code excerpts</td><td class="pg">31</td></tr>
   </table>
 </div>
 
@@ -103,12 +103,12 @@
     <tr><td>11.&emsp;Cluster profiles (medians over the full dataset)</td><td class="pg">18</td></tr>
     <tr><td>13.&emsp;Hyperparameter search space and selected values (regression)</td><td class="pg">21</td></tr>
     <tr><td>14.&emsp;Regression performance on the held-out test set</td><td class="pg">22</td></tr>
-    <tr><td>15.&emsp;Regression performance under 5-fold cross-validation</td><td class="pg">23</td></tr>
+    <tr><td>15.&emsp;Regression performance under 5-fold cross-validation</td><td class="pg">22</td></tr>
     <tr><td>16.&emsp;Hyperparameter search space and selected values (classification)</td><td class="pg">23</td></tr>
-    <tr><td>17.&emsp;Risk classification performance on the held-out test set</td><td class="pg">25</td></tr>
+    <tr><td>17.&emsp;Risk classification performance on the held-out test set</td><td class="pg">24</td></tr>
     <tr><td>18.&emsp;Confusion matrix of the winning classifier (out-of-fold)</td><td class="pg">25</td></tr>
     <tr><td>19.&emsp;Reference versus distributed execution</td><td class="pg">26</td></tr>
-    <tr><td>20.&emsp;All algorithms under 5-fold cross-validation</td><td class="pg">28</td></tr>
+    <tr><td>20.&emsp;All algorithms under 5-fold cross-validation</td><td class="pg">27</td></tr>
   </table>
 </div>
 
@@ -124,15 +124,15 @@
     <tr><td>7.&emsp;Distribution of the monthly total target</td><td class="pg">13</td></tr>
     <tr><td>8.&emsp;Monthly target by division (median and IQR)</td><td class="pg">14</td></tr>
     <tr><td>9.&emsp;Missing values per raw column</td><td class="pg">14</td></tr>
-    <tr><td>10.&emsp;Model selection for the number of clusters</td><td class="pg">18</td></tr>
+    <tr><td>10.&emsp;Model selection for the number of clusters</td><td class="pg">17</td></tr>
     <tr><td>11.&emsp;Archetype sizes</td><td class="pg">19</td></tr>
     <tr><td>12.&emsp;Spatial map of the eight archetypes</td><td class="pg">20</td></tr>
-    <tr><td>13.&emsp;Training time versus accuracy of all candidate families</td><td class="pg">22</td></tr>
-    <tr><td>14.&emsp;Assigned target versus model prediction</td><td class="pg">24</td></tr>
+    <tr><td>13.&emsp;Training time versus accuracy of all candidate families</td><td class="pg">21</td></tr>
+    <tr><td>14.&emsp;Assigned target versus model prediction</td><td class="pg">23</td></tr>
     <tr><td>15.&emsp;Top-10 SHAP feature attributions</td><td class="pg">24</td></tr>
-    <tr><td>16.&emsp;Out-of-fold ROC curves of the risk classifiers</td><td class="pg">26</td></tr>
-    <tr><td>17.&emsp;Share of shops labelled at-risk, by division</td><td class="pg">27</td></tr>
-    <tr><td>18.&emsp;Distribution of the combined anomaly score</td><td class="pg">28</td></tr>
+    <tr><td>16.&emsp;Out-of-fold ROC curves of the risk classifiers</td><td class="pg">25</td></tr>
+    <tr><td>17.&emsp;Share of shops labelled at-risk, by division</td><td class="pg">26</td></tr>
+    <tr><td>18.&emsp;Distribution of the combined anomaly score</td><td class="pg">27</td></tr>
   </table>
 </div>
 \n
@@ -353,7 +353,7 @@
 
 <p class="noindent"><i>How the algorithm works.</i> K-Means keeps one centroid per cluster and alternates two steps until the assignments stop changing: it assigns each shop to its nearest centroid, then moves each centroid to the mean of the shops assigned to it. Every iteration is guaranteed to lower the within-cluster sum of squared distances. Each iteration also costs time linear in the number of shops, clusters, and features, and that linearity is the reason the method stays practical at 719,817 &times; 48. The algorithm has two well-known weaknesses. It is sensitive to where the centroids start, which we handle with ten independent restarts per k, and it cannot pick k on its own, which we handle with two independent internal criteria described below.</p>
 
-<p><i>Why this model and not another.</i> Each of the natural alternatives breaks on some property of this dataset. Gaussian mixture models would give us soft memberships, but fitting a full 48-dimensional covariance matrix per component is statistically fragile when the features are mostly one-hot, and it is an order of magnitude slower. Spectral clustering needs an affinity structure over every pair of shops, which is quadratic in 719,817, so it is simply out of reach. Density-based clustering does not need a k at all, which is exactly why we run DBSCAN as a check; its result below shows the network has no density-separated islands for it to find. K-Means also gives us something the others do not &mdash; its centroids are readable objects in their own right, and the archetype profiles in Table 11 come straight from them.</p>
+<p><i>Why this model and not another.</i> Table 9 lists what else we considered; the deciding evidence is in the cross-checks we actually ran below. DBSCAN collapses to one cluster with 98.7% noise, so there are no density-separated islands for it to find, and Ward&rsquo;s clustering lands on the same structure as K-Means (silhouette 0.145 at k = 8). Gaussian mixtures and spectral clustering fell on scale alone &mdash; both need pairwise or covariance structure that has no chance at 719,817 &times; 48 &mdash; while K-Means centroids double as the archetype profiles of Table 11.</p>
 
 <p>To find natural outlet archetypes we standardised the 48 features to zero mean and unit variance and ran K-Means [2] for every k from 3 to 9, with 10 random restarts per k. There is no ground-truth segmentation to compare against, so we scored each k with two independent internal criteria: the silhouette coefficient [3], computed on a 10,000-shop subsample to keep it tractable, and the Davies&ndash;Bouldin index [4] on all rows. Table 10 lists the scores and Fig. 10 plots them. The two criteria agree on <b>k = 8</b> (silhouette 0.187, Davies&ndash;Bouldin 1.94).</p>
 
@@ -396,9 +396,9 @@
 
 <p><i>How the algorithms work.</i> A random forest grows many deep trees on bootstrap samples with random feature subsets and averages them. Its remaining error is mostly bias, because the averaging bags the variance away. Gradient boosting builds one additive model stage by stage: each new shallow tree fits the gradient of the loss at the current predictions, so the ensemble spends its capacity exactly where it is still wrong. XGBoost adds explicit regularisation (shrinkage, minimum child weight, L2 penalties) and grows trees level-wise. LightGBM grows leaf-wise, always expanding the leaf that cuts the loss most, which adapts faster to skewed targets. That property matters for our data, and it shows up later in the cross-validated ranking (Section 4.7).</p>
 
-<p><i>Why these models and not others.</i> Our feature matrix is medium-sized and tabular, with dense counts and coordinates sitting next to sparse one-hot indicators, and with interactions we know exist (density means one thing for a key-account wholesaler and something else for a small mudi shop). Gradient-boosted trees are the family that keeps winning in exactly this regime, and they need no feature scaling and no distributional assumptions. Each alternative breaks on some property of our data. Kernel SVR scales between quadratically and cubically in the number of samples, so it simply cannot be trained on 490,000 rows. k-nearest-neighbour regression depends on distances, and distances lose meaning in a 48-dimensional half-one-hot space; it would also pay a neighbour search at every prediction. Neural networks need far more tuning to match tree ensembles on tabular data, and they would cost us the per-prediction attribution that the audit use-case demands &mdash; with trees we get exact Tree-SHAP explanations almost for free. We kept the linear baseline on purpose. Its failure (R&sup2; 0.024) is our quantitative proof that the problem is non-linear at all.</p>
+<p><i>Why these models and not others.</i> We tested this instead of arguing it. Table 12 and Fig. 13 show every alternative family trained under one protocol: k-NN (R&sup2; 0.027) and the MLP (0.045) sit at the linear baseline (0.033), kernel SVR cannot get past 10,000 training rows, and only the tree ensembles rise clearly above the baseline, with XGBoost ahead (0.245). The linear baseline&rsquo;s failure on the full split (R&sup2; 0.024) is our proof that the problem is non-linear, and trees give us exact Tree-SHAP attribution, which the audit use-case needs.</p>
 
-<p>We did not want the previous paragraph to rest on textbook authority alone, so we trained the rejected alternatives ourselves under one common protocol: every model was fitted on the same 50,000-shop training subsample and scored on the same 12,500 held-out shops. Table 12 and Fig. 13 show what happened. k-NN (R&sup2; 0.027) and the neural network (0.045) barely improve on the linear baseline (0.033). Kernel SVR could not be trained past 10,000 rows at all, and even then it took 3.5 seconds just to predict the test set. Only the tree ensembles rise clearly above the baseline on this subsample, with XGBoost ahead (0.245). The absolute numbers sit below the full-data results that follow, because 50,000 rows see fewer of the rare wholesale shops. What matters here is the ordering, and the full-data experiments preserve it.</p>
+
 
 <p class="tcaption">TABLE 12<br>Rejected Alternatives Trained on a Common 50,000-Shop Subsample</p>
 <table class="data">
@@ -474,7 +474,7 @@
   <tr><td>reg_lambda</td><td>0.1 &ndash; 10 (log)</td><td class="num">2.38</td></tr>
 </table>
 
-<p><i>How SMOTE works, and why we chose it over the alternatives.</i> SMOTE builds synthetic minority examples by interpolating between a minority shop and one of its nearest minority neighbours in feature space. This actually grows the decision region of the minority class rather than just re-weighting it. We did think about three alternatives. Class weighting keeps every real example and only rescales the loss; it is the natural choice in a distributed setting, and our Spark lane in fact uses it, which gives us a like-for-like comparison across lanes. Random undersampling would throw away roughly a third of the majority class &mdash; over 130,000 real shops &mdash; and we were not willing to burn that much information. Threshold moving does not compete with SMOTE at all; it complements it, and our operational reading below uses it. SMOTE suits this particular dataset because the standardized feature space is dense enough that interpolation produces believable synthetic shops. On heavily sparse or categorical-only data we would have gone with weighting instead. One thing we treated as non-negotiable is placement: SMOTE runs strictly inside training folds. Resampling before the split would push synthetic near-copies of evaluation shops into training and quietly inflate every metric we report.</p>
+<p><i>Which balancing strategy, measured.</i> SMOTE creates synthetic minority shops by interpolating between minority neighbours; class weighting rescales the loss instead, and undersampling throws majority rows away. Rather than pick one on theory, we ran all four options on the same split with the same XGBoost: no balancing reaches ROC-AUC 0.863, class weights 0.862, random undersampling 0.861, and SMOTE 0.858 &mdash; a spread of only 0.006 &mdash; while class weights and undersampling lift recall to about 0.79&ndash;0.80 against 0.65 with no balancing. So at our moderate 37/63 imbalance the strategy barely moves AUC; it mainly trades precision for recall. We keep SMOTE in the reference lane because the proposal names it, always applied inside training folds so no synthetic shop leaks into evaluation, and the Spark lane uses class weights &mdash; a choice this measurement supports equally well.</p>
 
 <p>Table 17 gives the test-set results. Bayesian optimization clearly pays off here: the tuned XGBoost beats every candidate on every metric (ROC-AUC 0.869 against 0.857 for the defaults). We ran five-fold cross-validation on the winner to check the result was not just split luck, and it holds (ROC-AUC 0.870 &plusmn; 0.001, F1 0.712 &plusmn; 0.001). The stability surprised us after the regression task, but it makes sense: the binary peer-relative label simply does not feel the extreme values of the raw target. Fig. 16 shows the out-of-fold ROC curves of all four classifiers, computed so that every shop&rsquo;s score comes from a model that never saw it during training. Table 18 gives the confusion matrix of the winner at the 0.5 threshold. Fig. 17 shows how the labelled risk spreads geographically, from 27.8% in Barisal to 48.5% in Khulna &mdash; a ready-made priority order for field teams.</p>
 
@@ -504,7 +504,7 @@
 
 <h3 class="sub">4.5 Unsupervised Learning: Anomaly Detection (RQ4)</h3>
 
-<p class="noindent"><i>How the detectors work, and why we paired these two.</i> Isolation Forest relies on a simple fact: rare, extreme points are easy to cut off. It grows trees of random axis-parallel splits and scores each shop by how few splits it takes to isolate it &mdash; anomalies end up at shallow depths. The method is global, tree-based, makes no distributional assumptions, and runs in near-linear time in the number of shops. The Local Outlier Factor complements it. LOF compares the density around a shop with the densities around its neighbours, so it flags points that are sparse <i>relative to their own neighbourhood</i> even when they sit inside a globally dense region. A wholesale-sized target planted in a metro market is an LOF anomaly but not an Isolation Forest one; a shop with impossible coordinates is often the reverse. By averaging their per-cluster percentile ranks we force two independent mechanisms to agree before a shop is flagged, which cuts down single-method false alarms sharply. The alternatives break on scale or on assumptions. One-class SVMs carry kernel costs that simply do not reach 719,817 points, plus a parameter that is famously touchy. Autoencoder detectors need architecture tuning and give a field auditor almost nothing to interpret. Parametric scores such as Mahalanobis distance assume elliptical distributions, which Fig. 7 has already shown to be false here.</p>
+<p class="noindent"><i>How the detectors work, and why we paired these two.</i> Isolation Forest scores a shop by how few random splits it takes to isolate it; LOF compares a shop&rsquo;s local density with its neighbours&rsquo;. They flag different failure shapes, so requiring both to agree cuts false alarms. The evidence against the alternatives is already in this report: Fig. 7 shows tails nowhere near the elliptical shape parametric scores assume, DBSCAN&rsquo;s collapse in Section 4.2 shows global density structure carries little signal, and kernel one-class SVMs cannot be trained at 719,817 points at all. The chosen pair runs in near-linear time on the full data.</p>
 
 <p>To find shops that behave unlike their peers, we fitted Isolation Forest [11] (200 trees) and the Local Outlier Factor [12] (20 neighbours) separately <i>within each archetype</i>, never globally. A rural kiosk scored against metro superstores would always look anomalous, and that tells the analyst nothing &mdash; a small mudi shop is not a broken superstore, it is a different kind of business. We convert each method&rsquo;s raw score into a percentile rank within its cluster, and the combined score is the mean of the two ranks, so a shop is flagged only when both detectors, each tuned to a different failure shape, agree. Fig. 18 shows the resulting score distribution across all 719,817 shops. The top decile (71,982 shops, combined score &ge; 0.90) is exported with full context for manual triage into three buckets: data errors (wrong coordinates, duplicate entries), fraud candidates (targets or importance that do not fit the surroundings), and hidden opportunities (thriving shops in thin markets). Shops that also appear in the RQ3 high-risk list are recommended as the first field visits.</p>
 

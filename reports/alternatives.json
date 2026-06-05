@@ -1,0 +1,51 @@
+{
+  "Linear regression": {
+    "train_rows": 50000,
+    "r2": 0.032811473469272934,
+    "rmse": 277.45041774138434,
+    "fit_seconds": 0.0,
+    "predict_seconds": 0.0
+  },
+  "k-NN (k=15)": {
+    "train_rows": 50000,
+    "r2": 0.026838037713002527,
+    "rmse": 278.30587720834166,
+    "fit_seconds": 0.0,
+    "predict_seconds": 0.2
+  },
+  "MLP (2x128)": {
+    "train_rows": 50000,
+    "r2": 0.044922511102125084,
+    "rmse": 275.70784232919976,
+    "fit_seconds": 1.5,
+    "predict_seconds": 0.01
+  },
+  "Random Forest": {
+    "train_rows": 50000,
+    "r2": 0.10596222616135809,
+    "rmse": 266.75203993801347,
+    "fit_seconds": 2.0,
+    "predict_seconds": 0.03
+  },
+  "XGBoost": {
+    "train_rows": 50000,
+    "r2": 0.24502971461131018,
+    "rmse": 245.12902872429282,
+    "fit_seconds": 0.9,
+    "predict_seconds": 0.01
+  },
+  "LightGBM": {
+    "train_rows": 50000,
+    "r2": 0.10257241376051618,
+    "rmse": 267.2572668407879,
+    "fit_seconds": 3.6,
+    "predict_seconds": 0.02
+  },
+  "SVR (RBF, 10k rows only)": {
+    "train_rows": 10000,
+    "r2": 0.0141624897556617,
+    "rmse": 280.11249662395306,
+    "fit_seconds": 1.5,
+    "predict_seconds": 3.53
+  }
+}

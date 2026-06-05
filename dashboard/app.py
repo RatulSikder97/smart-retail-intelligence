@@ -231,6 +231,8 @@ def load_artifacts() -> dict:
         "metrics": CFG.reports_dir / pipeline.METRICS_JSON,
         "dataset_profile": CFG.reports_dir / "dataset_profile.json",
         "imputation_sensitivity": CFG.reports_dir / "imputation_sensitivity.json",
+        "alternatives": CFG.reports_dir / "alternatives.json",
+        "imbalance": CFG.reports_dir / "imbalance.json",
     }.items():
         if path.exists():
             art[key] = json.loads(path.read_text())
@@ -1249,6 +1251,43 @@ with tab_rq2:
                 st.caption(f"{t['objective']} on {t['tuning_sample']:,} sampled shops · "
                            f"best trial RMSE {t['best_cv_rmse']}")
                 st.json(t["best_params"])
+        if art.get("alternatives"):
+            with st.expander("Why gradient-boosted trees and not k-NN / SVR / neural nets — measured, not assumed", expanded=False):
+                alt_rows = [
+                    {"model": name, "train rows": f"{r['train_rows']:,}",
+                     "test R²": round(r["r2"], 3), "RMSE": round(r["rmse"], 1),
+                     "fit (s)": r["fit_seconds"], "predict (s)": r["predict_seconds"]}
+                    for name, r in art["alternatives"].items()
+                ]
+                st.dataframe(pd.DataFrame(alt_rows), width="stretch", hide_index=True)
+                pts = pd.DataFrame(
+                    [{"model": n, "fit_seconds": max(r["fit_seconds"], 0.05),
+                      "r2": r["r2"],
+                      "family": "tree ensemble" if n in ("Random Forest", "XGBoost", "LightGBM")
+                      else "rejected alternative"}
+                     for n, r in art["alternatives"].items()]
+                )
+                scatter = (
+                    alt.Chart(pts)
+                    .mark_circle(size=90)
+                    .encode(
+                        x=alt.X("fit_seconds", scale=alt.Scale(type="log"),
+                                title="fit time on the common 50k subsample (s, log)"),
+                        y=alt.Y("r2", title="test R²"),
+                        color=alt.Color("family", scale=alt.Scale(
+                            domain=["tree ensemble", "rejected alternative"],
+                            range=[SEQUENTIAL_HUE, "#8aa0b4"])),
+                        tooltip=["model", "r2", "fit_seconds"],
+                    )
+                )
+                labels_ = scatter.mark_text(align="left", dx=7, color=MUTED).encode(text="model")
+                st.altair_chart((scatter + labels_).properties(height=260), width="stretch")
+                st.caption(
+                    "Every family trained on the same 50,000-shop subsample, scored on the "
+                    "same 12,500 held-out shops. k-NN and the MLP sit at the linear "
+                    "baseline; kernel SVR could not be trained past 10,000 rows. Only the "
+                    "tree ensembles rise above the baseline — the choice is measured, not assumed."
+                )
         c1, c2 = st.columns(2)
         with c1:
             st.altair_chart(
@@ -1343,6 +1382,22 @@ with tab_rq3:
                 st.caption(f"{t['objective']} on {t['tuning_sample']:,} sampled shops · "
                            f"best trial ROC-AUC {t['best_cv_roc_auc']}")
                 st.json(t["best_params"])
+        if art.get("imbalance"):
+            with st.expander("Why this balancing strategy — all four measured on the same split and model"):
+                imb_rows = [
+                    {"strategy": name, "ROC-AUC": round(r["roc_auc"], 3),
+                     "F1": round(r["f1"], 3), "recall": round(r["recall"], 3),
+                     "fit (s)": r["fit_seconds"]}
+                    for name, r in art["imbalance"].items()
+                ]
+                st.dataframe(pd.DataFrame(imb_rows), width="stretch", hide_index=True)
+                st.caption(
+                    "Same XGBoost, same stratified split. AUC moves by only ~0.006 across "
+                    "strategies — at this moderate 37/63 imbalance the choice mainly trades "
+                    "precision for recall. SMOTE stays in the reference lane because the "
+                    "proposal names it (applied inside training folds only); the Spark lane "
+                    "uses class weights, which this measurement supports equally well."
+                )
         risk_view = f[f["risk_score"].notna()]
         if not risk_view.empty:
             c1, c2 = st.columns(2)

@@ -102,19 +102,29 @@ plt.rcParams.update({"font.family": "serif", "font.size": 8,
                      "axes.grid": True, "grid.color": "#d9d9d9",
                      "grid.linewidth": 0.4, "axes.axisbelow": True,
                      "savefig.dpi": 300})
-fig, ax = plt.subplots(figsize=(3.45, 2.6))
-colors = {"Linear regression": "#8aa0b4", "k-NN (k=15)": "#8aa0b4",
-          "MLP (2x128)": "#8aa0b4", "SVR (RBF, 10k rows only)": "#c0392b",
-          "Random Forest": "#1baf7a", "XGBoost": "#2a78d6", "LightGBM": "#eda100"}
+fig, ax = plt.subplots(figsize=(3.6, 2.6))
+style = {  # name: (color, dx, dy, ha) — offsets hand-placed so labels never collide
+    "Linear regression": ("#8aa0b4", 5, 4, "left"),
+    "k-NN (k=15)": ("#8aa0b4", 5, -11, "left"),
+    "MLP (2x128)": ("#8aa0b4", 5, 2, "left"),
+    "SVR (RBF, 10k rows only)": ("#c0392b", 5, -4, "left"),
+    "Random Forest": ("#1baf7a", -6, 2, "right"),
+    "XGBoost": ("#2a78d6", 6, -3, "left"),
+    "LightGBM": ("#eda100", 5, 2, "left"),
+}
+from matplotlib.ticker import FuncFormatter
 for name, r in results.items():
-    ax.scatter(r["fit_seconds"], r["r2"], s=26, color=colors[name], zorder=3)
-    dy = -0.045 if name in ("XGBoost",) else 0.02
+    color, dx, dy, ha = style[name]
+    x = max(r["fit_seconds"], 0.05)   # log axis cannot show 0.0 s
+    ax.scatter(x, r["r2"], s=28, color=color, zorder=3)
     ax.annotate(name.replace(" (RBF, 10k rows only)", " (10k only)"),
-                (r["fit_seconds"], r["r2"]),
-                textcoords="offset points", xytext=(4, 3 if dy > 0 else -9),
-                fontsize=6.6)
+                (x, r["r2"]), textcoords="offset points", xytext=(dx, dy),
+                fontsize=6.6, ha=ha)
 ax.set_xscale("log")
-ax.set_xlabel("training time on the common subsample (s, log scale)")
+ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
+ax.set_xlim(0.035, 15)
+ax.set_ylim(-0.015, 0.27)
+ax.set_xlabel("training time (s, log scale)")
 ax.set_ylabel("test R²")
 fig.savefig(ROOT / "report/figures/f_alternatives.png",
             bbox_inches="tight", pad_inches=0.02)
