@@ -249,177 +249,111 @@ ax.legend(frameon=False)
 save(fig, "f14_anomaly_scores.png")
 print("extra figures written")
 
-# F15/F0 — flow diagrams in plain journal style with small monochrome tech glyphs
+# F15/F0 — flow diagrams: draw.io-style boxes with real technology icons
 import matplotlib.patches as mpatches
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+import matplotlib.image as mpimg
+
+ICON_DIR = FIG / "icons"
+_icons = {p.stem: mpimg.imread(p) for p in ICON_DIR.glob("*.png")}
+
+# classic draw.io palette — the look of a hand-made engineering diagram
+GRAY_F, GRAY_E = "#f5f5f5", "#666666"
+BLUE_F, BLUE_E = "#dae8fc", "#6c8ebf"
+ORNG_F, ORNG_E = "#ffe6cc", "#d79b00"
+GREN_F, GREN_E = "#d5e8d4", "#82b366"
 
 def _diagram_axes(w, h):
     fig, ax = plt.subplots(figsize=(w, h))
     ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.axis("off")
     ax.grid(False)
-    return fig, ax, w / h  # aspect corrects circle distortion in axes coords
+    return fig, ax
 
-INK = "#111111"
+def _icon(ax, name, cx, cy, inches=0.24):
+    img = _icons[name]
+    zoom = inches * 72 / img.shape[0]  # OffsetImage zoom maps pixels to points
+    ax.add_artist(AnnotationBbox(OffsetImage(img, zoom=zoom), (cx, cy),
+                                 frameon=False, box_alignment=(0.5, 0.5)))
 
-def _icon_db(ax, cx, cy, hy, A):
-    # database cylinder
-    hx = hy * 0.62 / A
-    body = mpatches.FancyBboxPatch((cx - hx, cy - hy * 0.55), 2 * hx, hy * 1.1,
-                                   boxstyle="round,pad=0", fc="white", ec="none")
-    ax.add_patch(body)
-    ax.add_patch(mpatches.Rectangle((cx - hx, cy - hy * 0.55), 2 * hx, hy * 1.1,
-                                    fc="white", ec="none"))
-    ax.plot([cx - hx, cx - hx], [cy - hy * 0.55, cy + hy * 0.55], color=INK, lw=0.9)
-    ax.plot([cx + hx, cx + hx], [cy - hy * 0.55, cy + hy * 0.55], color=INK, lw=0.9)
-    ax.add_patch(mpatches.Ellipse((cx, cy + hy * 0.55), 2 * hx, hy * 0.5,
-                                  fc="white", ec=INK, lw=0.9))
-    ax.add_patch(mpatches.Arc((cx, cy - hy * 0.55), 2 * hx, hy * 0.5,
-                              theta1=180, theta2=360, ec=INK, lw=0.9))
-    ax.add_patch(mpatches.Arc((cx, cy), 2 * hx, hy * 0.5,
-                              theta1=180, theta2=360, ec=INK, lw=0.7))
+def _dbox(ax, x, y, w, h, title, body, icon, fc, ec,
+          title_fs=7.4, body_fs=6.6, icon_in=0.24):
+    ax.add_patch(mpatches.FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.005",
+                                         fc=fc, ec=ec, lw=1.1))
+    _icon(ax, icon, x + w / 2, y + h * 0.78, icon_in)
+    ax.text(x + w / 2, y + h * 0.475, title, ha="center", va="center",
+            fontsize=title_fs, fontweight="bold", color="#1a1a1a")
+    ax.text(x + w / 2, y + h * 0.20, body, ha="center", va="center",
+            fontsize=body_fs, color="#1a1a1a", linespacing=1.55)
 
-def _icon_servers(ax, cx, cy, hy, A):
-    # three stacked server units with an LED dot
-    hx = hy * 0.85 / A
-    unit = hy * 0.52
-    for i, dy in enumerate((0.62, 0.0, -0.62)):
-        y0 = cy + dy * hy - unit / 2
-        ax.add_patch(mpatches.Rectangle((cx - hx, y0), 2 * hx, unit,
-                                        fc="white", ec=INK, lw=0.9))
-        ax.plot([cx + hx * 0.45], [y0 + unit / 2], marker="o", ms=1.3,
-                color=INK, mec=INK)
-
-def _icon_funnel(ax, cx, cy, hy, A):
-    hx = hy * 0.75 / A
-    ax.add_patch(mpatches.Polygon(
-        [(cx - hx, cy + hy * 0.55), (cx + hx, cy + hy * 0.55),
-         (cx + hx * 0.22, cy - hy * 0.1), (cx + hx * 0.22, cy - hy * 0.6),
-         (cx - hx * 0.22, cy - hy * 0.6), (cx - hx * 0.22, cy - hy * 0.1)],
-        closed=True, fc="white", ec=INK, lw=0.9))
-
-def _icon_nodes(ax, cx, cy, hy, A):
-    # small connected-graph glyph
-    r = hy * 0.22
-    pts = [(cx, cy + hy * 0.5), (cx - hy * 0.62 / A, cy - hy * 0.42),
-           (cx + hy * 0.62 / A, cy - hy * 0.42)]
-    for a in pts:
-        for b in pts:
-            ax.plot([a[0], b[0]], [a[1], b[1]], color=INK, lw=0.7)
-    for (px, py) in pts:
-        ax.add_patch(mpatches.Ellipse((px, py), 2 * r / A, 2 * r,
-                                      fc="white", ec=INK, lw=0.9))
-
-def _icon_check(ax, cx, cy, hy, A):
-    ax.add_patch(mpatches.Ellipse((cx, cy), 2 * hy * 0.62 / A, 2 * hy * 0.62,
-                                  fc="white", ec=INK, lw=0.9))
-    ax.plot([cx - hy * 0.28 / A, cx - hy * 0.06 / A, cx + hy * 0.32 / A],
-            [cy - hy * 0.02, cy - hy * 0.26, cy + hy * 0.26], color=INK, lw=1.1)
-
-def _icon_monitor(ax, cx, cy, hy, A):
-    hx = hy * 0.85 / A
-    ax.add_patch(mpatches.Rectangle((cx - hx, cy - hy * 0.25), 2 * hx, hy * 0.85,
-                                    fc="white", ec=INK, lw=0.9))
-    ax.plot([cx, cx], [cy - hy * 0.25, cy - hy * 0.5], color=INK, lw=0.9)
-    ax.plot([cx - hx * 0.45, cx + hx * 0.45], [cy - hy * 0.5, cy - hy * 0.5],
-            color=INK, lw=0.9)
-
-def _icon_spark(ax, cx, cy, hy, A):
-    # eight-point spark
-    import math
-    for k in range(8):
-        ang = k * math.pi / 4
-        r1, r2 = (hy * 0.18, hy * 0.58) if k % 2 == 0 else (hy * 0.18, hy * 0.38)
-        ax.plot([cx + math.cos(ang) * r1 / A, cx + math.cos(ang) * r2 / A],
-                [cy + math.sin(ang) * r1, cy + math.sin(ang) * r2], color=INK, lw=0.9)
-
-def _icon_magnifier(ax, cx, cy, hy, A):
-    ax.add_patch(mpatches.Ellipse((cx - hy * 0.12 / A, cy + hy * 0.12),
-                                  2 * hy * 0.42 / A, 2 * hy * 0.42,
-                                  fc="white", ec=INK, lw=0.9))
-    ax.plot([cx + hy * 0.18 / A, cx + hy * 0.52 / A],
-            [cy - hy * 0.18, cy - hy * 0.52], color=INK, lw=1.1)
-
-def _pbox(ax, x, y, w, h, title, body, icon=None, A=1.0,
-          title_fs=7.2, body_fs=6.5, lw=0.9):
-    ax.add_patch(mpatches.Rectangle((x, y), w, h, fc="white", ec="black", lw=lw))
-    if icon:
-        icon(ax, x + w / 2, y + h * 0.80, h * 0.14, A)
-        ty, by = 0.52, 0.21
-    else:
-        ty, by = 0.76, 0.33
-    ax.text(x + w / 2, y + h * ty, title, ha="center", va="center",
-            fontsize=title_fs, fontweight="bold", color="black")
-    ax.text(x + w / 2, y + h * by, body, ha="center", va="center",
-            fontsize=body_fs, color="black", linespacing=1.55)
-
-def _parrow(ax, x1, y1, x2, y2):
+def _darrow(ax, x1, y1, x2, y2):
     ax.annotate("", xy=(x2, y2), xytext=(x1, y1),
-                arrowprops=dict(arrowstyle="-|>,head_width=0.22,head_length=0.45",
-                                color="black", lw=0.9, shrinkA=0, shrinkB=0))
+                arrowprops=dict(arrowstyle="-|>,head_width=0.24,head_length=0.5",
+                                color="#4d4d4d", lw=1.1, shrinkA=0, shrinkB=0))
 
 # ---- F15: architecture, two lanes ----
-fig, ax, A = _diagram_axes(6.5, 3.3)
+fig, ax = _diagram_axes(6.5, 3.3)
 
-ax.add_patch(mpatches.Rectangle((0.19, 0.525), 0.60, 0.455, fc="none", ec="black",
-                                lw=0.7, ls=(0, (4, 3))))
+ax.add_patch(mpatches.Rectangle((0.19, 0.525), 0.60, 0.455, fc="none", ec=BLUE_E,
+                                lw=0.9, ls=(0, (4, 3))))
 ax.text(0.20, 0.972, "Reference lane (scikit-learn — exact proposal algorithms)",
-        ha="left", va="top", fontsize=7.5, style="italic", color="black")
-ax.add_patch(mpatches.Rectangle((0.19, 0.02), 0.60, 0.455, fc="none", ec="black",
-                                lw=0.7, ls=(0, (4, 3))))
+        ha="left", va="top", fontsize=7.5, style="italic", color="#31506e")
+ax.add_patch(mpatches.Rectangle((0.19, 0.02), 0.60, 0.455, fc="none", ec=ORNG_E,
+                                lw=0.9, ls=(0, (4, 3))))
 ax.text(0.20, 0.467, "Distributed lane (Hadoop HDFS + Apache Spark — same phases)",
-        ha="left", va="top", fontsize=7.5, style="italic", color="black")
+        ha="left", va="top", fontsize=7.5, style="italic", color="#8a5a00")
 
-_pbox(ax, 0.010, 0.345, 0.140, 0.31, "Raw dataset", "3 CSVs · 206 MB\n832,881 rows",
-      icon=_icon_db, A=A)
-_pbox(ax, 0.845, 0.345, 0.145, 0.31, "Deliverables", "dashboard · report\naudit lists",
-      icon=_icon_monitor, A=A)
+_dbox(ax, 0.010, 0.345, 0.140, 0.31, "Raw dataset", "3 CSVs · 206 MB\n832,881 rows",
+      "database", GRAY_F, GRAY_E, icon_in=0.20)
+_dbox(ax, 0.845, 0.345, 0.145, 0.31, "Deliverables", "dashboard · report\naudit lists",
+      "desktop", GREN_F, GREN_E, icon_in=0.20)
 
 ref_y, ref_h, ref_w = 0.555, 0.36, 0.132
 ref_x = [0.205, 0.352, 0.499, 0.646]
-_pbox(ax, ref_x[0], ref_y, ref_w, ref_h, "Phase 1", "cleaning\n48 features",
-      icon=_icon_funnel, A=A)
-_pbox(ax, ref_x[1], ref_y, ref_w, ref_h, "Phase 2", "K-Means\nk = 8",
-      icon=_icon_nodes, A=A)
-_pbox(ax, ref_x[2], ref_y, ref_w, ref_h, "Phases 3–4", "XGBoost\nweights · SHAP",
-      icon=_icon_check, A=A)
-_pbox(ax, ref_x[3], ref_y, ref_w, ref_h, "Phase 5", "IForest\n+ LOF",
-      icon=_icon_magnifier, A=A)
+_dbox(ax, ref_x[0], ref_y, ref_w, ref_h, "Phase 1", "cleaning\n48 features",
+      "filter", BLUE_F, BLUE_E, icon_in=0.20)
+_dbox(ax, ref_x[1], ref_y, ref_w, ref_h, "Phase 2", "K-Means\nk = 8",
+      "bubbles", BLUE_F, BLUE_E, icon_in=0.20)
+_dbox(ax, ref_x[2], ref_y, ref_w, ref_h, "Phases 3–4", "XGBoost\nweights · SHAP",
+      "tree", BLUE_F, BLUE_E, icon_in=0.20)
+_dbox(ax, ref_x[3], ref_y, ref_w, ref_h, "Phase 5", "IForest\n+ LOF",
+      "search", BLUE_F, BLUE_E, icon_in=0.20)
 for a, b in zip(ref_x[:-1], ref_x[1:]):
-    _parrow(ax, a + ref_w, ref_y + ref_h / 2, b, ref_y + ref_h / 2)
+    _darrow(ax, a + ref_w + 0.004, ref_y + ref_h / 2, b - 0.004, ref_y + ref_h / 2)
 
 d_y, d_h, d_w = 0.055, 0.36, 0.182
 d_x = [0.205, 0.402, 0.599]
-_pbox(ax, d_x[0], d_y, d_w, d_h, "HDFS warehouse",
-      "9 datanodes · repl. 2\ndivision partitions", icon=_icon_servers, A=A)
-_pbox(ax, d_x[1], d_y, d_w, d_h, "Spark SQL",
-      "distributed cleaning\ngrid densities", icon=_icon_spark, A=A)
-_pbox(ax, d_x[2], d_y, d_w, d_h, "Spark MLlib",
-      "phases 2–5\nregional runs", icon=_icon_nodes, A=A)
+_dbox(ax, d_x[0], d_y, d_w, d_h, "HDFS warehouse",
+      "9 datanodes · repl. 2\ndivision partitions", "hadoop", ORNG_F, ORNG_E, icon_in=0.30)
+_dbox(ax, d_x[1], d_y, d_w, d_h, "Spark SQL",
+      "distributed cleaning\ngrid densities", "spark", ORNG_F, ORNG_E, icon_in=0.22)
+_dbox(ax, d_x[2], d_y, d_w, d_h, "Spark MLlib",
+      "phases 2–5\nregional runs", "spark", ORNG_F, ORNG_E, icon_in=0.22)
 for a, b in zip(d_x[:-1], d_x[1:]):
-    _parrow(ax, a + d_w, d_y + d_h / 2, b, d_y + d_h / 2)
+    _darrow(ax, a + d_w + 0.004, d_y + d_h / 2, b - 0.004, d_y + d_h / 2)
 
-_parrow(ax, 0.150, 0.55, 0.205, 0.73)
-_parrow(ax, 0.150, 0.45, 0.205, 0.24)
-_parrow(ax, 0.778, 0.73, 0.845, 0.55)
-_parrow(ax, 0.781, 0.24, 0.845, 0.45)
+_darrow(ax, 0.152, 0.55, 0.202, 0.73)
+_darrow(ax, 0.152, 0.45, 0.202, 0.24)
+_darrow(ax, 0.780, 0.73, 0.843, 0.55)
+_darrow(ax, 0.783, 0.24, 0.843, 0.45)
 save(fig, "f15_architecture.png")
 
 # ---- F0: overall methodology, six steps ----
 steps = [
-    ("1. Dataset", "Mendeley data\n832,881 rows", _icon_db),
-    ("2. Ingest", "HDFS, 9 nodes\nby division", _icon_servers),
-    ("3. Engineer", "GPS checks\n48 features", _icon_funnel),
-    ("4. Model", "RQ1–RQ4\nfour methods", _icon_nodes),
-    ("5. Evaluate", "Optuna, 5-fold\n47 tests", _icon_check),
-    ("6. Deliver", "dashboard\naudit lists", _icon_monitor),
+    ("1. Dataset", "Mendeley data\n832,881 rows", "database", GRAY_F, GRAY_E),
+    ("2. Ingest", "HDFS, 9 nodes\nby division", "hadoop", ORNG_F, ORNG_E),
+    ("3. Engineer", "GPS checks\n48 features", "pandas", BLUE_F, BLUE_E),
+    ("4. Model", "RQ1–RQ4\nfour methods", "sklearn", BLUE_F, BLUE_E),
+    ("5. Evaluate", "Optuna, 5-fold\n47 tests", "gauge", BLUE_F, BLUE_E),
+    ("6. Deliver", "dashboard\naudit lists", "streamlit", GREN_F, GREN_E),
 ]
-fig, ax, A = _diagram_axes(6.5, 1.6)
+fig, ax = _diagram_axes(6.5, 1.6)
 bw, gap = 0.148, 0.0208
 x = 0.004
-for i, (title, body, icon) in enumerate(steps):
-    _pbox(ax, x, 0.05, bw, 0.90, title, body, icon=icon, A=A,
-          title_fs=7.0, body_fs=6.4)
+for i, (title, body, icon, fc, ec) in enumerate(steps):
+    _dbox(ax, x, 0.05, bw, 0.90, title, body, icon, fc, ec,
+          title_fs=7.2, body_fs=6.4, icon_in=0.28)
     if i < len(steps) - 1:
-        _parrow(ax, x + bw, 0.50, x + bw + gap, 0.50)
+        _darrow(ax, x + bw + 0.004, 0.50, x + bw + gap - 0.004, 0.50)
     x += bw + gap
 save(fig, "f_overview.png")
 print("architecture figure written")
