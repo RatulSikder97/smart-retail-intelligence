@@ -159,7 +159,7 @@ with tab_overview:
             )
             st.altair_chart(
                 hbar(counts, "shops", "division", value_title="shops").properties(height=300),
-                use_container_width=True,
+                width='stretch',
             )
             if quality:
                 st.subheader("Data quality (phase 1)")
@@ -194,7 +194,7 @@ with tab_clusters:
                     )
                     .properties(height=220, title=f"{metric} ({better})")
                 )
-                col.altair_chart(line, use_container_width=True)
+                col.altair_chart(line, width='stretch')
 
         counts = (
             art["clusters"]["cluster"].value_counts().rename_axis("cluster")
@@ -226,10 +226,10 @@ with tab_clusters:
                 x="shops", y=alt.Y("archetype", sort=None), text=alt.Text("shops", format=",")
             )
         )
-        st.altair_chart(bars + labels, use_container_width=True)
+        st.altair_chart(bars + labels, width='stretch')
 
         st.subheader("Cluster profiles (medians)")
-        st.dataframe(art["profiles"], use_container_width=True, hide_index=True)
+        st.dataframe(art["profiles"], width='stretch', hide_index=True)
 
         st.caption(
             "Cross-checks — agglomerative silhouette: "
@@ -245,7 +245,7 @@ with tab_sales:
         models = pd.DataFrame(reg.get("models", {})).T.reset_index(names="model")
         st.dataframe(
             models.style.format({"rmse": "{:.3f}", "mae": "{:.3f}", "r2": "{:.3f}"}),
-            use_container_width=True, hide_index=True,
+            width='stretch', hide_index=True,
         )
         c1, c2 = st.columns(2)
         with c1:
@@ -253,7 +253,7 @@ with tab_sales:
                 hbar(models[["model", "rmse"]], "rmse", "model").properties(
                     height=220, title="Test RMSE (lower is better)"
                 ),
-                use_container_width=True,
+                width='stretch',
             )
         with c2:
             if "shap" in art:
@@ -263,7 +263,7 @@ with tab_sales:
                         top_shap, "mean_abs_shap", "feature",
                         value_title="mean |SHAP|",
                     ).properties(height=350, title="Top 15 feature attributions"),
-                    use_container_width=True,
+                    width='stretch',
                 )
 
         st.subheader("Actual vs predicted (test-style scatter, sampled)")
@@ -286,7 +286,7 @@ with tab_sales:
             .encode(x="v", y="v")
         )
         st.altair_chart(
-            (scatter + diagonal).properties(height=380), use_container_width=True
+            (scatter + diagonal).properties(height=380), width='stretch'
         )
 
 with tab_risk:
@@ -299,7 +299,7 @@ with tab_risk:
         models = pd.DataFrame(clf.get("models", {})).T.reset_index(names="model")
         st.dataframe(
             models.style.format("{:.3f}", subset=models.columns[1:].tolist()),
-            use_container_width=True, hide_index=True,
+            width='stretch', hide_index=True,
         )
 
         risk = art["risk"].merge(
@@ -314,13 +314,13 @@ with tab_risk:
             hbar(by_division, "mean risk", "division", color=STATUS_SERIOUS).properties(
                 height=280, title="Mean predicted risk by division"
             ),
-            use_container_width=True,
+            width='stretch',
         )
 
         st.subheader("Highest-risk shops")
         st.dataframe(
             risk.sort_values("risk_score", ascending=False).head(200),
-            use_container_width=True, hide_index=True,
+            width='stretch', hide_index=True,
         )
 
 with tab_anomaly:
@@ -344,7 +344,7 @@ with tab_anomaly:
                 lambda row: STATUS_SERIOUS,
                 ["shop_code", "division", "shop_type", "combined_score"],
             ),
-            height=420, use_container_width=True, returned_objects=[],
+            height=420, width='stretch', returned_objects=[],
         )
         st.subheader("Ranked anomalies")
-        st.dataframe(top.head(500), use_container_width=True, hide_index=True)
+        st.dataframe(top.head(500), width='stretch', hide_index=True)

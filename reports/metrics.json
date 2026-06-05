@@ -10,7 +10,9 @@
   "durations_sec": {
     "phase_1": 23.0,
     "phase_2": 29.6,
-    "phase_3": 37.6
+    "phase_3": 37.6,
+    "phase_4": 55.5,
+    "phase_5": 38.9
   },
   "phase_2_clustering": {
     "kmeans": {
@@ -81,5 +83,36 @@
     },
     "best_model": "xgboost",
     "n_features": 48
+  },
+  "phase_4_classification": {
+    "models": {
+      "logistic_regression": {
+        "roc_auc": 0.7601313899794617,
+        "f1": 0.6184114971524672,
+        "precision": 0.5421630225349753,
+        "recall": 0.7196166077345609
+      },
+      "random_forest": {
+        "roc_auc": 0.8444791476857922,
+        "f1": 0.6822340570804315,
+        "precision": 0.6985947004125008,
+        "recall": 0.6666221896057108
+      },
+      "xgboost": {
+        "roc_auc": 0.8566586101645389,
+        "f1": 0.6948209542998444,
+        "precision": 0.7159844284534623,
+        "recall": 0.674872684413014
+      }
+    },
+    "best_model": "xgboost",
+    "label_definition": "at_risk = total_target < risk_threshold * median(total_target | cluster, shop_type)",
+    "label_rate": 0.3663869243555063,
+    "risk_threshold": 0.8
+  },
+  "phase_5_anomaly": {
+    "n_scored": 719817,
+    "n_top_anomalies": 71982,
+    "n_skipped_small_clusters": 0
   }
 }
