@@ -1,13 +1,4 @@
-"""CLI orchestrator: runs phases 1-5 and persists every artifact.
-
-Usage:
-    python -m smart_retail.pipeline                 # all phases, full dataset
-    python -m smart_retail.pipeline --phases 1,2    # subset of phases
-    python -m smart_retail.pipeline --nrows 50000   # quick run on a row slice
-
-Phases read their inputs from data/processed/ when run in a separate
-invocation from the phase that produced them.
-"""
+"""CLI orchestrator: runs phases 1-5, persisting every artifact so later phases can reload inputs from data/processed/."""
 
 from __future__ import annotations
 
@@ -20,13 +11,13 @@ import joblib
 import pandas as pd
 
 from smart_retail.config import Config
-from smart_retail.data import loader, schema
-from smart_retail.features.engineering import run_preprocessing
-from smart_retail.models.anomaly import run_anomaly
-from smart_retail.models.classification import run_classification
-from smart_retail.models.clustering import run_clustering
-from smart_retail.models.regression import run_regression
-from smart_retail.profiling import build_dataset_profile
+from smart_retail.preprocessing import loader, schema
+from smart_retail.preprocessing.features import run_preprocessing
+from smart_retail.modeling.anomaly import run_anomaly
+from smart_retail.modeling.classification import run_classification
+from smart_retail.modeling.clustering import run_clustering
+from smart_retail.modeling.regression import run_regression
+from smart_retail.exploration.profiling import build_dataset_profile
 
 log = logging.getLogger("smart_retail")
 

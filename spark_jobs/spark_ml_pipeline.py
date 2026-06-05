@@ -1,20 +1,4 @@
-"""Distributed 5-phase pipeline on Hadoop (HDFS) + Spark MLlib.
-
-Every phase reads from and writes to HDFS (hdfs://namenode:8020/smart_retail),
-so the whole flow is genuinely distributed:
-
-  phase 1  Spark SQL     clean + engineer features (grid-window densities)
-  phase 2  Spark MLlib   K-Means (k scan) + Bisecting K-Means cross-check
-  phase 3  Spark MLlib   LinearRegression vs RandomForest vs GBT
-  phase 4  Spark MLlib   weighted LogReg / RF / GBT on the peer-miss label
-  phase 5  Spark SQL     per-cluster centroid-distance anomaly ranking
-
-MLlib has no XGBoost/LightGBM/SHAP/SMOTE/IsolationForest/LOF: phases 3-5 use
-the nearest distributed equivalents (GBT, class weights, centroid distance)
-— the scikit-learn pipeline remains the reference implementation for those
-exact algorithms. Metrics are mirrored to the local volume as
-data/spark/spark_metrics.json so the dashboard can display this run.
-"""
+"""Distributed 5-phase pipeline on Hadoop (HDFS) + Spark MLlib, mirroring the scikit-learn reference pipeline."""
 
 import json
 import os
@@ -55,12 +39,7 @@ ONEHOT_SOURCE = ["shop_type", "shop_style", "shop_importance", "place_nature", "
 
 
 def grid_density(df, radius_km: float, label: str):
-    """Approximate neighbour count within radius via a 3x3 grid-cell window.
-
-    Cell edge = radius, so the 3x3 window covers every true neighbour within
-    the radius (plus some between r and ~2r) — a standard distributed
-    approximation that avoids the O(n²) pairwise join.
-    """
+    # neighbour count via 3x3 grid-cell window (cell edge = radius) — avoids the O(n²) pairwise join
     cx = F.floor(F.col("longitude") / (radius_km / KM_PER_DEG_LON))
     cy = F.floor(F.col("latitude") / (radius_km / KM_PER_DEG_LAT))
     with_cell = df.withColumn("_cx", cx).withColumn("_cy", cy)
@@ -87,9 +66,7 @@ def grid_density(df, radius_km: float, label: str):
 def phase1_features(spark, metrics, divisions=None):
     t0 = time.time()
     try:
-        # division-partitioned warehouse (built by partition_dataset.py):
-        # a divisions filter prunes to just those partition directories,
-        # so a Khulna-only run never reads Dhaka's files at all
+        # warehouse built by partition_dataset.py — a divisions filter prunes to just those partition dirs
         shops = spark.read.parquet(f"{HDFS}/warehouse/shops")
         targets = spark.read.parquet(f"{HDFS}/warehouse/targets")
         if divisions:
@@ -167,7 +144,6 @@ def phase1_features(spark, metrics, divisions=None):
 
 
 def assemble(features):
-    """Numeric + one-hot feature vector, standardized."""
     numeric = ["latitude", "longitude", "density_500m", "density_1km",
                "density_5km", "dist_to_district_centre_km", "n_products_targeted"]
     df = features.withColumn(
@@ -175,8 +151,7 @@ def assemble(features):
     )
     onehot_cols = []
     for col in ONEHOT_SOURCE:
-        # small cardinality: expand levels as literal indicator columns so the
-        # same frame works for every phase without refitting indexers
+        # small cardinality: literal indicator columns let every phase reuse the frame without refitting indexers
         levels = [r[0] for r in df.select(col).distinct().collect()]
         for level in levels:
             name = f"{col}__{level}"
@@ -330,8 +305,7 @@ def phase5_anomaly(clustered, kmeans_model, metrics):
 
 
 def main():
-    # region scope: `spark-submit … spark_ml_pipeline.py Khulna,Barisal`
-    # or DIVISIONS=Khulna,Barisal in the service environment
+    # region scope from argv or DIVISIONS env, e.g. "Khulna,Barisal"
     raw_scope = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("DIVISIONS", "")
     divisions = [d.strip() for d in raw_scope.split(",") if d.strip()] or None
 

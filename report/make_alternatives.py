@@ -31,7 +31,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
 from xgboost import XGBRegressor
 
-from smart_retail.features.engineering import TARGET_COLUMN, feature_matrix
+from smart_retail.preprocessing.features import TARGET_COLUMN, feature_matrix
 
 ROOT = Path(__file__).resolve().parents[1]
 SEED = 42

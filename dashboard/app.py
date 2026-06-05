@@ -19,8 +19,8 @@ from streamlit_folium import st_folium
 
 from smart_retail import pipeline, reporting
 from smart_retail.config import Config
-from smart_retail.data import loader, schema
-from smart_retail.features.engineering import TARGET_COLUMN, numeric_feature_columns
+from smart_retail.preprocessing import loader, schema
+from smart_retail.preprocessing.features import TARGET_COLUMN, numeric_feature_columns
 
 # Validated categorical palette (fixed slot order — clusters keep their color
 # no matter what is filtered; worst adjacent CVD deltaE 24.2, see dataviz skill)

@@ -1,14 +1,4 @@
-"""Build the division-partitioned warehouse in HDFS.
-
-Raw CSVs are monolithic; this job rewrites them as parquet partitioned by
-division (Hive layout: .../shops/division=Dhaka/part-*.parquet). Spark's
-partition pruning then lets any downstream job touch only the divisions it
-was asked to process — the semantically-regional distribution the raw files
-cannot offer. Targets carry no division column, so it is attached via the
-shop join before partitioning.
-
-    spark-submit --master spark://spark-master:7077 /opt/jobs/partition_dataset.py
-"""
+"""Rewrite the raw CSVs as a division-partitioned parquet warehouse in HDFS so downstream jobs get partition pruning."""
 
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F

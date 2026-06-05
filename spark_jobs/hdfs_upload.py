@@ -1,12 +1,6 @@
-"""Upload the raw CSVs into HDFS via the Hadoop FileSystem API.
+"""Upload the raw CSVs into HDFS via the Hadoop FileSystem API (run with spark-submit --master "local[1]")."""
 
-The apache/hadoop image runs under qemu emulation on Apple Silicon and its
-`hdfs dfs -put` intermittently aborts mid-transfer; this uploader runs on the
-native-arm64 Spark image instead (Spark bundles the Hadoop client), which
-makes the 200 MB transfer reliable.
-
-    spark-submit --master "local[1]" /opt/jobs/hdfs_upload.py
-"""
+# runs on the arm64 Spark image because qemu-emulated `hdfs dfs -put` aborts mid-transfer on Apple Silicon
 
 from pyspark.sql import SparkSession
 

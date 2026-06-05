@@ -1,10 +1,10 @@
 import pytest
 
 from smart_retail.config import Config
-from smart_retail.features.engineering import run_preprocessing
-from smart_retail.models.classification import run_classification
-from smart_retail.models.clustering import run_clustering
-from smart_retail.models.regression import run_regression
+from smart_retail.preprocessing.features import run_preprocessing
+from smart_retail.modeling.classification import run_classification
+from smart_retail.modeling.clustering import run_clustering
+from smart_retail.modeling.regression import run_regression
 
 
 @pytest.fixture(scope="module")

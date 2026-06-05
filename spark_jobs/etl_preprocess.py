@@ -1,14 +1,4 @@
-"""Distributed ETL over the retail dataset on the Spark standalone cluster.
-
-Demonstrates the big-data layer of the project: the same cleaning rules as
-smart_retail.features.engineering, expressed as distributed Spark SQL over
-the raw CSVs. Output parquet + per-division analytics are written to the
-shared volume; the scikit-learn pipeline handles the spatial (BallTree) and
-model phases downstream.
-
-Run (see Makefile):
-    spark-submit --master spark://spark-master:7077 /opt/jobs/etl_preprocess.py
-"""
+"""Distributed ETL over the retail dataset on the Spark standalone cluster (run via spark-submit, see Makefile)."""
 
 from pyspark.sql import SparkSession, Window
 from pyspark.sql import functions as F
@@ -28,7 +18,6 @@ def main() -> None:
     )
     spark.sparkContext.setLogLevel("WARN")
 
-    # ------------------------------------------------------------------ read
     shops = spark.read.csv(
         f"{DATASET_DIR}/shop_info_with_geo.csv", header=True, inferSchema=True
     ).withColumn("shop_code", F.col("shop_code").cast("string"))
@@ -39,8 +28,7 @@ def main() -> None:
 
     n_raw = shops.count()
 
-    # ------------------------------------------------- clean (same rules as
-    # smart_retail.features.engineering, expressed as distributed Spark SQL)
+    # same cleaning rules as smart_retail.features.engineering, expressed as distributed Spark SQL
     shops = shops.dropDuplicates(["shop_code"])
     n_unique = shops.count()
 
@@ -81,7 +69,6 @@ def main() -> None:
     )
     n_with_target = clean.filter("has_target").count()
 
-    # ----------------------------------------------------------- analytics
     division_stats = (
         clean.groupBy("division")
         .agg(
@@ -95,7 +82,6 @@ def main() -> None:
         .orderBy(F.desc("shops"))
     )
 
-    # ---------------------------------------------------------------- write
     clean.coalesce(4).write.mode("overwrite").parquet(f"{OUT_DIR}/clean_shops.parquet")
     division_stats.coalesce(1).write.mode("overwrite").option("header", True).csv(
         f"{OUT_DIR}/division_stats.csv"

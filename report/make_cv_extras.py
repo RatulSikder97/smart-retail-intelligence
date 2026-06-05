@@ -37,8 +37,8 @@ from lightgbm import LGBMRegressor
 from xgboost import XGBClassifier, XGBRegressor
 
 from smart_retail.config import Config
-from smart_retail.features.engineering import TARGET_COLUMN, feature_matrix
-from smart_retail.models.classification import build_risk_labels
+from smart_retail.preprocessing.features import TARGET_COLUMN, feature_matrix
+from smart_retail.modeling.classification import build_risk_labels
 
 ROOT = Path(__file__).resolve().parents[1]
 FIG = ROOT / "report" / "figures"

@@ -1,5 +1,5 @@
-from smart_retail.data import schema
-from smart_retail.profiling import build_dataset_profile, profile_columns
+from smart_retail.preprocessing import schema
+from smart_retail.exploration.profiling import build_dataset_profile, profile_columns
 
 
 def test_profile_columns_covers_every_column(shops_sample):

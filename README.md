@@ -56,7 +56,13 @@ While the cluster is up you can watch it work: the namenode web UI is at http://
 ## Project layout
 
 ```
-src/smart_retail/   standard pipeline: config, phases 1-5, tuning, reporting
+src/smart_retail/   standard pipeline, organised by stage:
+  exploration/      dataset profiling (per-column stats, distributions)
+  preprocessing/    schema, CSV loaders, cleaning + feature engineering
+  modeling/         clustering, regression, classification, anomaly, tuning
+  config.py         all paths and knobs in one place
+  pipeline.py       the CLI that runs phases 1-5 in order
+  reporting.py      turns saved metrics into the written summaries
 spark_jobs/         distributed lane: HDFS upload, ETL, partitioning, MLlib pipeline
 dashboard/          Streamlit app
 dataset/            the three raw CSVs (you place these; mounted read-only)

@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 
 from smart_retail.config import Config
-from smart_retail.features.engineering import run_preprocessing
-from smart_retail.models.regression import run_regression
+from smart_retail.preprocessing.features import run_preprocessing
+from smart_retail.modeling.regression import run_regression
 
 MODELS = {"linear_regression", "random_forest", "xgboost", "lightgbm"}
 

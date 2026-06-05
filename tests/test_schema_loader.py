@@ -1,7 +1,7 @@
 import pytest
 
 from smart_retail.config import Config
-from smart_retail.data import loader, schema
+from smart_retail.preprocessing import loader, schema
 
 
 def test_shops_have_expected_schema(shops_sample):

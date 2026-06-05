@@ -1,8 +1,4 @@
-"""Central configuration for paths and model tunables.
-
-Every path can be overridden with environment variables so the same code
-runs on the host and inside Docker (where volumes are mounted at /app/*).
-"""
+"""Central configuration for paths and model tunables; every path is env-overridable for Docker."""
 
 from __future__ import annotations
 
@@ -23,11 +19,7 @@ class Config:
 
     # --- phase 1: preprocessing / features ---
     density_radii_km: tuple[float, ...] = (0.5, 1.0, 5.0)
-    # k-NN imputation (sensitivity experiment; off by default so the
-    # reference run keeps missingness explicit — see README):
-    # geo fields are always safe (~99.8% accurate); shop_style only when
-    # >= impute_knn_confidence of neighbours agree; shop_type/importance
-    # are never imputed (measured at/below the majority-class baseline)
+    # k-NN imputation is a sensitivity experiment — off by default so missingness stays explicit (see README)
     impute_knn: bool = False
     impute_knn_k: int = 10
     impute_knn_confidence: float = 0.7

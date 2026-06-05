@@ -2,7 +2,7 @@
 dataset/
 data/raw/*.csv
 data/processed/
-models/
+/models/
 reports/figures/
 *.parquet
 *.joblib

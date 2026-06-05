@@ -9,7 +9,7 @@ from __future__ import annotations
 import pytest
 
 from smart_retail.config import Config
-from smart_retail.data import schema, loader
+from smart_retail.preprocessing import schema, loader
 
 
 @pytest.fixture(scope="session")

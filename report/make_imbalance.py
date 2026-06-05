@@ -20,8 +20,8 @@ from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
 
 from smart_retail.config import Config
-from smart_retail.features.engineering import feature_matrix
-from smart_retail.models.classification import build_risk_labels
+from smart_retail.preprocessing.features import feature_matrix
+from smart_retail.modeling.classification import build_risk_labels
 
 ROOT = Path(__file__).resolve().parents[1]
 SEED = 42

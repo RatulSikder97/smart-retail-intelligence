@@ -2,8 +2,8 @@ import numpy as np
 
 import pytest
 
-from smart_retail.data import schema
-from smart_retail.features.engineering import (
+from smart_retail.preprocessing import schema
+from smart_retail.preprocessing.features import (
     TARGET_COLUMN,
     feature_matrix,
     run_preprocessing,

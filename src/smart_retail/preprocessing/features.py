@@ -1,10 +1,4 @@
-"""Phase 1 — preprocessing & feature engineering.
-
-Input : raw shop and target frames (real Mendeley schema).
-Output: one clean row per shop with GPS-validated coordinates, spatial
-        density/distance features, one-hot structural features, and the
-        joined monthly sales target.
-"""
+"""Phase 1 — preprocessing & feature engineering: raw shop/target frames to one clean feature row per shop."""
 
 from __future__ import annotations
 
@@ -13,7 +7,7 @@ import pandas as pd
 from sklearn.neighbors import BallTree
 
 from smart_retail.config import Config
-from smart_retail.data import schema
+from smart_retail.preprocessing import schema
 
 EARTH_RADIUS_KM = 6371.0
 
@@ -28,7 +22,6 @@ TARGET_COLUMN = "total_target"
 
 
 def _haversine_km(lat1, lon1, lat2, lon2) -> np.ndarray:
-    """Vectorized great-circle distance in kilometres."""
     lat1, lon1, lat2, lon2 = map(np.radians, (lat1, lon1, lat2, lon2))
     a = (
         np.sin((lat2 - lat1) / 2) ** 2
@@ -38,7 +31,6 @@ def _haversine_km(lat1, lon1, lat2, lon2) -> np.ndarray:
 
 
 def _shop_density(shops: pd.DataFrame, radii_km: tuple[float, ...]) -> pd.DataFrame:
-    """Number of neighbouring shops within each radius (excluding the shop itself)."""
     coords = np.radians(shops[["latitude", "longitude"]].to_numpy())
     tree = BallTree(coords, metric="haversine")
     out = {}
@@ -50,7 +42,6 @@ def _shop_density(shops: pd.DataFrame, radii_km: tuple[float, ...]) -> pd.DataFr
 
 
 def _dist_to_district_centre(shops: pd.DataFrame) -> pd.Series:
-    """Distance from each shop to the centroid of its district's (zila's) shops."""
     centroids = shops.groupby("zila")[["latitude", "longitude"]].transform("mean")
     return pd.Series(
         _haversine_km(
@@ -63,16 +54,7 @@ def _dist_to_district_centre(shops: pd.DataFrame) -> pd.Series:
 
 
 def _impute_knn(shops: pd.DataFrame, config: Config, report: dict) -> pd.DataFrame:
-    """Nearest-neighbour imputation for the columns where it is justified.
-
-    Geo-administrative fields are location-determined (measured 99.8%
-    accurate on held-out known shops); shop_style carries real spatial
-    signal (96.5% vs 65.2% baseline) and is filled only when neighbours
-    agree strongly. shop_type and shop_importance are deliberately NOT
-    imputed: measured at +11pts and -1pt against the majority-class
-    baseline respectively, and their joint missingness IS the ghost-shop
-    signal the analysis needs to preserve.
-    """
+    # geo fields always imputable; shop_style only on strong neighbour agreement; shop_type/importance never (their missingness IS the ghost-shop signal)
     coords = np.radians(shops[["latitude", "longitude"]].to_numpy())
     always = ["zila", "upazila", "division"]
     conditional = ["shop_style"]
@@ -115,7 +97,6 @@ def _impute_knn(shops: pd.DataFrame, config: Config, report: dict) -> pd.DataFra
 def run_preprocessing(
     shops: pd.DataFrame, targets: pd.DataFrame, config: Config
 ) -> tuple[pd.DataFrame, dict]:
-    """Clean the raw shop records and build the per-shop feature table."""
     report: dict = {"n_raw_shop_rows": len(shops)}
 
     # 1. one row per shop
@@ -131,8 +112,7 @@ def run_preprocessing(
     report["n_invalid_or_missing_gps"] = int((~valid_gps).sum())
     shops = shops[valid_gps].copy()
 
-    # 2b. optional k-NN imputation (geo fields + high-confidence style);
-    # runs before the Unknown fill so only justified gaps get values
+    # 2b. optional k-NN imputation — must run before the Unknown fill
     if config.impute_knn:
         shops = _impute_knn(shops, config, report)
 
@@ -146,9 +126,7 @@ def run_preprocessing(
     )
     shops["dist_to_district_centre_km"] = _dist_to_district_centre(shops)
 
-    # 5. monthly sales target join (targets file covers ~85% of shops).
-    # ~2.4% of codes appear twice, sometimes once with values and once all-NaN
-    # — sort valued rows first so dedup keeps the informative one.
+    # 5. target join — sort valued rows first so dedup of duplicate shop_codes keeps the informative one
     targets = (
         targets.sort_values(schema.TOTAL_TARGET, na_position="last")
         .drop_duplicates(subset=schema.SHOP_ID, keep="first")
@@ -180,7 +158,6 @@ def run_preprocessing(
 
 
 def numeric_feature_columns(features: pd.DataFrame) -> list[str]:
-    """Model-ready numeric columns (excludes identifiers, raw categoricals, target)."""
     excluded = set(ID_COLUMNS) | {TARGET_COLUMN, "has_target"}
     return [
         col
@@ -190,5 +167,4 @@ def numeric_feature_columns(features: pd.DataFrame) -> list[str]:
 
 
 def feature_matrix(features: pd.DataFrame) -> pd.DataFrame:
-    """NaN-free numeric matrix used by the model phases."""
     return features[numeric_feature_columns(features)].astype(np.float64)

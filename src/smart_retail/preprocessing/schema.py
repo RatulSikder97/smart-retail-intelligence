@@ -1,8 +1,4 @@
-"""Canonical schema of the Mendeley retail dataset (mgzvngzng2, v1).
-
-Source: Shahin, Swarna & Farid (2025), "Comprehensive retail network dataset
-for Bangladesh", Data in Brief, DOI 10.1016/j.dib.2025.112326.
-"""
+"""Canonical schema of the Mendeley retail dataset mgzvngzng2 v1 (Shahin, Swarna & Farid, 2025)."""
 
 SHOP_FILE = "shop_info_with_geo.csv"
 PRODUCT_FILE = "product_info.csv"

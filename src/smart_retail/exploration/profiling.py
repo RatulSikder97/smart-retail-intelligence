@@ -1,19 +1,13 @@
-"""Dataset profiling: per-column statistics for the three raw files.
-
-Runs once inside pipeline phase 1 and lands in reports/dataset_profile.json,
-so the dashboard can show an in-depth data dictionary without re-reading
-200 MB of CSV on every page load.
-"""
+"""Dataset profiling: per-column statistics for the three raw files, written once to reports/dataset_profile.json."""
 
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
 
-from smart_retail.data import schema
+from smart_retail.preprocessing import schema
 
-# How the pipeline treats each column's gaps — shown verbatim on the dataset
-# pages so every 'Unknown' or NaN is explained rather than left mysterious.
+# gap-handling notes shown verbatim on the dashboard's dataset pages
 _CATEGORICAL_FILL = (
     "Missing in the source (never captured at survey time). Phase 1 keeps the "
     "row and fills the gap with an explicit 'Unknown' level so these shops "
@@ -53,8 +47,6 @@ TRANSFORMATIONS = {
 
 
 def profile_columns(df: pd.DataFrame, descriptions: dict[str, str] | None = None) -> list[dict]:
-    """One record per column: dtype, completeness, cardinality, central
-    tendency, and a JSON-friendly distribution (histogram or top values)."""
     descriptions = descriptions or {}
     out = []
     for col in df.columns:
@@ -87,8 +79,7 @@ def profile_columns(df: pd.DataFrame, descriptions: dict[str, str] | None = None
                 std=round(float(clean.std()), 3),
                 skew=round(float(clean.skew()), 3) if len(clean) > 2 else None,
             )
-            # 30-bin histogram clipped at p99 so one giant outlier doesn't
-            # flatten the whole distribution view
+            # histogram is clipped at p99 so one giant outlier doesn't flatten the view
             cap = float(clean.quantile(0.99))
             clipped = clean[clean <= cap]
             if clipped.nunique() > 1:

@@ -1,12 +1,4 @@
-"""Bayesian hyperparameter tuning (Optuna TPE) and k-fold cross-validation.
-
-Tuning searches the XGBoost candidate only — it wins both supervised phases
-at default-ish settings, so spending the budget on the winner is where the
-marks-per-minute are. The search runs on a subsample with 3-fold CV inside
-each trial (proposal §4: "Bayesian hyperparameter tuning"); the final model
-retrains on the full split. CV reports the headline metrics as mean ± std
-over 5 folds so single-split luck can't flatter the results.
-"""
+"""Bayesian hyperparameter tuning (Optuna TPE) and k-fold cross-validation for the XGBoost candidates."""
 
 from __future__ import annotations
 
@@ -53,7 +45,6 @@ def _subsample(X: pd.DataFrame, y: pd.Series, config: Config) -> tuple:
 
 
 def tune_xgb_regressor(X: pd.DataFrame, y: pd.Series, config: Config) -> dict:
-    """Optuna TPE search minimizing 3-fold CV RMSE on a subsample."""
     Xs, ys = _subsample(X, y, config)
     folds = KFold(n_splits=3, shuffle=True, random_state=config.random_state)
 
@@ -83,7 +74,6 @@ def tune_xgb_regressor(X: pd.DataFrame, y: pd.Series, config: Config) -> dict:
 
 
 def tune_xgb_classifier(X: pd.DataFrame, y: pd.Series, config: Config) -> dict:
-    """Optuna TPE search maximizing 3-fold CV ROC-AUC; SMOTE inside each fold."""
     Xs, ys = _subsample(X, y, config)
     folds = StratifiedKFold(n_splits=3, shuffle=True, random_state=config.random_state)
 
@@ -121,7 +111,6 @@ def _mean_std(values: list[float]) -> dict:
 
 
 def cv_regression(model_factory, X: pd.DataFrame, y: pd.Series, config: Config) -> dict:
-    """k-fold CV of the final regressor: R² and RMSE as mean ± std."""
     folds = KFold(n_splits=config.cv_folds, shuffle=True,
                   random_state=config.random_state)
     r2s, rmses = [], []
@@ -135,11 +124,7 @@ def cv_regression(model_factory, X: pd.DataFrame, y: pd.Series, config: Config) 
 
 
 def cv_classification(pipeline_factory, X: pd.DataFrame, y: pd.Series, config: Config) -> dict:
-    """k-fold CV of the final classifier pipeline: ROC-AUC and F1 as mean ± std.
-
-    The factory must return a fresh (SMOTE → model) pipeline so resampling
-    stays inside each training fold.
-    """
+    # factory must return a fresh (SMOTE → model) pipeline so resampling stays inside each training fold
     folds = StratifiedKFold(n_splits=config.cv_folds, shuffle=True,
                             random_state=config.random_state)
     aucs, f1s = [], []

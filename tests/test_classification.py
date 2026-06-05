@@ -2,12 +2,12 @@ import numpy as np
 import pytest
 
 from smart_retail.config import Config
-from smart_retail.features.engineering import run_preprocessing
-from smart_retail.models.classification import (
+from smart_retail.preprocessing.features import run_preprocessing
+from smart_retail.modeling.classification import (
     build_risk_labels,
     run_classification,
 )
-from smart_retail.models.clustering import run_clustering
+from smart_retail.modeling.clustering import run_clustering
 
 MODELS = {"logistic_regression", "random_forest", "xgboost"}
 
@@ -58,8 +58,8 @@ def test_risk_scores_are_probabilities_for_all_labelled_shops(setup, classificat
 def test_smote_never_sees_test_data(setup):
     """The pipeline resamples only inside fit(); scoring uses the raw test set."""
     features, cluster_labels, cfg = setup
-    from smart_retail.models.classification import _candidate_models
-    from smart_retail.features.engineering import feature_matrix
+    from smart_retail.modeling.classification import _candidate_models
+    from smart_retail.preprocessing.features import feature_matrix
     from sklearn.model_selection import train_test_split
 
     labelled = features[features["has_target"]]

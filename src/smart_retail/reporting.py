@@ -1,15 +1,10 @@
-"""Narrative report builder: turns pipeline metrics into commented markdown.
-
-Used by the dashboard's "Full report" tab (and downloadable from there), so
-the written analysis always matches the artifacts on disk instead of being
-hand-edited prose that drifts out of date.
-"""
+"""Narrative report builder: turns pipeline metrics into commented markdown for the dashboard."""
 
 from __future__ import annotations
 
 import pandas as pd
 
-from smart_retail.features.engineering import TARGET_COLUMN
+from smart_retail.preprocessing.features import TARGET_COLUMN
 
 
 def _silhouette_reading(value: float) -> str:
@@ -315,7 +310,7 @@ def build_report(
     risk_by_division: pd.Series | None = None,
     top_anomalies: pd.DataFrame | None = None,
 ) -> dict[str, str]:
-    """All report sections as {section key: markdown}, in reading order."""
+    # dict insertion order is the report's reading order
     return {
         "data_quality": data_quality_section(metrics),
         "feature_engineering": feature_engineering_section(metrics),
@@ -328,7 +323,6 @@ def build_report(
 
 
 def report_markdown(sections: dict[str, str]) -> str:
-    """Single downloadable markdown document."""
     header = (
         "# Smart Retail Intelligence — Analysis Report\n\n"
         "Generated from `reports/metrics.json` — numbers always match the "
