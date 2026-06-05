@@ -1,0 +1,85 @@
+{
+  "phase_1_preprocessing": {
+    "n_raw_shop_rows": 832881,
+    "n_unique_shops": 832881,
+    "n_invalid_or_missing_gps": 113064,
+    "n_shops_with_target": 613660,
+    "n_final_shops": 719817,
+    "n_feature_columns": 48
+  },
+  "durations_sec": {
+    "phase_1": 23.0,
+    "phase_2": 29.6,
+    "phase_3": 37.6
+  },
+  "phase_2_clustering": {
+    "kmeans": {
+      "3": {
+        "silhouette": 0.17959904132847873,
+        "davies_bouldin": 2.2533252897041365
+      },
+      "4": {
+        "silhouette": 0.14181635432229936,
+        "davies_bouldin": 2.4059436539667325
+      },
+      "5": {
+        "silhouette": 0.16174400814254064,
+        "davies_bouldin": 2.2508296709410414
+      },
+      "6": {
+        "silhouette": 0.16236887673925743,
+        "davies_bouldin": 2.3147108275359325
+      },
+      "7": {
+        "silhouette": 0.14023053938460828,
+        "davies_bouldin": 2.1275709194878494
+      },
+      "8": {
+        "silhouette": 0.18712846998372812,
+        "davies_bouldin": 1.9424465012569523
+      },
+      "9": {
+        "silhouette": 0.185839181562539,
+        "davies_bouldin": 1.8130805127181127
+      }
+    },
+    "agglomerative": {
+      "silhouette": 0.14499898344020418,
+      "davies_bouldin": 1.8016763382126715
+    },
+    "dbscan": {
+      "silhouette": NaN,
+      "davies_bouldin": NaN,
+      "n_clusters_found": 1,
+      "noise_share": 0.9865
+    },
+    "best_k": 8,
+    "chosen_algorithm": "kmeans"
+  },
+  "phase_3_regression": {
+    "models": {
+      "linear_regression": {
+        "rmse": 272.70321915000744,
+        "mae": 23.77996372591431,
+        "r2": 0.024293174292477238
+      },
+      "random_forest": {
+        "rmse": 224.3108651278279,
+        "mae": 17.577480244822834,
+        "r2": 0.33985485349208966
+      },
+      "xgboost": {
+        "rmse": 204.43602947214396,
+        "mae": 18.122603616139568,
+        "r2": 0.4516552509635987
+      },
+      "lightgbm": {
+        "rmse": 219.78430818924747,
+        "mae": 19.93108678017102,
+        "r2": 0.36622926964960545
+      }
+    },
+    "best_model": "xgboost",
+    "n_features": 48
+  }
+}
