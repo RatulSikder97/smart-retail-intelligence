@@ -59,10 +59,19 @@ def load_artifacts() -> dict:
     for key, path in {
         "metrics": CFG.reports_dir / pipeline.METRICS_JSON,
         "dataset_profile": CFG.reports_dir / "dataset_profile.json",
-        "spark_metrics": CFG.data_dir / "spark" / "spark_metrics.json",
     }.items():
         if path.exists():
             art[key] = json.loads(path.read_text())
+    # every Spark run: spark_metrics.json = national, spark_metrics_<divs>.json = regional
+    spark_dir = CFG.data_dir / "spark"
+    if spark_dir.exists():
+        runs = {}
+        for path in sorted(spark_dir.glob("spark_metrics*.json")):
+            scope = path.stem.replace("spark_metrics", "").strip("_") or "national (all divisions)"
+            runs[scope.replace("_", " + ")] = json.loads(path.read_text())
+        if runs:
+            art["spark_runs"] = runs
+            art["spark_metrics"] = next(iter(runs.values()))
     for key, path in {
         "profiles": CFG.reports_dir / "cluster_profiles.csv",
         "shap": CFG.reports_dir / "shap_importance.csv",
@@ -91,6 +100,37 @@ def build_base(_art_keys: tuple) -> pd.DataFrame:
         if key in art:
             base = base.merge(art[key][cols], on="shop_code", how="left")
     return base
+
+
+@st.cache_data(ttl=30, show_spinner=False)
+def cluster_topology() -> dict | None:
+    """Live HDFS + Spark topology via their HTTP APIs (compose network)."""
+    import requests
+
+    try:
+        jmx = requests.get(
+            "http://namenode:9870/jmx?qry=Hadoop:service=NameNode,name=NameNodeInfo",
+            timeout=2,
+        ).json()["beans"][0]
+        live_nodes = json.loads(jmx.get("LiveNodes", "{}"))
+        master = requests.get("http://spark-master:8080/json/", timeout=2).json()
+        return {
+            "datanodes": [
+                {"datanode": name.split(":")[0],
+                 "used_gb": round(info.get("usedSpace", 0) / 1e9, 2),
+                 "blocks": info.get("numBlocks", 0),
+                 "state": info.get("adminState", "?")}
+                for name, info in live_nodes.items()
+            ],
+            "workers": [
+                {"worker": w["host"], "cores": w["cores"], "state": w["state"],
+                 "memory_gb": round(w["memory"] / 1024, 1)}
+                for w in master.get("workers", [])
+            ],
+            "spark_status": master.get("status", "?"),
+        }
+    except Exception:
+        return None
 
 
 def require(art: dict, *keys: str) -> bool:
@@ -504,16 +544,48 @@ final rank is the mean of the two percentile ranks.
         st.divider()
 
         st.subheader("Distributed run — Hadoop HDFS + Spark MLlib")
-        spark_metrics = art.get("spark_metrics")
-        if not spark_metrics:
+
+        topology = cluster_topology()
+        if topology:
+            t1, t2, t3 = st.columns([1, 2, 2])
+            t1.metric("Spark master", topology["spark_status"])
+            with t2:
+                st.markdown("**Live datanodes (HDFS)**")
+                st.dataframe(pd.DataFrame(topology["datanodes"]),
+                             width="stretch", hide_index=True)
+            with t3:
+                st.markdown("**Live Spark workers**")
+                st.dataframe(pd.DataFrame(topology["workers"]),
+                             width="stretch", hide_index=True)
+            st.caption(
+                "Queried live from the namenode and Spark master APIs. Scale "
+                "with `WORKERS=N DATANODES=N make spark-up` — blocks (stored "
+                "with replication 2) spread across whatever datanodes exist."
+            )
+        else:
+            st.caption(
+                "Cluster offline — start it with `make spark-up` to see the "
+                "live topology here."
+            )
+
+        spark_runs = art.get("spark_runs")
+        if not spark_runs:
             st.info(
                 "No distributed-run metrics yet. Start the cluster and run: "
                 "`make spark-up && make spark-pipeline` — results appear here."
             )
         else:
+            scope = st.selectbox(
+                "Run scope (regional runs read only their divisions' HDFS "
+                "partitions — partition pruning)",
+                list(spark_runs.keys()),
+            )
+            spark_metrics = spark_runs[scope]
+            run_scope = spark_metrics.get("run_scope", {})
             st.markdown(
-                f"Storage: `{spark_metrics.get('storage', '')}` · every phase "
-                "below read its input from and wrote its output to HDFS."
+                f"Storage: `{spark_metrics.get('storage', '')}` · input: "
+                f"{run_scope.get('input_source', 'raw CSVs')} · scope: "
+                f"**{run_scope.get('divisions', 'all')}**"
             )
             rows = []
             for key in ("phase_1_spark", "phase_2_spark", "phase_3_spark",
@@ -529,6 +601,25 @@ final rank is the mean of the two percentile ranks.
                         or (f"{p.get('n_top_decile', ''):,} top-decile" if p.get("n_top_decile") else ""),
                     })
             st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
+
+            if len(spark_runs) > 1:
+                st.markdown("**All Spark runs, side by side**")
+                comparison = []
+                for name, m in spark_runs.items():
+                    p1, p2 = m.get("phase_1_spark", {}), m.get("phase_2_spark", {})
+                    p3, p4 = m.get("phase_3_spark", {}), m.get("phase_4_spark", {})
+                    comparison.append({
+                        "run": name,
+                        "shops": p1.get("n_final_shops"),
+                        "best k": p2.get("best_k"),
+                        "regression R² (GBT)": round(
+                            p3.get("models", {}).get("gbt", {}).get("r2", float("nan")), 3),
+                        "risk ROC-AUC (GBT)": round(
+                            p4.get("models", {}).get("gbt", {}).get("roc_auc", float("nan")), 3),
+                        "total (s)": m.get("total_duration_sec"),
+                    })
+                st.dataframe(pd.DataFrame(comparison), width="stretch", hide_index=True)
+
             with st.expander("Full distributed-run metrics (JSON)"):
                 st.json(spark_metrics)
             st.caption(
