@@ -1231,11 +1231,18 @@ with tab_rq2:
         )
         if reg.get("cv"):
             cv = reg["cv"]
-            st.markdown(
-                f"**{cv['folds']}-fold cross-validation** — "
+            line = (
+                f"**{cv['folds']}-fold cross-validation** — best split model: "
                 f"R² {cv['r2']['mean']:.3f} ± {cv['r2']['std']:.3f} · "
                 f"RMSE {cv['rmse']['mean']:.1f} ± {cv['rmse']['std']:.1f}"
             )
+            if reg.get("cv_tuned"):
+                ct = reg["cv_tuned"]
+                line += (
+                    f" · tuned XGBoost: R² {ct['r2']['mean']:.3f} ± {ct['r2']['std']:.3f} · "
+                    f"RMSE {ct['rmse']['mean']:.1f} ± {ct['rmse']['std']:.1f}"
+                )
+            st.markdown(line)
         if reg.get("tuning"):
             t = reg["tuning"]
             with st.expander(f"Hyperparameter tuning — {t['engine']}, {t['n_trials']} trials"):
@@ -1318,11 +1325,18 @@ with tab_rq3:
         )
         if clf.get("cv"):
             cv = clf["cv"]
-            st.markdown(
-                f"**{cv['folds']}-fold cross-validation** — "
+            line = (
+                f"**{cv['folds']}-fold cross-validation** — best split model: "
                 f"ROC-AUC {cv['roc_auc']['mean']:.3f} ± {cv['roc_auc']['std']:.3f} · "
                 f"F1 {cv['f1']['mean']:.3f} ± {cv['f1']['std']:.3f}"
             )
+            if clf.get("cv_tuned"):
+                ct = clf["cv_tuned"]
+                line += (
+                    f" · tuned XGBoost: ROC-AUC {ct['roc_auc']['mean']:.3f} ± {ct['roc_auc']['std']:.3f} · "
+                    f"F1 {ct['f1']['mean']:.3f} ± {ct['f1']['std']:.3f}"
+                )
+            st.markdown(line)
         if clf.get("tuning"):
             t = clf["tuning"]
             with st.expander(f"Hyperparameter tuning — {t['engine']}, {t['n_trials']} trials"):

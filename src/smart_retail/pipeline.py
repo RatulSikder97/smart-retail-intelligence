@@ -103,6 +103,8 @@ def phase_3_regress(config: Config, features: pd.DataFrame) -> dict:
         out["tuning"] = result.tuning
     if result.cv:
         out["cv"] = result.cv
+    if result.cv_tuned:
+        out["cv_tuned"] = result.cv_tuned
     return out
 
 
@@ -123,6 +125,8 @@ def phase_4_classify(
         out["tuning"] = result.tuning
     if result.cv:
         out["cv"] = result.cv
+    if result.cv_tuned:
+        out["cv_tuned"] = result.cv_tuned
     return out
 
 
