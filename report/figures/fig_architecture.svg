@@ -139,11 +139,15 @@
     <path d="M798 362 H836 V256 H866" marker-end="url(#ag)"/>
   </g>
 
-  <!-- connector labels (clear of the lines) -->
-  <text x="192" y="130" font-size="9.5" fill="#5B6B7C">shops + targets</text>
-  <text x="192" y="378" font-size="9.5" fill="#5B6B7C">ingest</text>
-  <text x="842" y="120" font-size="9.5" fill="#1a7a4b">results</text>
-  <text x="842" y="380" font-size="9.5" fill="#1a7a4b">cross-validates</text>
+  <!-- connector labels: rotated along the vertical trunks, in empty gutters -->
+  <text transform="translate(179,192) rotate(-90)" text-anchor="middle"
+        font-size="9" fill="#5B6B7C">shops + targets</text>
+  <text transform="translate(179,304) rotate(-90)" text-anchor="middle"
+        font-size="9" fill="#5B6B7C">ingest</text>
+  <text transform="translate(846,178) rotate(-90)" text-anchor="middle"
+        font-size="9" fill="#1a7a4b">results</text>
+  <text transform="translate(846,308) rotate(-90)" text-anchor="middle"
+        font-size="9" fill="#1a7a4b">cross-validates</text>
 
   <!-- equality badge between lanes -->
   <rect x="390" y="226" width="238" height="21" rx="10.5" fill="#fff" stroke="#c9d6e6" stroke-width="1"/>
