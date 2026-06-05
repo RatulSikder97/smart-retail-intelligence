@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "smart-retail"
+version = "0.1.0"
+description = "Smart Retail Intelligence for Bangladesh's FMCG Distribution Network (MITE 431)"
+authors = [
+    { name = "Ratul Sikder" },
+    { name = "Fahim Rahman" },
+]
+requires-python = ">=3.11"
+dependencies = [
+    "pandas>=2.1",
+    "numpy>=1.26",
+    "scikit-learn>=1.4",
+    "xgboost>=2.0",
+    "lightgbm>=4.3",
+    "imbalanced-learn>=0.12",
+    "shap>=0.45",
+    "folium>=0.16",
+    "streamlit>=1.35",
+    "streamlit-folium>=0.20",
+    "pyarrow>=15.0",
+    "joblib>=1.3",
+    "requests>=2.31",
+    "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+smart-retail = "smart_retail.pipeline:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+filterwarnings = [
+    "ignore::FutureWarning",
+    "ignore::UserWarning",
+]

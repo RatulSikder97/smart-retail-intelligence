@@ -1,0 +1,88 @@
+# Smart Retail Intelligence for Bangladesh's FMCG Distribution Network
+
+An integrated **supervised, unsupervised, and clustering** pipeline over Bangladesh's
+national retail dataset (719,817 GPS-tagged outlets), with a Streamlit dashboard.
+
+Course: **MITE 431 — Big Data Analytics** · Ratul Sikder (2506102) & Fahim Rahman (2506108)
+
+## Research questions → pipeline phases
+
+| Phase | RQ | What it does | Models |
+|---|---|---|---|
+| 1. Preprocessing | — | GPS validation, dedup, shop-density & distance features | — |
+| 2. Clustering | RQ1 | Shop archetypes across 8 divisions | K-Means, Hierarchical, DBSCAN |
+| 3. Regression | RQ2 | Predict monthly sales target from location/type/density | Linear, RF, XGBoost, LightGBM |
+| 4. Classification | RQ3 | Predict which shops will miss targets (proxy label) | LogReg, RF, XGBoost + SMOTE |
+| 5. Anomaly detection | RQ4 | Per-cluster outliers (fraud / errors / opportunity) | Isolation Forest, LOF |
+
+## Dataset
+
+[Comprehensive Retail Network Dataset of Bangladesh](https://data.mendeley.com/datasets/mgzvngzng2/1)
+(Shahin, Swarna & Farid, 2025) — CC BY 4.0, DOI `10.17632/mgzvngzng2.1`.
+
+Download the three CSVs from Mendeley and place them in `data/raw/`:
+
+```
+data/raw/
+├── shop_info_with_geo.csv        (~117 MB, 719,817 shops)
+├── product_target_for_shop.csv   (~89 MB, 613,656 shops × 17 products)
+└── product_info.csv              (~4 KB, 42 SKUs)
+```
+
+> **Note:** the dataset ships sales **targets**, not realized sales. The RQ3
+> "will-miss-target" label is therefore a documented proxy: a shop is *at-risk*
+> when its total target is below 80% of the median of its (cluster × shop type)
+> peer group.
+
+## Quick start (Docker)
+
+```bash
+make build        # build the image
+make pipeline     # run phases 1-5 → data/processed/, models/, reports/
+make dashboard    # Streamlit on http://localhost:8501
+make test         # pytest inside the container
+```
+
+Or without Make:
+
+```bash
+docker compose build
+docker compose run --rm pipeline
+docker compose up dashboard
+```
+
+## Local development (no Docker)
+
+```bash
+python3.11 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+python -m smart_retail.pipeline          # full pipeline
+python -m smart_retail.pipeline --phases 1,2   # selected phases
+pytest
+streamlit run dashboard/app.py
+```
+
+## Outputs
+
+| Artifact | Path |
+|---|---|
+| Engineered features | `data/processed/features.parquet` |
+| Cluster labels + profiles | `data/processed/clusters.parquet`, `reports/cluster_profiles.csv` |
+| Sales predictions | `data/processed/predictions.parquet` |
+| Risk scores | `data/processed/risk.parquet` |
+| Ranked anomalies | `data/processed/anomalies.parquet` |
+| All metrics | `reports/metrics.json` |
+| Trained models | `models/*.joblib` |
+
+## Project layout
+
+```
+src/smart_retail/
+├── config.py               # paths + tunables (env-overridable)
+├── data/                   # schema constants, loaders
+├── features/engineering.py # phase 1
+├── models/                 # phases 2-5 (clustering, regression, classification, anomaly)
+└── pipeline.py             # CLI orchestrator
+dashboard/app.py            # Streamlit (5 tabs)
+tests/                      # pytest suite (runs on real-data slices)
+```

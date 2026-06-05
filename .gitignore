@@ -1,0 +1,32 @@
+# Data & artifacts (large / regenerable)
+dataset/
+data/raw/*.csv
+data/processed/
+models/
+reports/figures/
+*.parquet
+*.joblib
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Local env
+.env
