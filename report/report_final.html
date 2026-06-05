@@ -92,7 +92,7 @@
   <table class="toct">
     <tr><td>1.&emsp;The three files of the dataset</td><td class="pg">8</td></tr>
     <tr><td>2.&emsp;Column dictionary of the shop file</td><td class="pg">9</td></tr>
-    <tr><td>3.&emsp;Column dictionary of the targets file</td><td class="pg">10</td></tr>
+    <tr><td>3.&emsp;Column dictionary of the targets file</td><td class="pg">9</td></tr>
     <tr><td>4.&emsp;Column dictionary of the product catalogue</td><td class="pg">10</td></tr>
     <tr><td>5.&emsp;The preprocessing funnel</td><td class="pg">10</td></tr>
     <tr><td>6.&emsp;Engineered features (48 columns)</td><td class="pg">11</td></tr>
@@ -118,8 +118,8 @@
   <table class="toct">
     <tr><td>1.&emsp;Overall methodology of the project</td><td class="pg">6</td></tr>
     <tr><td>2.&emsp;Pipeline architecture: reference and distributed lanes</td><td class="pg">8</td></tr>
-    <tr><td>3.&emsp;The preprocessing funnel</td><td class="pg">11</td></tr>
-    <tr><td>4.&emsp;Clean outlets per division</td><td class="pg">12</td></tr>
+    <tr><td>3.&emsp;The preprocessing funnel</td><td class="pg">10</td></tr>
+    <tr><td>4.&emsp;Clean outlets per division</td><td class="pg">11</td></tr>
     <tr><td>5.&emsp;Shops per business type</td><td class="pg">12</td></tr>
     <tr><td>6.&emsp;Distributions of the engineered features</td><td class="pg">13</td></tr>
     <tr><td>7.&emsp;Distribution of the monthly total target</td><td class="pg">13</td></tr>
@@ -456,7 +456,7 @@
 </table>
 
 <div class="figure"><img src="figures/f13_actual_vs_predicted.png">
-<p class="figcaption">Fig. 14. Assigned monthly target versus model prediction, hex-binned over every labelled shop (613,660; log colour scale, axes clipped at the 99th percentile). The model tracks the bulk of the distribution; the extreme tail resists point prediction.</p></div>
+<p class="figcaption">Fig. 14. Assigned monthly target versus model prediction (30,000-shop sample, axes clipped at the 99th percentile). The model tracks the bulk of the distribution; the extreme tail resists point prediction.</p></div>
 
 <p>Fig. 15 shows the SHAP [9] feature attribution of the winning model. Product-mix breadth (<code>n_products_targeted</code>) and the top importance tier dominate, and micro-location comes next: density within 500 m, the raw coordinates, and distance to the district centre. So location and assortment drive expected volume, not shop type alone. This supports the proposal&rsquo;s premise that intuition-based allocation leaves measurable signal unused.</p>
 
