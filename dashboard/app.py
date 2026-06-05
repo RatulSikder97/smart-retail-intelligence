@@ -637,24 +637,20 @@ with tab_dataset:
         ts = profile["target_summary"]
         cat = profile["catalogue_summary"]
         st.markdown(
-            "Three interlinked files describe the network. Every column of "
-            "every file is profiled below from the actual data — pick a file, "
-            "then a column, to see its meaning, central tendency, "
-            "distribution, and exactly how the pipeline treats its gaps."
+            "Pick a file, then a column — meaning, central tendency, "
+            "distribution, and how the pipeline treats its gaps."
         )
         st.info(
-            "**What is the 'Unknown' shop type?** 85,167 shop records "
-            "(10.23%) have *no* shop_type in the raw file — the survey never "
-            "captured it. The same records mostly lack style, importance and "
-            "organizer too. Phase 1 keeps these shops and labels the gap "
-            "explicitly as **'Unknown'** instead of deleting 85k rows; the "
-            "clustering then isolates them as their own archetype (the "
-            "data-poor 'ghost-shop' segment of RQ1) — so the gap itself "
-            "became a finding.",
+            "**What is the 'Unknown' shop type?** 85,167 records (10.23%) have "
+            "no shop_type in the raw file — the survey never captured it, and "
+            "the same records mostly lack style, importance and organizer. "
+            "Phase 1 keeps them under an explicit **'Unknown'** label; "
+            "clustering then isolates them as the data-poor 'ghost-shop' "
+            "archetype of RQ1. The gap itself is a finding.",
             icon="❓",
         )
 
-        file_tabs = st.tabs([f"📄 {name}" for name in profile["files"]])
+        file_tabs = st.tabs(list(profile["files"]))
         for file_tab, (filename, file_profile) in zip(file_tabs, profile["files"].items()):
             with file_tab:
                 cols = file_profile["columns"]
@@ -705,10 +701,137 @@ with tab_dataset:
             st.dataframe(art["products"], width="stretch", hide_index=True, height=300)
 
 # ==========================================================================
+ALGORITHM_CARDS = [
+    {
+        "phase": "Phase 1", "rq": "Preparation",
+        "title": "Cleaning & feature engineering",
+        "algorithm": "BallTree (haversine) · vectorized geometry · one-hot encoding",
+        "why": "Density and centrality turn 'urban over-stock vs rural stock-out' "
+               "into measurable inputs; BallTree answers all 719,817 neighbour "
+               "queries in seconds (n log n, not n²).",
+        "input": "shop_info_with_geo.csv (832,881 rows) + product_target_for_shop.csv (853,732 rows)",
+        "output": "features.parquet — 719,817 shops × 48 features",
+        "steps": [
+            "Drop duplicate shop_code rows (keep first).",
+            "Validate GPS against the Bangladesh bounding box (20.5–26.7°N, 88.0–92.7°E); "
+            "rows with geometry = POINT EMPTY are removed.",
+            "Fill categorical gaps with an explicit 'Unknown' level.",
+            "Count neighbours within 500 m / 1 km / 5 km on a haversine BallTree.",
+            "Compute distance to the shop centroid of each district.",
+            "Join monthly targets, preferring valued rows over NaN duplicates; "
+            "derive n_products_targeted and has_target.",
+            "One-hot encode type, style, importance, place nature, division.",
+        ],
+    },
+    {
+        "phase": "Phase 2", "rq": "RQ1",
+        "title": "Archetype clustering",
+        "algorithm": "K-Means (selected) · Agglomerative + DBSCAN cross-checks",
+        "why": "k is not assumed: every k from 3–9 is scored on two independent "
+               "criteria, and both point to 8. DBSCAN collapsing to one cluster "
+               "(98.7% noise) is reported — the network is a continuous fabric.",
+        "input": "Standard-scaled 48-feature matrix (719,817 × 48)",
+        "output": "cluster per shop · cluster_profiles.csv · kmeans model",
+        "steps": [
+            "Standardize every feature (zero mean, unit variance).",
+            "Fit K-Means for k = 3…9, 10 restarts each (seed 42).",
+            "Score each k: silhouette on a 10k subsample + Davies–Bouldin on all rows.",
+            "Pick the best-silhouette k → 8.",
+            "Cross-check with Agglomerative (Ward) and DBSCAN on a 20k subsample.",
+            "Profile each cluster: median density, distance, target, dominant categories.",
+        ],
+    },
+    {
+        "phase": "Phase 3", "rq": "RQ2",
+        "title": "Sales-target regression",
+        "algorithm": "Linear baseline vs Random Forest · XGBoost · LightGBM + SHAP",
+        "why": "The linear baseline exists to prove non-linearity (R² 0.02 vs "
+               "XGBoost 0.45 on identical inputs); SHAP opens the winning "
+               "black box into per-feature contributions.",
+        "input": "Features of the 613,660 shops with a target; label = total_target",
+        "output": "predictions.parquet · shap_importance.csv · best model",
+        "steps": [
+            "Split 80/20 train/test (seed 42).",
+            "Fit LinearRegression (scaled), RandomForest (100 trees, depth ≤ 20), "
+            "XGBoost (300 × depth 8), LightGBM (300 trees, 63 leaves).",
+            "Evaluate RMSE / MAE / R² on the untouched test set.",
+            "Select the lowest-RMSE model → XGBoost.",
+            "Explain it with SHAP TreeExplainer on ≤ 2,000 test rows.",
+            "Predict every labelled shop with the winner.",
+        ],
+    },
+    {
+        "phase": "Phase 4", "rq": "RQ3",
+        "title": "Target-miss risk classification",
+        "algorithm": "SMOTE + Logistic Regression · Random Forest · XGBoost",
+        "why": "The dataset has assigned targets, not realized sales, so the label "
+               "is an explicit peer-relative proxy. SMOTE runs only inside the "
+               "training fold — resampling before the split would leak.",
+        "input": "Features + cluster id; label: total_target < 0.8 × peer median (cluster × type)",
+        "output": "risk.parquet (at_risk + risk_score per shop) · best model",
+        "steps": [
+            "Build the peer-relative label per (cluster × shop type) → 36.6% base rate.",
+            "Stratified 80/20 split (seed 42).",
+            "Wrap each model in an imblearn pipeline [SMOTE → model]: oversampling "
+            "happens only in fit(), never on the test set.",
+            "Fit LogisticRegression (scaled), RandomForest, XGBoost.",
+            "Score ROC-AUC / F1 / precision / recall on the raw test set.",
+            "Pick the highest-AUC model; predict_proba → risk_score ∈ [0, 1].",
+        ],
+    },
+    {
+        "phase": "Phase 5", "rq": "RQ4",
+        "title": "Per-cluster anomaly detection",
+        "algorithm": "Isolation Forest + Local Outlier Factor, combined by rank",
+        "why": "Scores are computed within each archetype, never globally — a rural "
+               "kiosk judged against metro superstores would always look anomalous. "
+               "Two detectors catch two different failure shapes.",
+        "input": "Features + cluster labels for all 719,817 shops",
+        "output": "anomalies.parquet · top_anomalies.parquet (71,982 ranked shops)",
+        "steps": [
+            "For each cluster with ≥ 20 shops, standardize its feature block.",
+            "Isolation Forest (200 trees): negate score_samples, rank to percentile.",
+            "LOF (20 neighbours): same negate-and-rank treatment.",
+            "combined_score = mean of the two percentile ranks.",
+            "Export the top decile with full context for fraud / data-error / "
+            "opportunity triage.",
+        ],
+    },
+]
+
+
+def render_algorithm_card(card: dict) -> None:
+    with st.container(border=True):
+        st.markdown(
+            f'<div class="eyebrow">{card["phase"]} · {card["rq"]}</div>'
+            f'<p class="section-title" style="font-size:1.02rem;">{card["title"]}</p>'
+            f'<p class="section-desc" style="margin-bottom:0.45rem;">{card["algorithm"]}</p>'
+            f'<div class="stat-label" style="white-space:normal;">IN&nbsp;&nbsp;'
+            f'<span style="text-transform:none;letter-spacing:0;color:#1C2A3A;">{card["input"]}</span></div>'
+            f'<div class="stat-label" style="white-space:normal;margin-top:2px;">OUT&nbsp;'
+            f'<span style="text-transform:none;letter-spacing:0;color:#1C2A3A;">{card["output"]}</span></div>',
+            unsafe_allow_html=True,
+        )
+        with st.expander(f"Internal steps ({len(card['steps'])})"):
+            for i, step in enumerate(card["steps"], start=1):
+                st.markdown(f"{i}. {step}")
+        st.caption(card["why"])
+
+
 with tab_method:
-    section_header("Methodology", "How the analysis is produced",
-                   "Two execution paths over the same raw data — reference scikit-learn and distributed Hadoop/Spark.")
-    st.graphviz_chart("""
+    section_header(
+        "Methodology", "How the analysis is produced",
+        "One topic per view — pipeline flow, the algorithm behind every step, "
+        "the engineered features, the distributed run, and the experiments.",
+    )
+    (sub_flow, sub_algo, sub_feat, sub_dist, sub_exp) = st.tabs(
+        ["Pipeline flow", "Algorithms step by step", "Feature engineering",
+         "Hadoop · Spark", "Experiments"]
+    )
+
+    # ---------------------------------------------------------- flow
+    with sub_flow:
+        st.graphviz_chart("""
 digraph pipeline {
   rankdir=LR; bgcolor=transparent;
   node [shape=box, style="rounded,filled", fillcolor="#eef4fb", color="#2a78d6",
@@ -730,189 +853,133 @@ digraph pipeline {
   spark -> dash [label="distributed run"];
 }
 """)
-    st.caption(
-        "Two execution paths over the same data: the scikit-learn pipeline "
-        "(reference implementation, exact algorithms from the proposal) and "
-        "the Hadoop/Spark path (distributed storage + MLlib) for the big-data "
-        "requirement. Both start from the same raw CSVs."
-    )
-    st.divider()
-
-    if require(art, "metrics"):
-        quality = art["metrics"].get("phase_1_preprocessing", {})
-        section_header("Phase 1", "Data preparation, step by step")
-        funnel = pd.DataFrame(
-            [
-                {"stage": "1 · Raw shop records", "shops": quality.get("n_raw_shop_rows", 0)},
-                {"stage": "2 · Unique shop codes", "shops": quality.get("n_unique_shops", 0)},
-                {"stage": "3 · Valid GPS (inside Bangladesh)", "shops": quality.get("n_final_shops", 0)},
-                {"stage": "4 · Joined with a sales target", "shops": quality.get("n_shops_with_target", 0)},
-            ]
+        st.caption(
+            "Two paths over the same raw data: scikit-learn (reference, exact "
+            "proposal algorithms) and Hadoop/Spark (distributed)."
         )
-        bars = (
-            alt.Chart(funnel)
-            .mark_bar(color=SEQUENTIAL_HUE, cornerRadiusEnd=4, height={"band": 0.55})
-            .encode(x=alt.X("shops", title="shops"),
-                    y=alt.Y("stage", sort=None, title=None),
-                    tooltip=["stage", "shops"])
-        )
-        labels = (
-            alt.Chart(funnel).mark_text(align="left", dx=4, color="#555")
-            .encode(x="shops", y=alt.Y("stage", sort=None),
-                    text=alt.Text("shops", format=","))
-        )
-        st.altair_chart((bars + labels).properties(height=210), width="stretch")
-        st.markdown(
-            f"The {quality.get('n_invalid_or_missing_gps', 0):,} rows removed at "
-            "stage 3 have empty latitude/longitude in the raw file "
-            "(`geometry = POINT EMPTY`) — the missing-GPS rate the dataset "
-            "authors themselves report. What remains equals the paper's "
-            "published outlet count exactly, so no valid shop is lost."
-        )
-        st.divider()
-
-        section_header("Phases 1–5", "Methods, phase by phase")
-        st.markdown(
-            "Each phase consumes the previous phase's output. The table gives "
-            "the one-line view; the notes underneath explain how each method "
-            "works and why it was chosen."
-        )
-        methods = pd.DataFrame(
-            [
-                {"phase": "1 · Preparation", "input": "raw CSVs",
-                 "method": "dedup, GPS validation, BallTree neighbour densities, district-centroid distance, one-hot encoding",
-                 "output": "features.parquet (719,817 × 48)"},
-                {"phase": "2 · Archetypes (RQ1)", "input": "scaled feature matrix",
-                 "method": "K-Means scanned k=3…9, scored by silhouette + Davies-Bouldin; hierarchical & DBSCAN as cross-checks",
-                 "output": "cluster per shop, profiles"},
-                {"phase": "3 · Sales (RQ2)", "input": "features of 613,660 labelled shops",
-                 "method": "linear baseline vs Random Forest, XGBoost, LightGBM on an 80/20 split; SHAP on the winner",
-                 "output": "predictions, feature attributions"},
-                {"phase": "4 · Risk (RQ3)", "input": "features + cluster",
-                 "method": "peer-relative miss label; SMOTE inside the training fold; LogReg / RF / XGBoost",
-                 "output": "risk score per shop"},
-                {"phase": "5 · Anomalies (RQ4)", "input": "features + cluster",
-                 "method": "Isolation Forest + LOF fitted per cluster, combined by percentile rank",
-                 "output": "ranked top decile for triage"},
-            ]
-        )
-        st.dataframe(methods, width="stretch", hide_index=True)
-
-        with st.expander("Notes on the methods (read before interpreting results)"):
-            st.markdown(
-                """
-The **density features** count how many other shops sit within 500 m, 1 km and
-5 km of each outlet. A BallTree with the haversine metric answers all 719,817
-queries in seconds and, unlike a naive pairwise scan, scales as *n log n*.
-Density is the pipeline's proxy for local competition and urbanisation.
-
-The **cluster count k = 8** is not assumed — K-Means is fitted for every k from
-3 to 9 and judged on two independent criteria. Silhouette rewards tight,
-well-separated clusters; Davies–Bouldin penalises overlapping ones. Both point
-to 8. DBSCAN collapsing to one cluster with 98.7% noise is reported rather than
-hidden: it says the retail fabric is continuous, which is itself a finding.
-
-For **sales prediction** the linear baseline exists to prove non-linearity: it
-manages R² 0.02 where XGBoost reaches 0.45 with identical inputs. SHAP values
-are computed on the winner because gradient-boosted trees are otherwise opaque;
-they decompose every single prediction into per-feature contributions.
-
-The **risk label is a proxy** and is labelled as such everywhere: the dataset
-carries assigned targets, not realized sales, so a shop is flagged when its
-target sits far below what shops of the same archetype and type receive. SMOTE
-runs strictly inside the training fold — resampling before the split would leak
-synthetic copies of test shops into training and inflate every metric.
-
-**Anomaly scores are computed within each cluster**, never globally: a rural
-kiosk compared against metro superstores would always look anomalous. Isolation
-Forest catches shops that are easy to isolate in feature space; LOF catches
-shops whose local neighbourhood density differs from their neighbours'. The
-final rank is the mean of the two percentile ranks.
-"""
-            )
-        sensitivity = art.get("imputation_sensitivity")
-        if sensitivity:
-            st.divider()
-            section_header("Sensitivity", "Missing values — the k-NN imputation experiment")
-            ref, imp = sensitivity["reference_no_imputation"], sensitivity["with_knn_imputation"]
-            details = sensitivity["imputation_details"]
-            st.markdown(
-                f"Gaps are kept as an explicit 'Unknown' by default. As a controlled "
-                f"experiment (`--impute-knn`), geo fields and high-confidence shop_style "
-                f"were filled from each shop's {details['k']} nearest neighbours "
-                f"({details['imputed']['shop_style']:,} styles at ≥{details['confidence_threshold']:.0%} "
-                f"agreement, {details['imputed']['division']} geo fields); shop_type and "
-                "shop_importance were never filled (measured at or below the "
-                "majority-class baseline)."
-            )
-            comparison = pd.DataFrame(
+        if require(art, "metrics"):
+            quality = art["metrics"].get("phase_1_preprocessing", {})
+            st.markdown("**From raw file to model-ready table**")
+            funnel = pd.DataFrame(
                 [
-                    {"metric": "clustering best k", "reference": ref["best_k"], "with imputation": imp["best_k"]},
-                    {"metric": "silhouette", "reference": round(ref["silhouette"], 3), "with imputation": round(imp["silhouette"], 3)},
-                    {"metric": "regression R² (XGBoost)", "reference": round(ref["regression_r2"], 3), "with imputation": round(imp["regression_r2"], 3)},
-                    {"metric": "regression RMSE", "reference": round(ref["regression_rmse"], 1), "with imputation": round(imp["regression_rmse"], 1)},
-                    {"metric": "risk ROC-AUC (XGBoost)", "reference": round(ref["roc_auc"], 3), "with imputation": round(imp["roc_auc"], 3)},
-                    {"metric": "risk F1", "reference": round(ref["f1"], 3), "with imputation": round(imp["f1"], 3)},
+                    {"stage": "1 · Raw shop records", "shops": quality.get("n_raw_shop_rows", 0)},
+                    {"stage": "2 · Unique shop codes", "shops": quality.get("n_unique_shops", 0)},
+                    {"stage": "3 · Valid GPS (inside Bangladesh)", "shops": quality.get("n_final_shops", 0)},
+                    {"stage": "4 · Joined with a sales target", "shops": quality.get("n_shops_with_target", 0)},
                 ]
             )
-            st.dataframe(comparison, width="stretch", hide_index=True)
-            st.markdown(
-                "**Reading the trade-off.** Imputation improves the supervised "
-                "metrics (risk AUC 0.857 → 0.881) but collapses the archetype "
-                "structure from 8 clusters to 3 — filling in shop_style blends "
-                "the data-poor 'ghost' segment into ordinary archetypes, hiding "
-                "exactly the population the audit use-case needs to see. The "
-                "risk numbers are also not strictly comparable: the proxy label "
-                "is defined relative to cluster peers, and the clusters changed. "
-                "The reference pipeline therefore keeps imputation **off**; the "
-                "flag exists for prediction-focused deployments."
+            bars = (
+                alt.Chart(funnel)
+                .mark_bar(color=SEQUENTIAL_HUE, cornerRadiusEnd=4, height={"band": 0.55})
+                .encode(x=alt.X("shops", title="shops"),
+                        y=alt.Y("stage", sort=None, title=None),
+                        tooltip=["stage", "shops"])
+            )
+            labels = (
+                alt.Chart(funnel).mark_text(align="left", dx=4, color=MUTED)
+                .encode(x="shops", y=alt.Y("stage", sort=None),
+                        text=alt.Text("shops", format=","))
+            )
+            st.altair_chart(
+                (bars + labels).properties(height=210, padding={"right": 52}),
+                width="stretch",
+            )
+            st.caption(
+                f"Stage 3 removes {quality.get('n_invalid_or_missing_gps', 0):,} rows "
+                "whose coordinates were never captured (geometry = POINT EMPTY); "
+                "what remains equals the paper's published count exactly."
             )
 
-        st.divider()
+    # ---------------------------------------------------------- algorithms
+    with sub_algo:
+        col_a, col_b = st.columns(2)
+        for slot, card in zip([col_a, col_b, col_a, col_b, col_a], ALGORITHM_CARDS):
+            with slot:
+                render_algorithm_card(card)
 
-        section_header("Big data layer", "Distributed run — Hadoop HDFS + Spark MLlib")
+    # ---------------------------------------------------------- features
+    with sub_feat:
+        feature_cols = numeric_feature_columns(art["features"])
+        onehot_families: dict[str, list] = {}
+        core = []
+        for col in feature_cols:
+            family = next(
+                (p for p in ("shop_type_", "shop_style_", "shop_importance_",
+                             "place_nature_", "division_") if col.startswith(p)), None,
+            )
+            if family:
+                onehot_families.setdefault(family.rstrip("_"), []).append(col)
+            else:
+                core.append(col)
+        descriptions = {
+            "density_500m": "Shops within 500 m (BallTree haversine, self excluded)",
+            "density_1km": "Shops within 1 km",
+            "density_5km": "Shops within 5 km",
+            "dist_to_district_centre_km": "Distance to the district's shop centroid",
+            "n_products_targeted": "Products (of 17) with a positive monthly target",
+            "latitude": "Validated GPS latitude",
+            "longitude": "Validated GPS longitude",
+        }
+        dictionary = pd.DataFrame(
+            [{"feature": c, "group": "spatial" if c.startswith(("density", "dist"))
+              else "core", "description": descriptions.get(c, "")} for c in core]
+            + [{"feature": f"{fam}_* ({len(cols)} columns)", "group": "one-hot",
+                "description": f"Indicator per {fam.replace('_', ' ')} level; 'Unknown' kept explicit"}
+               for fam, cols in onehot_families.items()]
+        )
+        c1, c2 = st.columns([2, 3])
+        with c1:
+            stat_row([("Model features", len(feature_cols), "engineered in phase 1")])
+            st.dataframe(dictionary, width="stretch", hide_index=True, height=360)
+        with c2:
+            st.caption("Distributions in the current filter view (clipped at p99)")
+            hist_sample = f.sample(min(50_000, len(f)), random_state=0)
+            g1, g2 = st.columns(2)
+            g1.altair_chart(histogram(hist_sample, "density_1km", "shops within 1 km"), width="stretch")
+            g2.altair_chart(histogram(hist_sample, "dist_to_district_centre_km", "km to district centre"), width="stretch")
+            g3, g4 = st.columns(2)
+            g3.altair_chart(histogram(hist_sample, "n_products_targeted", "products targeted"), width="stretch")
+            if f["has_target"].any():
+                g4.altair_chart(
+                    histogram(hist_sample[hist_sample["has_target"]], TARGET_COLUMN, "monthly total target"),
+                    width="stretch",
+                )
 
+    # ---------------------------------------------------------- distributed
+    with sub_dist:
         topology = cluster_topology()
         if topology:
-            t1, t2, t3 = st.columns([1, 2, 2])
-            t1.metric("Spark master", topology["spark_status"])
+            stat_row([
+                ("Spark master", topology["spark_status"], None),
+                ("Live datanodes", len(topology["datanodes"]), "HDFS, replication 2"),
+                ("Live workers", len(topology["workers"]),
+                 f"{sum(w['cores'] for w in topology['workers'])} cores"),
+            ])
+            t2, t3 = st.columns(2)
             with t2:
-                st.markdown("**Live datanodes (HDFS)**")
+                st.markdown("**Datanodes**")
                 st.dataframe(pd.DataFrame(topology["datanodes"]),
                              width="stretch", hide_index=True)
             with t3:
-                st.markdown("**Live Spark workers**")
+                st.markdown("**Spark workers**")
                 st.dataframe(pd.DataFrame(topology["workers"]),
                              width="stretch", hide_index=True)
-            st.caption(
-                "Queried live from the namenode and Spark master APIs. Scale "
-                "with `WORKERS=N DATANODES=N make spark-up` — blocks (stored "
-                "with replication 2) spread across whatever datanodes exist."
-            )
+            st.caption("Live from the namenode and Spark master APIs · scale with "
+                       "`WORKERS=N DATANODES=N make spark-up`")
         else:
-            st.caption(
-                "Cluster offline — start it with `make spark-up` to see the "
-                "live topology here."
-            )
+            st.caption("Cluster offline — `make spark-up` to see the live topology here.")
 
         spark_runs = art.get("spark_runs")
         if not spark_runs:
-            st.info(
-                "No distributed-run metrics yet. Start the cluster and run: "
-                "`make spark-up && make spark-pipeline` — results appear here."
-            )
+            st.info("No distributed-run metrics yet — run `make spark-pipeline`.")
         else:
-            scope = st.selectbox(
-                "Run scope (regional runs read only their divisions' HDFS "
-                "partitions — partition pruning)",
-                list(spark_runs.keys()),
-            )
+            scope = st.selectbox("Run scope", list(spark_runs.keys()))
             spark_metrics = spark_runs[scope]
             run_scope = spark_metrics.get("run_scope", {})
-            st.markdown(
-                f"Storage: `{spark_metrics.get('storage', '')}` · input: "
-                f"{run_scope.get('input_source', 'raw CSVs')} · scope: "
-                f"**{run_scope.get('divisions', 'all')}**"
+            st.caption(
+                f"Storage `{spark_metrics.get('storage', '')}` · input: "
+                f"{run_scope.get('input_source', 'raw CSVs')} · divisions: "
+                f"{run_scope.get('divisions', 'all')}"
             )
             rows = []
             for key in ("phase_1_spark", "phase_2_spark", "phase_3_spark",
@@ -947,63 +1014,48 @@ final rank is the mean of the two percentile ranks.
                     })
                 st.dataframe(pd.DataFrame(comparison), width="stretch", hide_index=True)
 
-            with st.expander("Full distributed-run metrics (JSON)"):
+            with st.expander("Full metrics (JSON)"):
                 st.json(spark_metrics)
             st.caption(
-                "MLlib offers no XGBoost/SHAP/SMOTE/Isolation-Forest, so the "
-                "distributed run uses the nearest equivalents (GBT, class "
-                "weights, centroid distance). The scikit-learn pipeline stays "
-                "the reference for the exact proposal algorithms; matching row "
-                "counts across both paths cross-validate the data preparation."
+                "MLlib has no XGBoost/SHAP/SMOTE/Isolation-Forest — the distributed "
+                "run uses the nearest equivalents; matching row counts across both "
+                "paths cross-validate the data preparation."
             )
-        st.divider()
 
-        section_header("Feature engineering", "Engineered feature attributes")
-        feature_cols = numeric_feature_columns(art["features"])
-        onehot_families: dict[str, list] = {}
-        core = []
-        for col in feature_cols:
-            family = next(
-                (p for p in ("shop_type_", "shop_style_", "shop_importance_",
-                             "place_nature_", "division_") if col.startswith(p)), None,
+    # ---------------------------------------------------------- experiments
+    with sub_exp:
+        sensitivity = art.get("imputation_sensitivity")
+        if not sensitivity:
+            st.info("Run the pipeline with `--impute-knn` to populate this experiment.")
+        else:
+            section_header("Sensitivity", "Missing values — the k-NN imputation experiment",
+                           "Gaps stay 'Unknown' by default; this measures what filling them changes.")
+            ref, imp = sensitivity["reference_no_imputation"], sensitivity["with_knn_imputation"]
+            details = sensitivity["imputation_details"]
+            st.caption(
+                f"Filled from each shop's {details['k']} nearest neighbours: "
+                f"{details['imputed']['shop_style']:,} styles (≥{details['confidence_threshold']:.0%} "
+                f"agreement) and {details['imputed']['division']} geo fields. shop_type "
+                "and shop_importance never — measured at or below the majority-class baseline."
             )
-            if family:
-                onehot_families.setdefault(family.rstrip("_"), []).append(col)
-            else:
-                core.append(col)
-        descriptions = {
-            "density_500m": "Shops within 500 m (BallTree haversine, self excluded)",
-            "density_1km": "Shops within 1 km",
-            "density_5km": "Shops within 5 km",
-            "dist_to_district_centre_km": "Distance to the district's shop centroid",
-            "n_products_targeted": "Products (of 17) with a positive monthly target",
-            "latitude": "Validated GPS latitude",
-            "longitude": "Validated GPS longitude",
-        }
-        dictionary = pd.DataFrame(
-            [{"feature": c, "group": "spatial" if c.startswith(("density", "dist"))
-              else "core", "description": descriptions.get(c, "")} for c in core]
-            + [{"feature": f"{fam}_* ({len(cols)} columns)", "group": "one-hot",
-                "description": f"Indicator per {fam.replace('_', ' ')} level; 'Unknown' kept explicit"}
-               for fam, cols in onehot_families.items()]
-        )
-        c1, c2 = st.columns([2, 3])
-        with c1:
-            st.metric("Model features", len(feature_cols))
-            st.dataframe(dictionary, width="stretch", hide_index=True, height=360)
-        with c2:
-            st.caption("Distributions in the current filter view (clipped at p99)")
-            hist_sample = f.sample(min(50_000, len(f)), random_state=0)
-            g1, g2 = st.columns(2)
-            g1.altair_chart(histogram(hist_sample, "density_1km", "shops within 1 km"), width="stretch")
-            g2.altair_chart(histogram(hist_sample, "dist_to_district_centre_km", "km to district centre"), width="stretch")
-            g3, g4 = st.columns(2)
-            g3.altair_chart(histogram(hist_sample, "n_products_targeted", "products targeted"), width="stretch")
-            if f["has_target"].any():
-                g4.altair_chart(
-                    histogram(hist_sample[hist_sample["has_target"]], TARGET_COLUMN, "monthly total target"),
-                    width="stretch",
-                )
+            comparison = pd.DataFrame(
+                [
+                    {"metric": "clustering best k", "reference": ref["best_k"], "with imputation": imp["best_k"]},
+                    {"metric": "silhouette", "reference": round(ref["silhouette"], 3), "with imputation": round(imp["silhouette"], 3)},
+                    {"metric": "regression R² (XGBoost)", "reference": round(ref["regression_r2"], 3), "with imputation": round(imp["regression_r2"], 3)},
+                    {"metric": "regression RMSE", "reference": round(ref["regression_rmse"], 1), "with imputation": round(imp["regression_rmse"], 1)},
+                    {"metric": "risk ROC-AUC (XGBoost)", "reference": round(ref["roc_auc"], 3), "with imputation": round(imp["roc_auc"], 3)},
+                    {"metric": "risk F1", "reference": round(ref["f1"], 3), "with imputation": round(imp["f1"], 3)},
+                ]
+            )
+            st.dataframe(comparison, width="stretch", hide_index=True)
+            st.markdown(
+                "**The trade-off.** Imputation lifts the supervised metrics "
+                "(risk AUC 0.857 → 0.881) but collapses the taxonomy from 8 "
+                "archetypes to 3 — the data-poor 'ghost' segment blends into "
+                "ordinary clusters, hiding the population the audit needs. The "
+                "reference pipeline keeps imputation off."
+            )
 
 # ==========================================================================
 with tab_rq1:
