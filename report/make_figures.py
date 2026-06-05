@@ -212,15 +212,16 @@ save(fig, "f10_missingness.png")
 # F11 — spatial map of archetypes (sampled scatter)
 merged = features_full.merge(clusters, on="shop_code")
 sample = merged.sample(60_000, random_state=42)
-fig, ax = plt.subplots(figsize=(COL_W, 3.9))
+fig, ax = plt.subplots(figsize=(6.2, 4.8))
 for c in sorted(sample["cluster"].unique()):
     s = sample[sample["cluster"] == c]
-    ax.scatter(s["longitude"], s["latitude"], s=0.4, color=CLUSTER_COLORS[int(c) % 8],
+    ax.scatter(s["longitude"], s["latitude"], s=0.8, color=CLUSTER_COLORS[int(c) % 8],
                label=f"C{int(c)}", rasterized=True, linewidths=0)
 ax.set_xlabel("longitude"); ax.set_ylabel("latitude")
 ax.set_aspect(1.09)  # ~cos(23.7 deg) correction
-leg = ax.legend(frameon=False, markerscale=14, ncol=4, loc="lower right",
-                columnspacing=0.8, handletextpad=0.1)
+# legend fully outside the map so no archetype dot is covered
+leg = ax.legend(frameon=False, markerscale=11, loc="center left",
+                bbox_to_anchor=(1.02, 0.5), handletextpad=0.2, labelspacing=1.0)
 save(fig, "f11_cluster_map.png")
 
 # F13 — actual vs predicted (best regression model)

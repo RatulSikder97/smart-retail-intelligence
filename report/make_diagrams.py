@@ -120,25 +120,25 @@ FIG2 = f"""
 # ================= Fig 1: six-step methodology (624 x 96) =================
 steps = [
     ("database", "1. Dataset", "Mendeley data<br>832,881 rows"),
-    ("hadoop", "2. Ingest", "HDFS, 9 nodes<br>by division"),
-    ("pandas", "3. Engineer", "GPS checks<br>48 features"),
-    ("sklearn", "4. Model", "RQ1&ndash;RQ4<br>four methods"),
+    ("dbimport", "2. Ingest", "HDFS, 9 nodes<br>by division"),
+    ("settings", "3. Engineer", "GPS checks<br>48 features"),
+    ("tree", "4. Model", "RQ1&ndash;RQ4<br>four methods"),
     ("gauge", "5. Evaluate", "Optuna, 5-fold<br>47 tests"),
-    ("streamlit", "6. Deliver", "dashboard<br>audit lists"),
+    ("desktop", "6. Deliver", "dashboard<br>audit lists"),
 ]
-sbw, sgap = 94, 12
+sbw, sgap = 94, 12  # six boxes across 624px
 cells, wires1 = [], []
 x = 2
 for i, (icon, t, b) in enumerate(steps):
-    cells.append(card(x, 4, sbw, 86, icon, t, b))
+    cells.append(card(x, 4, sbw, 108, icon, t, b, icon_h=20))
     if i < len(steps) - 1:
-        wires1.append(wire([(x + sbw, 47), (x + sbw + sgap - 1, 47)]))
+        wires1.append(wire([(x + sbw, 58), (x + sbw + sgap - 1, 58)]))
     x += sbw + sgap
 
 FIG1 = f"""
-<div id="fig1" class="canvas" style="width:624px;height:94px;">
+<div id="fig1" class="canvas" style="width:624px;height:116px;">
   {"".join(cells)}
-  <svg class="wires" width="624" height="94">{ARROW_DEFS}{"".join(wires1)}</svg>
+  <svg class="wires" width="624" height="116">{ARROW_DEFS}{"".join(wires1)}</svg>
 </div>
 """
 

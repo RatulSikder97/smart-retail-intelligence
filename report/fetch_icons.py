@@ -14,7 +14,9 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 ICONS = {
     # brand logos (Simple Icons, CC0) in official brand colours
-    "hadoop": "https://cdn.simpleicons.org/apachehadoop/66CCFF",
+    "hadoop": "https://cdn.simpleicons.org/apachehadoop/1B7EB8",
+    "dbimport": "https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/database-import.svg",
+    "settings": "https://raw.githubusercontent.com/tabler/tabler-icons/main/icons/outline/settings.svg",
     "spark": "https://cdn.simpleicons.org/apachespark/E25A1C",
     "sklearn": "https://cdn.simpleicons.org/scikitlearn/F7931E",
     "streamlit": "https://cdn.simpleicons.org/streamlit/FF4B4B",
