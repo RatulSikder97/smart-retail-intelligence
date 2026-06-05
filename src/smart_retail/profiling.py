@@ -7,13 +7,54 @@ so the dashboard can show an in-depth data dictionary without re-reading
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 
 from smart_retail.data import schema
 
+# How the pipeline treats each column's gaps — shown verbatim on the dataset
+# pages so every 'Unknown' or NaN is explained rather than left mysterious.
+_CATEGORICAL_FILL = (
+    "Missing in the source (never captured at survey time). Phase 1 keeps the "
+    "row and fills the gap with an explicit 'Unknown' level so these shops "
+    "stay analysable — dropping them would discard shops that DO have GPS "
+    "and targets. 'Unknown' then behaves as its own category in clustering "
+    "and the models."
+)
+TRANSFORMATIONS = {
+    "organizer": _CATEGORICAL_FILL,
+    "place_nature": _CATEGORICAL_FILL,
+    "place_name": "Free text; not used as a model feature.",
+    "freq_type": _CATEGORICAL_FILL,
+    "shop_type": _CATEGORICAL_FILL,
+    "shop_style": _CATEGORICAL_FILL,
+    "shop_importance": _CATEGORICAL_FILL,
+    "ss_importance": _CATEGORICAL_FILL,
+    "visit_target": "99.7% missing in the source — dropped, carries no usable signal.",
+    "latitude": "Rows with missing/out-of-country GPS are removed in phase 1 "
+                "(13.6%; geometry = 'POINT EMPTY'). No imputation — a made-up "
+                "location would poison every spatial feature.",
+    "longitude": "Same rule as latitude.",
+    "geometry": "Redundant WKT copy of latitude/longitude — dropped after GPS validation.",
+    "zila": _CATEGORICAL_FILL,
+    "upazila": _CATEGORICAL_FILL,
+    "division": _CATEGORICAL_FILL,
+    "Total": "NaN means the shop has no assigned target (rows ~736k+ of the "
+             "file). Kept as NaN and excluded from the supervised phases "
+             "(regression/classification) — never imputed, because an invented "
+             "target would become a fake label.",
+    **{f"prod_{i}": "NaN treated as 0 when counting a shop's targeted products "
+                    "(n_products_targeted)." for i in range(1, 18)},
+    "price_1": "Importance-tier price; missing for SKUs not sold in that tier — left as-is.",
+    "price_2": "Importance-tier price; missing for SKUs not sold in that tier — left as-is.",
+    "price_3": "Importance-tier price; missing for SKUs not sold in that tier — left as-is.",
+    "ingredient": "Missing for ~29% of SKUs in the source catalogue — left as-is.",
+}
+
 
 def profile_columns(df: pd.DataFrame, descriptions: dict[str, str] | None = None) -> list[dict]:
-    """One record per column: dtype, completeness, cardinality, examples."""
+    """One record per column: dtype, completeness, cardinality, central
+    tendency, and a JSON-friendly distribution (histogram or top values)."""
     descriptions = descriptions or {}
     out = []
     for col in df.columns:
@@ -23,17 +64,52 @@ def profile_columns(df: pd.DataFrame, descriptions: dict[str, str] | None = None
             "column": col,
             "dtype": str(s.dtype),
             "non_null": int(s.notna().sum()),
+            "missing": int(s.isna().sum()),
             "missing_pct": round(float(s.isna().mean()) * 100, 2),
             "unique": int(s.nunique()),
             "examples": ", ".join(str(v)[:24] for v in examples),
             "description": descriptions.get(col, ""),
+            "transformation": TRANSFORMATIONS.get(col, ""),
         }
         if pd.api.types.is_numeric_dtype(s) and s.notna().any():
+            clean = s.dropna()
+            mode = clean.mode()
             record.update(
-                min=round(float(s.min()), 3),
-                median=round(float(s.median()), 3),
-                mean=round(float(s.mean()), 3),
-                max=round(float(s.max()), 3),
+                kind="numeric",
+                min=round(float(clean.min()), 3),
+                q25=round(float(clean.quantile(0.25)), 3),
+                median=round(float(clean.median()), 3),
+                mean=round(float(clean.mean()), 3),
+                mode=round(float(mode.iloc[0]), 3) if not mode.empty else None,
+                q75=round(float(clean.quantile(0.75)), 3),
+                p95=round(float(clean.quantile(0.95)), 3),
+                max=round(float(clean.max()), 3),
+                std=round(float(clean.std()), 3),
+                skew=round(float(clean.skew()), 3) if len(clean) > 2 else None,
+            )
+            # 30-bin histogram clipped at p99 so one giant outlier doesn't
+            # flatten the whole distribution view
+            cap = float(clean.quantile(0.99))
+            clipped = clean[clean <= cap]
+            if clipped.nunique() > 1:
+                counts, edges = np.histogram(clipped, bins=30)
+                record["histogram"] = {
+                    "counts": counts.tolist(),
+                    "edges": [round(float(e), 4) for e in edges],
+                    "clipped_at_p99": cap,
+                }
+        else:
+            vc = s.fillna("<missing>").astype(str).value_counts()
+            record.update(
+                kind="categorical",
+                top_values=[
+                    {"value": str(v)[:40], "count": int(c)}
+                    for v, c in vc.head(15).items()
+                ],
+                most_common=str(vc.index[0])[:40] if len(vc) else None,
+                most_common_count=int(vc.iloc[0]) if len(vc) else 0,
+                least_common=str(vc.index[-1])[:40] if len(vc) else None,
+                least_common_count=int(vc.iloc[-1]) if len(vc) else 0,
             )
         out.append(record)
     return out

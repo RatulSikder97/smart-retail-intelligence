@@ -8,11 +8,11 @@
     "n_feature_columns": 48
   },
   "durations_sec": {
-    "phase_1": 29.8,
-    "phase_2": 55.0,
-    "phase_3": 182.5,
-    "phase_4": 117.3,
-    "phase_5": 81.6
+    "phase_1": 35.0,
+    "phase_2": 43.9,
+    "phase_3": 100.1,
+    "phase_4": 77.8,
+    "phase_5": 58.0
   },
   "phase_2_clustering": {
     "kmeans": {

@@ -1,4 +1,4 @@
-.PHONY: build pipeline dashboard test shell clean spark-up spark-etl spark-down spark-partition spark-pipeline
+.PHONY: build pipeline dashboard test shell clean spark-up spark-etl spark-down spark-partition spark-pipeline spark-ports
 
 build:            ## Build the Docker image
 	docker compose build
@@ -25,7 +25,10 @@ spark-partition:  ## Build the division-partitioned warehouse in HDFS
 	docker compose --profile spark --profile spark-jobs run --rm --no-deps spark-partition
 
 spark-pipeline:   ## Distributed 5-phase MLlib run; scope with DIVISIONS=Khulna,Barisal
-	docker compose --profile spark --profile spark-jobs run --rm --no-deps -e DIVISIONS=$(DIVISIONS) spark-pipeline
+	docker compose --profile spark --profile spark-jobs run --rm --no-deps --service-ports -e DIVISIONS=$(DIVISIONS) spark-pipeline
+
+spark-ports:      ## Show every exposed port of the distributed system
+	@docker ps --format 'table {{.Names}}\t{{.Ports}}' | grep -E 'NAMES|namenode|datanode|spark|dashboard' | sed 's/0.0.0.0://g;s/, \[::\]:[0-9]*->[0-9]*\/tcp//g'
 
 spark-etl:        ## Run the distributed ETL job on the Spark cluster
 	docker compose --profile spark --profile spark-jobs run --rm --no-deps spark-etl

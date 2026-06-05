@@ -93,6 +93,22 @@ Operational notes: HDFS metadata and blocks live inside the containers (demo
 setup) — after recreating the namenode or datanodes, re-run the ingest. Job
 targets use `--no-deps` so running a job never rescales the live topology.
 
+### Every exposed endpoint
+
+| Endpoint | URL | What to check there |
+|---|---|---|
+| Dashboard | http://localhost:8501 | all analysis views |
+| HDFS namenode UI | http://localhost:9870 | datanodes, blocks, browse `/smart_retail` |
+| HDFS RPC | `hdfs://localhost:8020` | CLI/API access from the host |
+| Spark master UI | http://localhost:8080 | workers, running/completed jobs |
+| Spark REST submit | http://localhost:6066 | programmatic job submission |
+| Spark driver UI | http://localhost:4040 | live stages/DAG while a job runs |
+| Datanode UIs (×N) | auto-assigned host ports | per-node blocks and health |
+| Worker UIs (×N) | auto-assigned host ports | per-worker executors |
+
+Replicas can't share one host port, so datanode/worker UIs get auto-assigned
+ports — `make spark-ports` prints the live map.
+
 **Where is Hadoop?** Spark bundles the Hadoop 3 client libraries (this build
 is `spark-3.5-bin-hadoop3`), which is how it reads/writes the shared volume.
 A full HDFS + YARN cluster adds nothing at 206 MB of input — the mounted

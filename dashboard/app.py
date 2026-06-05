@@ -222,10 +222,25 @@ def section(title: str, body: str) -> None:
 
 art = load_artifacts()
 
-st.title("Smart Retail Intelligence — Bangladesh FMCG Network")
-st.caption(
-    "719,817 GPS-tagged outlets · Mendeley dataset mgzvngzng2 (CC BY 4.0) · "
-    "MITE 431, Ratul Sikder & Fahim Rahman"
+st.markdown(
+    """
+<div style="padding:1.1rem 1.4rem;border-radius:10px;margin-bottom:0.8rem;
+     background:linear-gradient(100deg,#f0f5fc 0%,#fafbfd 70%);
+     border:1px solid #e3eaf3;">
+  <div style="font-size:1.55rem;font-weight:700;color:#16385c;">
+    Smart Retail Intelligence
+  </div>
+  <div style="color:#41556e;margin-top:0.15rem;">
+    Bangladesh FMCG distribution network · 719,817 GPS-tagged outlets
+  </div>
+  <div style="margin-top:0.55rem;">
+    <code style="background:#e8f0fa;border-radius:4px;padding:2px 8px;">MITE 431 · Big Data Analytics</code>
+    <code style="background:#e8f0fa;border-radius:4px;padding:2px 8px;">Mendeley mgzvngzng2 · CC BY 4.0</code>
+    <code style="background:#e8f0fa;border-radius:4px;padding:2px 8px;">Ratul Sikder · Fahim Rahman</code>
+  </div>
+</div>
+""",
+    unsafe_allow_html=True,
 )
 
 if "features" not in art:
@@ -234,22 +249,28 @@ if "features" not in art:
 
 base = build_base(tuple(sorted(art.keys())))
 
-with st.sidebar:
-    st.header("Filters")
-    st.caption("Empty selection = everything. Filters apply to the analysis tabs.")
-    sel_divisions = st.multiselect("Division", sorted(base["division"].unique()))
+with st.container(border=True):
+    fc1, fc2, fc3, fc4, fc5, fc6 = st.columns([2, 2, 2, 2, 1.6, 1.4])
+    sel_divisions = fc1.multiselect(
+        "Division", sorted(base["division"].unique()), placeholder="All divisions"
+    )
     cluster_options = (
         sorted(base["cluster"].dropna().unique().astype(int))
         if "cluster" in base else []
     )
-    sel_clusters = st.multiselect(
-        "Archetype (cluster)", cluster_options, format_func=lambda c: f"Cluster {c}"
+    sel_clusters = fc2.multiselect(
+        "Archetype", cluster_options, placeholder="All archetypes",
+        format_func=lambda c: f"Cluster {c}",
     )
-    sel_types = st.multiselect("Shop type", sorted(base["shop_type"].unique()))
-    sel_importance = st.multiselect(
-        "Shop importance", sorted(base["shop_importance"].unique())
+    sel_types = fc3.multiselect(
+        "Shop type", sorted(base["shop_type"].unique()), placeholder="All types"
     )
-    only_target = st.checkbox("Only shops with a sales target", value=False)
+    sel_importance = fc4.multiselect(
+        "Importance", sorted(base["shop_importance"].unique()), placeholder="All tiers"
+    )
+    with fc5:
+        st.markdown("<div style='height:1.75rem'></div>", unsafe_allow_html=True)
+        only_target = st.checkbox("Has sales target")
 
     mask = pd.Series(True, index=base.index)
     if sel_divisions:
@@ -264,8 +285,8 @@ with st.sidebar:
         mask &= base["has_target"]
 
     f = base[mask]
-    st.divider()
-    st.metric("Shops in view", f"{len(f):,}", f"{len(f) / len(base):.1%} of {len(base):,}")
+    fc6.metric("Shops in view", f"{len(f):,}",
+               f"{len(f) / len(base):.1%} of {len(base):,}", delta_color="off")
 
 if f.empty:
     st.warning("The current filter combination matches no shops — clear a filter.")
@@ -357,8 +378,89 @@ with tab_overview:
             hbar(type_counts, "shops", "shop_type", value_title="shops", fmt=",").properties(height=280),
             width="stretch",
         )
+        st.caption(
+            "'Unknown' = shop_type was never captured in the source survey "
+            "(10.23% of raw records) — kept as an explicit category rather "
+            "than dropped. Full explanation on the Dataset tab."
+        )
 
 # ==========================================================================
+def render_column_detail(record: dict) -> None:
+    """Full page for one column: meaning, central tendency, distribution,
+    and how the pipeline handles its gaps."""
+    if record.get("description"):
+        st.markdown(f"**What it means.** {record['description']}")
+
+    total = record["non_null"] + record["missing"]
+    if record["missing"] > 0:
+        st.warning(
+            f"**{record['missing']:,} missing values ({record['missing_pct']}% "
+            f"of {total:,} rows).** {record.get('transformation') or 'Left as-is.'}",
+            icon="⚠️",
+        )
+    elif record.get("transformation"):
+        st.caption(f"Handling: {record['transformation']}")
+
+    if record.get("kind") == "numeric":
+        st.markdown("**Central tendency & spread**")
+        m1, m2, m3, m4, m5 = st.columns(5)
+        m1.metric("Mean", f"{record['mean']:,}")
+        m2.metric("Median", f"{record['median']:,}")
+        m3.metric("Mode", f"{record['mode']:,}" if record.get("mode") is not None else "—")
+        m4.metric("Std dev", f"{record['std']:,}" if record.get("std") is not None else "—")
+        m5.metric("Skew", record.get("skew", "—"))
+        r1, r2, r3, r4, r5 = st.columns(5)
+        r1.metric("Min", f"{record['min']:,}")
+        r2.metric("25th pct", f"{record['q25']:,}")
+        r3.metric("75th pct", f"{record['q75']:,}")
+        r4.metric("95th pct", f"{record['p95']:,}")
+        r5.metric("Max", f"{record['max']:,}")
+        if record.get("skew") is not None and record["skew"] > 2:
+            st.caption(
+                f"Skew {record['skew']} — heavily right-tailed: the mean "
+                f"({record['mean']:,}) sits far above the median "
+                f"({record['median']:,}), pulled up by a few extreme values. "
+                "Use the median as the 'typical' value."
+            )
+        hist = record.get("histogram")
+        if hist:
+            bins = pd.DataFrame({
+                "from": hist["edges"][:-1],
+                "to": hist["edges"][1:],
+                "rows": hist["counts"],
+            })
+            chart = (
+                alt.Chart(bins)
+                .mark_bar(color=SEQUENTIAL_HUE, opacity=0.85, binSpacing=1)
+                .encode(
+                    x=alt.X("from:Q", title=record["column"],
+                            axis=alt.Axis(format="~s")),
+                    x2="to:Q",
+                    y=alt.Y("rows:Q", title="rows"),
+                    tooltip=["from", "to", "rows"],
+                )
+                .properties(height=220, title="Distribution (clipped at the 99th percentile)")
+            )
+            st.altair_chart(chart, width="stretch")
+    else:
+        st.markdown("**Category landscape**")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Distinct values", f"{record['unique']:,}")
+        c2.metric("Most common", record.get("most_common", "—"),
+                  f"{record.get('most_common_count', 0):,} rows", delta_color="off")
+        c3.metric("Least common", record.get("least_common", "—"),
+                  f"{record.get('least_common_count', 0):,} rows", delta_color="off")
+        top = pd.DataFrame(record.get("top_values", []))
+        if not top.empty:
+            top["value"] = top["value"].replace("<missing>", "(missing → 'Unknown')")
+            st.altair_chart(
+                hbar(top, "count", "value", value_title="rows", fmt=",")
+                .properties(height=48 + 26 * len(top),
+                            title=f"Value distribution (top {len(top)})"),
+                width="stretch",
+            )
+
+
 with tab_dataset:
     st.subheader("In-depth dataset description")
     profile = art.get("dataset_profile")
@@ -371,15 +473,55 @@ with tab_dataset:
         ts = profile["target_summary"]
         cat = profile["catalogue_summary"]
         st.markdown(
-            "Three interlinked files describe the network: where every shop is "
-            "and what kind of shop it is (`shop_info_with_geo`), how much each "
-            "shop is expected to sell per product per month "
-            "(`product_target_for_shop`), and what the products are "
-            "(`product_info`). The tables below profile every column of every "
-            "file: completeness, cardinality, ranges, and example values — "
-            "computed from the actual files, not copied from the paper."
+            "Three interlinked files describe the network. Every column of "
+            "every file is profiled below from the actual data — pick a file, "
+            "then a column, to see its meaning, central tendency, "
+            "distribution, and exactly how the pipeline treats its gaps."
+        )
+        st.info(
+            "**What is the 'Unknown' shop type?** 85,167 shop records "
+            "(10.23%) have *no* shop_type in the raw file — the survey never "
+            "captured it. The same records mostly lack style, importance and "
+            "organizer too. Phase 1 keeps these shops and labels the gap "
+            "explicitly as **'Unknown'** instead of deleting 85k rows; the "
+            "clustering then isolates them as their own archetype (the "
+            "data-poor 'ghost-shop' segment of RQ1) — so the gap itself "
+            "became a finding.",
+            icon="❓",
         )
 
+        file_tabs = st.tabs([f"📄 {name}" for name in profile["files"]])
+        for file_tab, (filename, file_profile) in zip(file_tabs, profile["files"].items()):
+            with file_tab:
+                cols = file_profile["columns"]
+                cols_df = pd.DataFrame(cols)
+                n_numeric = int((cols_df.get("kind") == "numeric").sum())
+                h1, h2, h3, h4 = st.columns(4)
+                h1.metric("Rows", f"{file_profile['rows']:,}")
+                h2.metric("Columns", len(cols))
+                h3.metric("Numeric / categorical", f"{n_numeric} / {len(cols) - n_numeric}")
+                h4.metric("Columns with gaps", int((cols_df["missing"] > 0).sum()))
+
+                summary_cols = [c for c in ("column", "description", "dtype",
+                                            "missing_pct", "unique", "examples")
+                                if c in cols_df.columns]
+                with st.expander("Column summary table", expanded=False):
+                    st.dataframe(
+                        cols_df[summary_cols], width="stretch", hide_index=True,
+                        column_config={
+                            "missing_pct": st.column_config.NumberColumn(
+                                "missing %", format="%.2f%%"),
+                        },
+                    )
+
+                selected = st.selectbox(
+                    "Explore a column", [c["column"] for c in cols],
+                    key=f"col_{filename}",
+                )
+                record = next(c for c in cols if c["column"] == selected)
+                render_column_detail(record)
+
+        st.divider()
         k1, k2, k3, k4, k5 = st.columns(5)
         k1.metric("Target rows with a Total", f"{ts['rows_with_total']:,}")
         k2.metric("Target rows all-NaN", f"{ts['rows_all_nan']:,}")
@@ -391,24 +533,6 @@ with tab_dataset:
             f"vs mean {ts['total_mean']:,.2f} vs max {ts['total_max']:,.0f} — a few "
             "wholesale-style outlets carry targets thousands of times the typical shop."
         )
-        st.divider()
-
-        for filename, file_profile in profile["files"].items():
-            cols_df = pd.DataFrame(file_profile["columns"])
-            ordered = [c for c in ("column", "description", "dtype", "non_null",
-                                   "missing_pct", "unique", "min", "median",
-                                   "mean", "max", "examples") if c in cols_df.columns]
-            st.markdown(f"**`{filename}`** — {file_profile['rows']:,} rows, "
-                        f"{len(cols_df)} columns")
-            st.dataframe(
-                cols_df[ordered], width="stretch", hide_index=True,
-                height=min(420, 42 + 35 * len(cols_df)),
-                column_config={
-                    "missing_pct": st.column_config.NumberColumn("missing %", format="%.2f%%"),
-                    "non_null": st.column_config.NumberColumn("non-null", format="%d"),
-                },
-            )
-
         if "products" in art:
             st.markdown(
                 f"**Product catalogue** — {cat['skus']} SKUs, {cat['brands']} brands, "

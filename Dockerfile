@@ -22,6 +22,7 @@ COPY README.md ./
 RUN pip install --no-cache-dir --no-deps -e .
 
 COPY dashboard ./dashboard
+COPY .streamlit ./.streamlit
 COPY tests ./tests
 
 # Artifact and data mount points, writable by the non-root user

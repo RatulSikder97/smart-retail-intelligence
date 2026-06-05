@@ -57,6 +57,7 @@ services:
       - HDFS-SITE.XML_dfs.permissions.enabled=false
     ports:
       - "9870:9870"   # namenode web UI
+      - "8020:8020"   # HDFS RPC (hdfs dfs -fs hdfs://localhost:8020 from host)
 
   datanode:
     image: apache/hadoop:3.4.1
@@ -73,6 +74,8 @@ services:
       - HDFS-SITE.XML_dfs.namenode.rpc-address=namenode:8020
       - HDFS-SITE.XML_dfs.replication=1
       - HDFS-SITE.XML_dfs.permissions.enabled=false
+    ports:
+      - "9864"        # datanode web UI, auto-assigned host port per replica
     depends_on:
       - namenode
 
@@ -105,6 +108,7 @@ services:
     ports:
       - "7077:7077"   # cluster endpoint
       - "8080:8080"   # master web UI
+      - "6066:6066"   # REST submission gateway
     volumes:
       - ./dataset:/data/dataset:ro
       - ./data:/data/out
@@ -125,8 +129,8 @@ services:
       - SPARK_WORKER_MEMORY=4g
     depends_on:
       - spark-master
-    # no published ports: scale freely with --scale spark-worker=N
-    # (per-worker UIs remain reachable through the master UI on :8080)
+    ports:
+      - "8081"        # worker web UI, auto-assigned host port per replica
     volumes:
       - ./dataset:/data/dataset:ro
       - ./data:/data/out
@@ -164,6 +168,8 @@ services:
       --driver-memory 3g
       --conf spark.hadoop.fs.defaultFS=hdfs://namenode:8020
       /opt/jobs/spark_ml_pipeline.py
+    ports:
+      - "4040:4040"   # live driver UI (stages/DAG) while the job runs
     environment:
       # regional scope, e.g. DIVISIONS=Khulna,Barisal make spark-pipeline
       - DIVISIONS=${DIVISIONS:-}
