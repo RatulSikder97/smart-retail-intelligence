@@ -1106,7 +1106,7 @@ digraph pipeline {
             st.dataframe(comparison, width="stretch", hide_index=True)
             st.markdown(
                 "**The trade-off.** Imputation lifts the supervised metrics "
-                "(risk AUC 0.857 → 0.881) but collapses the taxonomy from 8 "
+                "(risk AUC 0.862 → 0.886) but collapses the taxonomy from 8 "
                 "archetypes to 3 — the data-poor 'ghost' segment blends into "
                 "ordinary clusters, hiding the population the audit needs. The "
                 "reference pipeline keeps imputation off."
