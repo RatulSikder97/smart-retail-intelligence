@@ -55,10 +55,10 @@ def test_risk_scores_are_probabilities_for_all_labelled_shops(setup, classificat
     assert set(scores["at_risk"].unique()) <= {0, 1}
 
 
-def test_smote_never_sees_test_data(setup):
-    """The pipeline resamples only inside fit(); scoring uses the raw test set."""
+def test_class_weighting_uses_only_real_rows(setup):
+    """Weighting reshapes the loss, never the data: no rows created or dropped."""
     features, cluster_labels, cfg = setup
-    from smart_retail.modeling.classification import _candidate_models
+    from smart_retail.modeling.classification import _candidate_models, pos_weight_ratio
     from smart_retail.preprocessing.features import feature_matrix
     from sklearn.model_selection import train_test_split
 
@@ -69,9 +69,12 @@ def test_smote_never_sees_test_data(setup):
         X, y, test_size=cfg.test_size, random_state=cfg.random_state, stratify=y
     )
     X_test_before = X_test.copy()
-    pipeline = _candidate_models(cfg)["logistic_regression"]
+    pos_weight = pos_weight_ratio(y_train)
+    assert pos_weight > 1.0  # at-risk shops are the minority class
+    pipeline = _candidate_models(cfg, pos_weight)["logistic_regression"]
     pipeline.fit(X_train, y_train)
     pipeline.predict_proba(X_test)
-    # test set untouched, and its size unchanged by resampling
+    # test set untouched, and no synthetic rows anywhere
     assert X_test.equals(X_test_before)
     assert len(X_test) == int(round(cfg.test_size * len(X)))
+    assert len(X_train) + len(X_test) == len(X)

@@ -47,10 +47,10 @@ def xgb(**extra):
 
 strategies = {
     "No balancing": xgb(),
-    "Class weights (scale_pos_weight)": xgb(scale_pos_weight=pos_weight),
+    "Class weights (ours)": xgb(scale_pos_weight=pos_weight),
     "Random undersampling": ImbPipeline([("rus", RandomUnderSampler(random_state=SEED)),
                                          ("m", xgb())]),
-    "SMOTE (ours)": ImbPipeline([("sm", SMOTE(random_state=SEED)), ("m", xgb())]),
+    "SMOTE": ImbPipeline([("sm", SMOTE(random_state=SEED)), ("m", xgb())]),
 }
 
 results = {}

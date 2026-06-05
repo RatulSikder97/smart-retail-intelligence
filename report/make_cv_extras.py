@@ -1,11 +1,4 @@
-"""Out-of-fold analysis for the final report.
-
-Computes, honestly (5-fold, resampling inside folds only):
-  * ROC curves + confusion matrix for every risk classifier,
-  * 5-fold CV summary for every regression and classification candidate
-    (the reference paper's 'all algorithms under cross validation' table).
-Writes report/cv_all_models.json and the ROC/confusion figures.
-"""
+"""Out-of-fold 5-fold CV for every candidate (class-weighted, no resampling); writes cv_all_models.json and the ROC figure."""
 
 from __future__ import annotations
 
@@ -18,8 +11,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from imblearn.over_sampling import SMOTE
-from imblearn.pipeline import Pipeline as ImbPipeline
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import (
@@ -99,20 +90,20 @@ for name, model in reg_models.items():
     print("reg", name, out["regression"][name])
 
 # ------------- classification: out-of-fold proba for every candidate -------
+pos_weight = float((y_clf == 0).sum() / (y_clf == 1).sum())
 clf_models = {
-    "Logistic regression": ImbPipeline([("sc", StandardScaler()),
-                                        ("sm", SMOTE(random_state=SEED)),
-                                        ("m", LogisticRegression(max_iter=2000))]),
-    "Random Forest": ImbPipeline([("sm", SMOTE(random_state=SEED)),
-                                  ("m", RandomForestClassifier(n_estimators=100, max_depth=20,
-                                        min_samples_leaf=5, n_jobs=-1, random_state=SEED))]),
-    "XGBoost (defaults)": ImbPipeline([("sm", SMOTE(random_state=SEED)),
-                                       ("m", XGBClassifier(n_estimators=300, max_depth=8,
-                                             learning_rate=0.1, n_jobs=-1,
-                                             random_state=SEED, verbosity=0))]),
-    "XGBoost (tuned)": ImbPipeline([("sm", SMOTE(random_state=SEED)),
-                                    ("m", XGBClassifier(**{**tuned_clf, "tree_method": "hist",
-                                          "n_jobs": -1, "random_state": SEED, "verbosity": 0}))]),
+    "Logistic regression": make_pipeline(StandardScaler(),
+                                         LogisticRegression(max_iter=2000,
+                                                            class_weight="balanced")),
+    "Random Forest": RandomForestClassifier(n_estimators=100, max_depth=20,
+                                            min_samples_leaf=5, class_weight="balanced",
+                                            n_jobs=-1, random_state=SEED),
+    "XGBoost (defaults)": XGBClassifier(n_estimators=300, max_depth=8,
+                                        learning_rate=0.1, scale_pos_weight=pos_weight,
+                                        n_jobs=-1, random_state=SEED, verbosity=0),
+    "XGBoost (tuned)": XGBClassifier(**{**tuned_clf, "tree_method": "hist",
+                                        "scale_pos_weight": pos_weight,
+                                        "n_jobs": -1, "random_state": SEED, "verbosity": 0}),
 }
 skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED)
 roc_points = {}

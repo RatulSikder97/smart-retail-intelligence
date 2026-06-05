@@ -144,9 +144,9 @@
 <div class="paper">
 
 <div class="abstract">
-<p class="noindent"><i>Abstract</i>&mdash;Bangladesh&rsquo;s fast-moving consumer goods (FMCG) trade reaches consumers through roughly 720,000 retail outlets spread over all 64 districts, but allocation planning is still done mostly on intuition; industry estimates put the resulting waste at 15&ndash;25% of distribution capacity. In this project we run supervised, unsupervised, and clustering methods together on the recently released Comprehensive Retail Network Dataset of Bangladesh (719,817 GPS-tagged outlets, a 42-SKU catalogue, and monthly sales targets for 17 products). We prepare the data in two lanes that check each other: a scikit-learn reference lane, and a distributed lane on Hadoop HDFS and Apache Spark with a division-partitioned warehouse whose row counts reproduce the reference exactly. From each shop we build 48 spatial and structural features. We find 8 interpretable shop archetypes with K-Means and confirm them with hierarchical clustering and DBSCAN. We compare four regression models for sales-target prediction (best test R&sup2; 0.45 against a linear baseline of 0.02). We train a target-miss risk classifier that reaches ROC-AUC 0.869 on the held-out split and 0.870 out-of-fold. Finally, we rank 71,982 anomalous shops for fraud and data-error triage with per-cluster Isolation Forest and Local Outlier Factor. Hyperparameters of the winning models come from Bayesian optimization (Optuna TPE), and we also evaluate every algorithm under 5-fold cross-validation. One result has direct business value on its own: 85,167 book entries with no recorded attributes fall into a single &ldquo;ghost-shop&rdquo; archetype, which gives distributors a machine-generated audit list for the duplicate and fraudulent entries that motivated this study in the first place.</p>
+<p class="noindent"><i>Abstract</i>&mdash;Bangladesh&rsquo;s fast-moving consumer goods (FMCG) trade reaches consumers through roughly 720,000 retail outlets spread over all 64 districts, but allocation planning is still done mostly on intuition; industry estimates put the resulting waste at 15&ndash;25% of distribution capacity. In this project we run supervised, unsupervised, and clustering methods together on the recently released Comprehensive Retail Network Dataset of Bangladesh (719,817 GPS-tagged outlets, a 42-SKU catalogue, and monthly sales targets for 17 products). We prepare the data in two lanes that check each other: a scikit-learn reference lane, and a distributed lane on Hadoop HDFS and Apache Spark with a division-partitioned warehouse whose row counts reproduce the reference exactly. From each shop we build 48 spatial and structural features. We find 8 interpretable shop archetypes with K-Means and confirm them with hierarchical clustering and DBSCAN. We compare four regression models for sales-target prediction (best test R&sup2; 0.45 against a linear baseline of 0.02). We train a target-miss risk classifier that reaches ROC-AUC 0.875 on the held-out split and 0.876 out-of-fold. Finally, we rank 71,982 anomalous shops for fraud and data-error triage with per-cluster Isolation Forest and Local Outlier Factor. Hyperparameters of the winning models come from Bayesian optimization (Optuna TPE), and we also evaluate every algorithm under 5-fold cross-validation. One result has direct business value on its own: 85,167 book entries with no recorded attributes fall into a single &ldquo;ghost-shop&rdquo; archetype, which gives distributors a machine-generated audit list for the duplicate and fraudulent entries that motivated this study in the first place.</p>
 </div>
-<p class="keywords noindent">Index Terms&mdash;retail analytics, clustering, XGBoost, SHAP, SMOTE, anomaly detection, Bayesian optimization, Hadoop, Apache Spark, Bangladesh</p>
+<p class="keywords noindent">Index Terms&mdash;retail analytics, clustering, XGBoost, SHAP, cost-sensitive learning, anomaly detection, Bayesian optimization, Hadoop, Apache Spark, Bangladesh</p>
 
 <h2 class="sec">1. Introduction</h2>
 
@@ -154,7 +154,7 @@
 
 <p>Until recently nobody could study this problem quantitatively at national scale, simply because no public data described the network. The release of the Comprehensive Retail Network Dataset for Bangladesh [1] changed that. It gives GPS coordinates, structural attributes, and monthly sales targets for hundreds of thousands of outlets under a CC BY 4.0 license. As far as we can tell the dataset has hardly been touched yet, and our project is among the first attempts to run a full machine-learning pipeline on it.</p>
 
-<p>We ask four research questions. RQ1: what natural archetypes exist among the outlets? RQ2: can we predict a shop&rsquo;s monthly sales target from its location, type, importance, and neighbourhood density? RQ3: can we flag in advance the shops that will miss their targets? RQ4: which shops behave oddly compared with their peers? We answer them, in order, with clustering (K-Means, hierarchical, DBSCAN), regression (a linear baseline against Random Forest, XGBoost, and LightGBM, explained with SHAP), classification (logistic regression, Random Forest, and XGBoost with SMOTE class balancing), and per-cluster anomaly detection (Isolation Forest and Local Outlier Factor). We pick the hyperparameters of the winning models with Bayesian optimization, evaluate every algorithm again under 5-fold cross-validation, and package the whole pipeline so that one Docker command reproduces it. Since this course is about big data analytics, data storage and preparation also run on distributed infrastructure, namely a Hadoop HDFS cluster and Apache Spark with MLlib, and the two execution lanes cross-check each other.</p>
+<p>We ask four research questions. RQ1: what natural archetypes exist among the outlets? RQ2: can we predict a shop&rsquo;s monthly sales target from its location, type, importance, and neighbourhood density? RQ3: can we flag in advance the shops that will miss their targets? RQ4: which shops behave oddly compared with their peers? We answer them, in order, with clustering (K-Means, hierarchical, DBSCAN), regression (a linear baseline against Random Forest, XGBoost, and LightGBM, explained with SHAP), classification (class-weighted logistic regression, Random Forest, and XGBoost), and per-cluster anomaly detection (Isolation Forest and Local Outlier Factor). We pick the hyperparameters of the winning models with Bayesian optimization, evaluate every algorithm again under 5-fold cross-validation, and package the whole pipeline so that one Docker command reproduces it. Since this course is about big data analytics, data storage and preparation also run on distributed infrastructure, namely a Hadoop HDFS cluster and Apache Spark with MLlib, and the two execution lanes cross-check each other.</p>
 
 <p>Fig. 1 shows the full workflow of the project in six steps: from getting the dataset, through distributed storage, cleaning and feature engineering, the four modelling phases, and evaluation with Bayesian tuning and cross-validation, to the delivered dashboard, report, and audit lists.</p>
 
@@ -166,7 +166,7 @@
 
 <p class="noindent">The methods we use in this project are all standard tools of data mining, so we review them here together with how they have been applied to retail and distribution problems. Segmenting outlets with clustering is one of the oldest ideas in commercial analytics; in our context an outlet can be anything from a small mudi shop to a departmental store, so segmentation matters. The K-Means algorithm goes back to Lloyd [2]. When there is no ground truth, the silhouette coefficient [3] and the Davies&ndash;Bouldin index [4] are still the standard internal criteria for deciding how many clusters to keep. Hierarchical agglomerative clustering with Ward&rsquo;s linkage gives a second view of the same structure under different assumptions. DBSCAN [5] does not fix the number of clusters beforehand, and it does not force every point into a cluster either. For these reasons we run both of them as structural cross-checks rather than as our primary methods.</p>
 
-<p>For prediction on tabular data, ensembles of decision trees dominate the field. Random Forests [6] cut variance by bagging many decorrelated trees. Gradient-boosted trees instead fit trees one after another on the residuals left by earlier trees; XGBoost [7] and LightGBM [8] are the two implementations everyone uses, and they keep winning applied competitions on structured data. The usual complaint against boosted ensembles is that they are hard to interpret. SHAP [9] answers this by breaking each individual prediction into additive per-feature contributions with game-theoretic guarantees, and we use its Tree-SHAP variant. For class imbalance in classification we use SMOTE [10], which creates synthetic minority-class examples by interpolating between neighbouring minority points. We were careful to apply it only inside training folds, as standard practice requires, since applying it before the split leaks information. For anomaly detection we pair Isolation Forest [11], which isolates anomalies through random axis-parallel splits and scores each point by its average isolation depth, with the Local Outlier Factor [12], which compares the local density of a point against its neighbours. The two methods catch different shapes of failure, and asking for agreement between them cut down our false alarms noticeably. For hyperparameter search we use the Tree-structured Parzen Estimator, a Bayesian optimization method that models the objective as a distribution and proposes promising configurations one at a time; we use the Optuna implementation [13]. Our reference implementations come from scikit-learn [14] and its imbalanced-learn extension.</p>
+<p>For prediction on tabular data, ensembles of decision trees dominate the field. Random Forests [6] cut variance by bagging many decorrelated trees. Gradient-boosted trees instead fit trees one after another on the residuals left by earlier trees; XGBoost [7] and LightGBM [8] are the two implementations everyone uses, and they keep winning applied competitions on structured data. The usual complaint against boosted ensembles is that they are hard to interpret. SHAP [9] answers this by breaking each individual prediction into additive per-feature contributions with game-theoretic guarantees, and we use its Tree-SHAP variant. For class imbalance in classification the textbook options are SMOTE [10], which manufactures synthetic minority-class examples by interpolating between neighbouring minority points, and cost-sensitive class weighting, which leaves the data alone and rescales the loss instead. We measured both on our own data (Section 4.4) and settled on class weighting: it matched SMOTE on discrimination while training only on real shops. For anomaly detection we pair Isolation Forest [11], which isolates anomalies through random axis-parallel splits and scores each point by its average isolation depth, with the Local Outlier Factor [12], which compares the local density of a point against its neighbours. The two methods catch different shapes of failure, and asking for agreement between them cut down our false alarms noticeably. For hyperparameter search we use the Tree-structured Parzen Estimator, a Bayesian optimization method that models the objective as a distribution and proposes promising configurations one at a time; we use the Optuna implementation [13]. Our reference implementations come from scikit-learn [14]; the balancing benchmark of Section 4.4 additionally uses its imbalanced-learn extension.</p>
 
 <p>On the infrastructure side, the Hadoop Distributed File System [15] gives replicated block storage across data nodes, and Apache Spark [16] has become the de-facto engine for distributed data processing, with MLlib [17] as its machine-learning library. We follow the pattern common in industry: the distributed engines handle storage and data preparation, and one strong node trains the models whose exact algorithms MLlib does not provide. The dataset itself is documented in [1], which reports a 13.58% missing-GPS rate; our own profiling reproduced this figure exactly, which gave us some confidence in the source. As far as we could find, no published work has combined clustering, regression, classification, and anomaly detection on this dataset in a single pipeline. That gap is what this project tries to fill.</p>
 <h2 class="sec">3. Data</h2>
@@ -308,7 +308,7 @@
   <tr><td>shop_importance</td><td class="num">86.9%</td><td class="num">87.9%</td><td>never &mdash; below baseline</td></tr>
 </table>
 
-<p>To see what imputation would actually change downstream, we ran the full pipeline once with imputation switched on (Table 8). The supervised metrics improve; risk ROC-AUC rises from 0.857 to 0.881. But the archetype taxonomy collapses from 8 clusters to 3, because filling in <code>shop_style</code> blends the ghost-shop segment into the ordinary archetypes and hides exactly the population the audit use-case needs to see. The risk numbers are also not strictly comparable between the two runs, since the proxy label is defined relative to cluster peers and the clusters changed. Our reference pipeline therefore keeps imputation off. The flag stays available for deployments that only care about prediction.</p>
+<p>To see what imputation would actually change downstream, we ran the full pipeline once with imputation switched on (Table 8). The supervised metrics improve; risk ROC-AUC rises from 0.862 to 0.886. But the archetype taxonomy collapses from 8 clusters to 3, because filling in <code>shop_style</code> blends the ghost-shop segment into the ordinary archetypes and hides exactly the population the audit use-case needs to see. The risk numbers are also not strictly comparable between the two runs, since the proxy label is defined relative to cluster peers and the clusters changed. Our reference pipeline therefore keeps imputation off. The flag stays available for deployments that only care about prediction.</p>
 
 <p class="tcaption">TABLE 8<br>Full-Pipeline Sensitivity of Enabling k-NN Imputation</p>
 <table class="data">
@@ -316,7 +316,7 @@
   <tr><td>Clustering best k</td><td class="num">8</td><td class="num">3</td></tr>
   <tr><td>Silhouette</td><td class="num">0.187</td><td class="num">0.236</td></tr>
   <tr><td>Regression R&sup2; (XGBoost)</td><td class="num">0.452</td><td class="num">0.463</td></tr>
-  <tr><td>Risk ROC-AUC (XGBoost)</td><td class="num">0.857</td><td class="num">0.881</td></tr>
+  <tr><td>Risk ROC-AUC (XGBoost)</td><td class="num">0.862</td><td class="num">0.886</td></tr>
 </table>
 
 <h3 class="sub">3.5 Distributed Data Preparation on HDFS and Spark</h3>
@@ -341,7 +341,7 @@
   <tr><td>RQ2 regression</td><td>Gradient-boosted trees (XGBoost / LightGBM)</td>
       <td>SVR, k-NN regression, neural networks</td>
       <td>Mixed one-hot + count features with strong interactions; boosted trees dominate medium-size tabular data and need no feature scaling</td></tr>
-  <tr><td>RQ3 imbalance</td><td>SMOTE inside training folds</td>
+  <tr><td>RQ3 imbalance</td><td>class weights (negative/positive ratio in the loss)</td>
       <td>Class weighting, random undersampling</td>
       <td>Moderate 37/63 imbalance in a dense standardized space where interpolation is meaningful; weighting used in the Spark lane as the distributed equivalent</td></tr>
   <tr><td>RQ4 anomalies</td><td>Isolation Forest + LOF, per cluster</td>
@@ -460,43 +460,43 @@
 <p class="figcaption">Fig. 15. Top-10 SHAP feature attributions of the winning regression model.</p></div>
 <h3 class="sub">4.4 Supervised Learning: Target-Miss Risk Classification (RQ3)</h3>
 
-<p class="noindent">The dataset gives us assigned targets, not realised sales, so we could not build a true &ldquo;missed the target&rdquo; label. Instead we set an explicit proxy and state it wherever results appear: a shop is labelled <i>at-risk</i> when its total target falls below 80% of the median target of its peer group, meaning shops of the same archetype (Section 4.2) and the same business type. In plain terms, the shop is well behind others that look like it. The base rate is 36.6%. The classes are imbalanced, so we apply SMOTE [10] inside an imbalanced-learn pipeline. This keeps the synthetic oversampling strictly within training folds; the test set is never resampled. We trained logistic regression (on standardised inputs), Random Forest, and XGBoost, with the XGBoost hyperparameters again picked by Optuna TPE (Table 16). Interestingly, the search went the opposite way from the regression case and chose a large, deep ensemble.</p>
+<p class="noindent">The dataset gives us assigned targets, not realised sales, so we could not build a true &ldquo;missed the target&rdquo; label. Instead we set an explicit proxy and state it wherever results appear: a shop is labelled <i>at-risk</i> when its total target falls below 80% of the median target of its peer group, meaning shops of the same archetype (Section 4.2) and the same business type. In plain terms, the shop is well behind others that look like it. The base rate is 36.6%. The classes are imbalanced (roughly 37/63), so we weight the minority class in the loss: <code>class_weight=balanced</code> for the scikit-learn models and <code>scale_pos_weight</code> for XGBoost, recomputed from each training fold. No shop is ever duplicated or synthesised &mdash; every training row stays a real outlet. We trained logistic regression (on standardised inputs), Random Forest, and XGBoost, with the XGBoost hyperparameters again picked by Optuna TPE (Table 16). Interestingly, the search went the opposite way from the regression case and chose a large, deep ensemble.</p>
 
 <p class="tcaption">TABLE 16<br>Hyperparameter Search Space and Selected Values (Classification)</p>
 <table class="data">
   <tr><th>Hyperparameter</th><th>Search space</th><th class="num">Selected</th></tr>
-  <tr><td>n_estimators</td><td>150 &ndash; 600 (step 50)</td><td class="num">550</td></tr>
+  <tr><td>n_estimators</td><td>150 &ndash; 600 (step 50)</td><td class="num">600</td></tr>
   <tr><td>max_depth</td><td>4 &ndash; 10</td><td class="num">10</td></tr>
-  <tr><td>learning_rate</td><td>0.03 &ndash; 0.3 (log)</td><td class="num">0.045</td></tr>
-  <tr><td>subsample</td><td>0.6 &ndash; 1.0</td><td class="num">0.89</td></tr>
-  <tr><td>colsample_bytree</td><td>0.6 &ndash; 1.0</td><td class="num">0.98</td></tr>
-  <tr><td>min_child_weight</td><td>1 &ndash; 10</td><td class="num">3</td></tr>
-  <tr><td>reg_lambda</td><td>0.1 &ndash; 10 (log)</td><td class="num">2.38</td></tr>
+  <tr><td>learning_rate</td><td>0.03 &ndash; 0.3 (log)</td><td class="num">0.040</td></tr>
+  <tr><td>subsample</td><td>0.6 &ndash; 1.0</td><td class="num">0.72</td></tr>
+  <tr><td>colsample_bytree</td><td>0.6 &ndash; 1.0</td><td class="num">0.73</td></tr>
+  <tr><td>min_child_weight</td><td>1 &ndash; 10</td><td class="num">2</td></tr>
+  <tr><td>reg_lambda</td><td>0.1 &ndash; 10 (log)</td><td class="num">1.68</td></tr>
 </table>
 
-<p><i>Which balancing strategy, measured.</i> SMOTE creates synthetic minority shops by interpolating between minority neighbours; class weighting rescales the loss instead, and undersampling throws majority rows away. Rather than pick one on theory, we ran all four options on the same split with the same XGBoost: no balancing reaches ROC-AUC 0.863, class weights 0.862, random undersampling 0.861, and SMOTE 0.858 &mdash; a spread of only 0.006 &mdash; while class weights and undersampling lift recall to about 0.79&ndash;0.80 against 0.65 with no balancing. So at our moderate 37/63 imbalance the strategy barely moves AUC; it mainly trades precision for recall. We keep SMOTE in the reference lane because the proposal names it, always applied inside training folds so no synthetic shop leaks into evaluation, and the Spark lane uses class weights &mdash; a choice this measurement supports equally well.</p>
+<p><i>Which balancing strategy, measured.</i> SMOTE creates synthetic minority shops by interpolating between minority neighbours; class weighting rescales the loss instead, and undersampling throws majority rows away. Rather than pick one on theory, we ran all four options on the same split with the same XGBoost: no balancing reaches ROC-AUC 0.863, class weights 0.862, random undersampling 0.861, and SMOTE 0.858 &mdash; a spread of only 0.006 &mdash; while class weights lift recall to 0.795 and F1 to 0.720, against 0.646 and 0.691 with no balancing and 0.677 and 0.696 with SMOTE. Class weights also fit in 2.1 s against SMOTE&rsquo;s 11.8 s, and they train on real shops only, with not a single synthetic row anywhere in the project. On this evidence we use class weighting in both lanes &mdash; the scikit-learn reference and Spark MLlib &mdash; and keep SMOTE in the comparison as the tested-and-rejected alternative.</p>
 
-<p>Table 17 gives the test-set results. Bayesian optimization clearly pays off here: the tuned XGBoost beats every candidate on every metric (ROC-AUC 0.869 against 0.857 for the defaults). We ran five-fold cross-validation on the winner to check the result was not just split luck, and it holds (ROC-AUC 0.870 &plusmn; 0.001, F1 0.712 &plusmn; 0.001). The stability surprised us after the regression task, but it makes sense: the binary peer-relative label simply does not feel the extreme values of the raw target. Fig. 16 shows the out-of-fold ROC curves of all four classifiers, computed so that every shop&rsquo;s score comes from a model that never saw it during training. Table 18 gives the confusion matrix of the winner at the 0.5 threshold. Fig. 17 shows how the labelled risk spreads geographically, from 27.8% in Barisal to 48.5% in Khulna &mdash; a ready-made priority order for field teams.</p>
+<p>Table 17 gives the test-set results. Bayesian optimization clearly pays off here: the tuned XGBoost beats every candidate on every metric (ROC-AUC 0.875 against 0.862 for the defaults). We ran five-fold cross-validation on the winner to check the result was not just split luck, and it holds (ROC-AUC 0.876 &plusmn; 0.001, F1 0.736 &plusmn; 0.001). The stability surprised us after the regression task, but it makes sense: the binary peer-relative label simply does not feel the extreme values of the raw target. Fig. 16 shows the out-of-fold ROC curves of all four classifiers, computed so that every shop&rsquo;s score comes from a model that never saw it during training. Table 18 gives the confusion matrix of the winner at the 0.5 threshold. Fig. 17 shows how the labelled risk spreads geographically, from 27.8% in Barisal to 48.5% in Khulna &mdash; a ready-made priority order for field teams.</p>
 
 <p class="tcaption">TABLE 17<br>Risk Classification Performance on the Held-Out Test Set</p>
 <table class="data">
   <tr><th>Model</th><th class="num">ROC-AUC</th><th class="num">F1</th><th class="num">Precision</th><th class="num">Recall</th></tr>
-  <tr><td>Logistic regression</td><td class="num">0.760</td><td class="num">0.618</td><td class="num">0.542</td><td class="num">0.720</td></tr>
-  <tr><td>Random Forest</td><td class="num">0.845</td><td class="num">0.682</td><td class="num">0.699</td><td class="num">0.667</td></tr>
-  <tr><td>XGBoost (defaults)</td><td class="num">0.857</td><td class="num">0.695</td><td class="num">0.716</td><td class="num">0.675</td></tr>
-  <tr><td><b>XGBoost (Optuna-tuned)</b></td><td class="num"><b>0.869</b></td><td class="num"><b>0.712</b></td><td class="num"><b>0.731</b></td><td class="num"><b>0.694</b></td></tr>
+  <tr><td>Logistic regression</td><td class="num">0.760</td><td class="num">0.619</td><td class="num">0.542</td><td class="num">0.720</td></tr>
+  <tr><td>Random Forest</td><td class="num">0.862</td><td class="num">0.720</td><td class="num">0.661</td><td class="num">0.791</td></tr>
+  <tr><td>XGBoost (defaults)</td><td class="num">0.862</td><td class="num">0.720</td><td class="num">0.657</td><td class="num">0.795</td></tr>
+  <tr><td><b>XGBoost (Optuna-tuned)</b></td><td class="num"><b>0.875</b></td><td class="num"><b>0.735</b></td><td class="num"><b>0.677</b></td><td class="num"><b>0.805</b></td></tr>
 </table>
 
 <div class="figure"><img src="figures/f12_roc.png">
 <p class="figcaption">Fig. 16. Out-of-fold ROC curves of the four risk classifiers (5-fold cross-validation; every score produced by a model that never saw the shop in training).</p></div>
 
-<p>What does the confusion matrix (Table 18) mean for a distributor? Of every 100 shops the model flags, about 73 are genuinely at-risk (precision 0.73), so a field visit triggered by the model is productive nearly three times out of four. Of every 100 truly at-risk shops, the model catches about 69 (recall 0.69). The 57,213 false positives are not really wasted effort in practice. They sit mostly near the 80% labelling threshold, where a visit is rarely useless anyway. The 68,999 missed shops are the real argument for lowering the decision threshold in deployments where coverage matters more than precision; the ROC curve in Fig. 16 lays out the available trade-offs.</p>
+<p>What does the confusion matrix (Table 18) mean for a distributor? Of every 100 truly at-risk shops, the model now catches about 80 (recall 0.80) &mdash; this is where the class weighting earns its keep, since a missed at-risk shop is the expensive error in this use-case. Of every 100 shops the model flags, about 68 are genuinely at-risk (precision 0.68), so roughly two field visits in three are productive. The 85,680 false positives sit mostly near the 80% labelling threshold, where a visit is rarely useless anyway, and only 44,154 truly at-risk shops slip through. Deployments that value precision over coverage can simply raise the decision threshold; the ROC curve in Fig. 16 lays out the available trade-offs.</p>
 
 <p class="tcaption">TABLE 18<br>Confusion Matrix of the Winning Classifier (Out-of-Fold, Threshold 0.5)</p>
 <table class="data" style="min-width: 55%;">
   <tr><th></th><th class="num">Predicted: not at-risk</th><th class="num">Predicted: at-risk</th></tr>
-  <tr><td><b>Actual: not at-risk</b></td><td class="num">331,610</td><td class="num">57,213</td></tr>
-  <tr><td><b>Actual: at-risk</b></td><td class="num">68,999</td><td class="num">155,838</td></tr>
+  <tr><td><b>Actual: not at-risk</b></td><td class="num">303,143</td><td class="num">85,680</td></tr>
+  <tr><td><b>Actual: at-risk</b></td><td class="num">44,154</td><td class="num">180,683</td></tr>
 </table>
 
 <div class="figure"><img src="figures/f6_risk_by_division.png">
@@ -512,7 +512,7 @@
 <p class="figcaption">Fig. 18. Distribution of the combined anomaly score; the top decile beyond the threshold is exported for manual triage.</p></div>
 <h3 class="sub">4.6 Distributed Execution on the Spark Cluster</h3>
 
-<p class="noindent">After the distributed preparation of Section 3.5, we ran the modelling phases on the Spark lane as well, using MLlib [17]: K-Means and Bisecting K-Means for clustering, gradient-boosted trees for regression and class-weighted classification, and a centroid-distance ranking for anomalies. MLlib does not ship XGBoost, SHAP, SMOTE, Isolation Forest, or LOF, so on the distributed lane we picked the nearest equivalents and kept the scikit-learn lane as the reference for the exact algorithms in our proposal. Table 19 puts the two side by side. Partition pruning turned out to be a real saving for regional work: a run scoped to Khulna and Barisal covered 115,742 shops in 598 s, against 1,112 s for the national run, because Spark read only the requested partitions. The runtimes also taught us an honest lesson. At 206 MB the whole dataset sits in memory, and the single-node reference pipeline finishes in roughly six minutes end to end. Distributed execution starts paying only at volumes larger than ours, and the sensible architecture, which we follow, is distributed storage and preparation feeding a single-node training stage.</p>
+<p class="noindent">After the distributed preparation of Section 3.5, we ran the modelling phases on the Spark lane as well, using MLlib [17]: K-Means and Bisecting K-Means for clustering, gradient-boosted trees for regression and class-weighted classification, and a centroid-distance ranking for anomalies. MLlib does not ship XGBoost, SHAP, Isolation Forest, or LOF, so on the distributed lane we picked the nearest equivalents and kept the scikit-learn lane as the reference for the exact algorithms in our proposal. Table 19 puts the two side by side. Partition pruning turned out to be a real saving for regional work: a run scoped to Khulna and Barisal covered 115,742 shops in 598 s, against 1,112 s for the national run, because Spark read only the requested partitions. The runtimes also taught us an honest lesson. At 206 MB the whole dataset sits in memory, and the single-node reference pipeline finishes in roughly six minutes end to end. Distributed execution starts paying only at volumes larger than ours, and the sensible architecture, which we follow, is distributed storage and preparation feeding a single-node training stage.</p>
 
 <p class="tcaption">TABLE 19<br>Reference Versus Distributed Execution</p>
 <table class="data">
@@ -520,7 +520,7 @@
   <tr><td>Storage</td><td>local parquet volumes</td><td>HDFS, 9 datanodes, replication 2, division-partitioned warehouse</td></tr>
   <tr><td>Clean shops / with target</td><td class="num">719,817 / 613,660</td><td class="num">719,817 / 613,660 (identical)</td></tr>
   <tr><td>Clustering</td><td>K-Means, best k = 8 (silhouette 0.187)</td><td>MLlib K-Means, best k = 3 (silhouette 0.295, grid densities)</td></tr>
-  <tr><td>Regression / classification</td><td>XGBoost R&sup2; 0.45 / AUC 0.869</td><td>GBT R&sup2; 0.313 / AUC 0.821</td></tr>
+  <tr><td>Regression / classification</td><td>XGBoost R&sup2; 0.45 / AUC 0.875</td><td>GBT R&sup2; 0.313 / AUC 0.821</td></tr>
   <tr><td>National runtime</td><td>&asymp; 6 min (one node)</td><td>1,112 s (1 worker, 4 cores)</td></tr>
   <tr><td>Regional run (Khulna + Barisal)</td><td>&mdash;</td><td>598 s over 115,742 shops via partition pruning</td></tr>
 </table>
@@ -540,9 +540,9 @@
   <tr><td>Regression &mdash; LightGBM</td><td class="num">R&sup2; 0.373 &plusmn; 0.078</td><td class="num">RMSE 198.6 &plusmn; 27.0</td></tr>
   <tr><td>Regression &mdash; XGBoost (tuned)</td><td class="num">R&sup2; 0.327 &plusmn; 0.062</td><td class="num">RMSE 206.7 &plusmn; 32.1</td></tr>
   <tr><td>Classification &mdash; Logistic regression</td><td class="num">ROC-AUC 0.758 (out-of-fold)&nbsp;</td><td class="num">F1 0.617</td></tr>
-  <tr><td>Classification &mdash; Random Forest</td><td class="num">ROC-AUC 0.844 (out-of-fold)&nbsp;</td><td class="num">F1 0.682</td></tr>
-  <tr><td>Classification &mdash; XGBoost (defaults)</td><td class="num">ROC-AUC 0.858 (out-of-fold)&nbsp;</td><td class="num">F1 0.695</td></tr>
-  <tr><td><b>Classification &mdash; XGBoost (tuned)</b></td><td class="num"><b>ROC-AUC 0.870 (out-of-fold)&nbsp;</b></td><td class="num"><b>F1 0.712</b></td></tr>
+  <tr><td>Classification &mdash; Random Forest</td><td class="num">ROC-AUC 0.861 (out-of-fold)&nbsp;</td><td class="num">F1 0.720</td></tr>
+  <tr><td>Classification &mdash; XGBoost (defaults)</td><td class="num">ROC-AUC 0.863 (out-of-fold)&nbsp;</td><td class="num">F1 0.721</td></tr>
+  <tr><td><b>Classification &mdash; XGBoost (tuned)</b></td><td class="num"><b>ROC-AUC 0.876 (out-of-fold)&nbsp;</b></td><td class="num"><b>F1 0.736</b></td></tr>
 </table>
 
 <h3 class="sub">4.8 Threats to Validity</h3>
@@ -554,7 +554,7 @@
 
 <p class="noindent">1) <i>Archetypes (RQ1).</i> The 719,817 analysable outlets fall into 8 archetypes that we can actually name and explain, among them a metro-Dhaka core and a small key-account tier that carries six-to-eight-fold targets. The one that mattered most to us is an 85,167-shop segment where the same attributes are missing together and the product mix is empty. That segment is, in effect, a machine-generated candidate list of the duplicate and ghost entries that pushed us to do this study in the first place.</p>
 <p class="noindent">2) <i>Sales prediction (RQ2).</i> Monthly targets can be predicted far beyond a linear baseline (test R&sup2; 0.45 versus 0.02). SHAP tells us where the signal comes from: assortment breadth, importance tier, and micro-location. Cross-validation taught us something we did not expect. Single-split metrics on this heavy-tailed target are unreliable, and the Bayesian-tuned configuration turned out roughly ten times more stable across folds than the split winner.</p>
-<p class="noindent">3) <i>Risk (RQ3).</i> Our peer-relative risk classifier reaches ROC-AUC 0.869 on the held-out split and 0.870 out-of-fold. It orders the divisions from 27.8% to 48.5% labelled risk, which reads directly as a geographic priority map for field teams.</p>
+<p class="noindent">3) <i>Risk (RQ3).</i> Our peer-relative risk classifier reaches ROC-AUC 0.875 on the held-out split and 0.876 out-of-fold. It orders the divisions from 27.8% to 48.5% labelled risk, which reads directly as a geographic priority map for field teams.</p>
 <p class="noindent">4) <i>Anomalies (RQ4).</i> Running Isolation Forest and LOF per cluster gives a ranked 71,982-shop audit list, with full triage context attached to each shop.</p>
 <p class="noindent">5) <i>Big data engineering.</i> The distributed lane on Hadoop HDFS and Spark reproduces the reference preparation to the row. It shows partition pruning working, with regional runs that are genuinely cheaper, and we write down honestly where distribution pays off at this data volume and where it does not.</p>
 
@@ -606,15 +606,15 @@ for radius in config.density_radii_km:            # 0.5, 1.0, 5.0 km
                                count_only=True)
     shops[f"density_{radius}"] = counts - 1       # exclude the shop itself</pre>
 
-<p class="noindent"><b>Excerpt 2 &mdash; the peer-relative risk label and leak-free SMOTE</b> (classification):</p>
+<p class="noindent"><b>Excerpt 2 &mdash; the peer-relative risk label and cost-sensitive weighting</b> (classification):</p>
 <pre class="code">peer_median = (labelled.assign(cluster=cluster_labels)
     .groupby(["cluster", "shop_type"])[TARGET].transform("median"))
 y = (labelled[TARGET] &lt; 0.8 * peer_median).astype(int)
 
-pipeline = ImbPipeline([("smote", SMOTE(random_state=42)),
-                        ("model", XGBClassifier(**params))])
-# SMOTE runs only inside pipeline.fit() on the training fold;
-# the evaluation fold is never resampled.</pre>
+pos_weight = (y_train == 0).sum() / (y_train == 1).sum()   # &asymp; 1.73
+model = XGBClassifier(**params, scale_pos_weight=pos_weight)
+# the loss is reweighted, the data never is: every training row
+# stays a real shop, and the evaluation fold is untouched.</pre>
 
 <p class="noindent"><b>Excerpt 3 &mdash; the Bayesian tuning objective</b> (Optuna TPE, regression):</p>
 <pre class="code">def objective(trial):

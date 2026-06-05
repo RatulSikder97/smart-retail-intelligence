@@ -277,7 +277,7 @@ box(0.01, 0.38, 0.13, 0.18, "Raw CSVs\n832,881 shops\n42 SKUs", fc="#f5f7fa", ec
 box(0.18, 0.66, 0.16, 0.16, "Phase 1\ncleaning +\nBallTree features")
 box(0.37, 0.66, 0.14, 0.16, "Phase 2\nK-Means k=8")
 box(0.54, 0.74, 0.20, 0.10, "Phase 3  regression + SHAP")
-box(0.54, 0.62, 0.20, 0.10, "Phase 4  risk + SMOTE")
+box(0.54, 0.62, 0.20, 0.10, "Phase 4  risk + weights")
 box(0.54, 0.545, 0.20, 0.06, "Phase 5  IForest + LOF")
 # distributed lane
 box(0.18, 0.16, 0.17, 0.18, "HDFS storage\n9 datanodes, repl. 2\ndivision-partitioned\nwarehouse", fc="#fdf3e2", ec="#eda100")

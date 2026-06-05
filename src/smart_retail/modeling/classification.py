@@ -6,8 +6,6 @@ from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
-from imblearn.over_sampling import SMOTE
-from imblearn.pipeline import Pipeline as ImbPipeline
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
@@ -17,6 +15,7 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
 
@@ -55,46 +54,35 @@ def build_risk_labels(
     return (labelled[TARGET_COLUMN] < config.risk_threshold * peer_median).astype(int)
 
 
-def _candidate_models(config: Config) -> dict[str, ImbPipeline]:
-    smote = SMOTE(random_state=config.random_state)
+def pos_weight_ratio(y_train: pd.Series) -> float:
+    # negative/positive ratio drives the class weighting — real rows only, nothing resampled
+    return float((y_train == 0).sum() / (y_train == 1).sum())
+
+
+def _candidate_models(config: Config, pos_weight: float) -> dict:
     return {
-        "logistic_regression": ImbPipeline(
+        "logistic_regression": Pipeline(
             [
                 ("scale", StandardScaler()),
-                ("smote", smote),
-                ("model", LogisticRegression(max_iter=2000)),
+                ("model", LogisticRegression(max_iter=2000, class_weight="balanced")),
             ]
         ),
-        "random_forest": ImbPipeline(
-            [
-                ("smote", smote),
-                (
-                    "model",
-                    RandomForestClassifier(
-                        n_estimators=100,
-                        max_depth=20,
-                        min_samples_leaf=5,
-                        n_jobs=config.n_jobs,
-                        random_state=config.random_state,
-                    ),
-                ),
-            ]
+        "random_forest": RandomForestClassifier(
+            n_estimators=100,
+            max_depth=20,
+            min_samples_leaf=5,
+            class_weight="balanced",
+            n_jobs=config.n_jobs,
+            random_state=config.random_state,
         ),
-        "xgboost": ImbPipeline(
-            [
-                ("smote", smote),
-                (
-                    "model",
-                    XGBClassifier(
-                        n_estimators=300,
-                        max_depth=8,
-                        learning_rate=0.1,
-                        n_jobs=config.n_jobs,
-                        random_state=config.random_state,
-                        verbosity=0,
-                    ),
-                ),
-            ]
+        "xgboost": XGBClassifier(
+            n_estimators=300,
+            max_depth=8,
+            learning_rate=0.1,
+            scale_pos_weight=pos_weight,
+            n_jobs=config.n_jobs,
+            random_state=config.random_state,
+            verbosity=0,
         ),
     }
 
@@ -118,26 +106,25 @@ def run_classification(
         random_state=config.random_state, stratify=y,
     )
 
-    candidates = _candidate_models(config)
+    pos_weight = pos_weight_ratio(y_train)
+    candidates = _candidate_models(config, pos_weight)
     tuning_summary = None
     if config.tune:
         from smart_retail.modeling.tuning import tune_xgb_classifier
 
         tuning_summary = tune_xgb_classifier(X_train, y_train, config)
         # separate candidate: the default-vs-tuned comparison stays visible
-        candidates["xgboost_tuned"] = ImbPipeline([
-            ("smote", SMOTE(random_state=config.random_state)),
-            ("model", XGBClassifier(**{
-                **tuning_summary["best_params"],
-                "tree_method": "hist",
-                "n_jobs": config.n_jobs,
-                "random_state": config.random_state,
-                "verbosity": 0,
-            })),
-        ])
+        candidates["xgboost_tuned"] = XGBClassifier(**{
+            **tuning_summary["best_params"],
+            "tree_method": "hist",
+            "scale_pos_weight": pos_weight,
+            "n_jobs": config.n_jobs,
+            "random_state": config.random_state,
+            "verbosity": 0,
+        })
 
     metrics: dict[str, dict] = {}
-    fitted: dict[str, ImbPipeline] = {}
+    fitted: dict[str, object] = {}
     for name, pipeline in candidates.items():
         pipeline.fit(X_train, y_train)
         proba = pipeline.predict_proba(X_test)[:, 1]

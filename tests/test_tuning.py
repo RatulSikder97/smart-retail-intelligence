@@ -46,7 +46,7 @@ def test_classification_tuning_and_cv(tuned_setup):
 
     assert result.tuning is not None
     assert 0.5 <= result.tuning["best_cv_roc_auc"] <= 1.0
-    assert "SMOTE inside each fold" in result.tuning["objective"]
+    assert "class weights inside each fold" in result.tuning["objective"]
 
     assert result.cv is not None
     assert 0.5 <= result.cv["roc_auc"]["mean"] <= 1.0

@@ -1,38 +1,38 @@
 {
-  "reference_no_imputation": {
-    "best_k": 8,
-    "silhouette": 0.18712846998372812,
-    "regression_best": "xgboost",
-    "regression_r2": 0.4516552509635987,
-    "regression_rmse": 204.43602947214396,
-    "classification_best": "xgboost",
-    "roc_auc": 0.8566586101645389,
-    "f1": 0.6948209542998444,
-    "label_rate": 0.3663869243555063
+ "reference_no_imputation": {
+  "best_k": 8,
+  "silhouette": 0.18712846998372812,
+  "regression_best": "xgboost",
+  "regression_r2": 0.4516552509635987,
+  "regression_rmse": 204.43602947214396,
+  "classification_best": "xgboost",
+  "roc_auc": 0.8621265153158867,
+  "f1": 0.7195579754632099,
+  "label_rate": 0.3663869243555063
+ },
+ "with_knn_imputation": {
+  "best_k": 3,
+  "silhouette": 0.2356394629502648,
+  "regression_best": "xgboost",
+  "regression_r2": 0.46309206938463465,
+  "regression_rmse": 202.29283580649917,
+  "classification_best": "xgboost",
+  "roc_auc": 0.8861831006570986,
+  "f1": 0.7540337357989719,
+  "label_rate": 0.37765212006648635
+ },
+ "imputation_details": {
+  "k": 10,
+  "confidence_threshold": 0.7,
+  "imputed": {
+   "zila": 138,
+   "upazila": 138,
+   "division": 138,
+   "shop_style": 81281
   },
-  "with_knn_imputation": {
-    "best_k": 3,
-    "silhouette": 0.2356394629502648,
-    "regression_best": "xgboost",
-    "regression_r2": 0.46309206938463465,
-    "regression_rmse": 202.29283580649917,
-    "classification_best": "xgboost",
-    "roc_auc": 0.8810060684872496,
-    "f1": 0.7390144601993542,
-    "label_rate": 0.37765212006648635
-  },
-  "imputation_details": {
-    "k": 10,
-    "confidence_threshold": 0.7,
-    "imputed": {
-      "zila": 138,
-      "upazila": 138,
-      "division": 138,
-      "shop_style": 81281
-    },
-    "never_imputed": [
-      "shop_type",
-      "shop_importance"
-    ]
-  }
+  "never_imputed": [
+   "shop_type",
+   "shop_importance"
+  ]
+ }
 }

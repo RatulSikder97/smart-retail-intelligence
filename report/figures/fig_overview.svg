@@ -82,7 +82,7 @@
     </g>
     <text x="614" y="158" text-anchor="middle" font-size="13" font-weight="bold" fill="#16385C">Model RQ1&#8211;RQ4</text>
     <text x="614" y="176" text-anchor="middle" font-size="10.5" fill="#41556E">K-Means &#183; XGBoost</text>
-    <text x="614" y="191" text-anchor="middle" font-size="10.5" fill="#41556E">SMOTE &#183; IForest + LOF</text>
+    <text x="614" y="191" text-anchor="middle" font-size="10.5" fill="#41556E">Class weights &#183; IForest + LOF</text>
     <text x="614" y="206" text-anchor="middle" font-size="10.5" fill="#41556E">(MLlib on Spark)</text>
   </g>
 

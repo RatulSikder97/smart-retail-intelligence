@@ -5,8 +5,6 @@ from __future__ import annotations
 import numpy as np
 import optuna
 import pandas as pd
-from imblearn.over_sampling import SMOTE
-from imblearn.pipeline import Pipeline as ImbPipeline
 from sklearn.metrics import (
     f1_score,
     mean_squared_error,
@@ -81,12 +79,12 @@ def tune_xgb_classifier(X: pd.DataFrame, y: pd.Series, config: Config) -> dict:
         params = _suggest_xgb_params(trial, config)
         aucs = []
         for train_idx, val_idx in folds.split(Xs, ys):
-            pipe = ImbPipeline([
-                ("smote", SMOTE(random_state=config.random_state)),
-                ("model", XGBClassifier(**params)),
-            ])
-            pipe.fit(Xs.iloc[train_idx], ys.iloc[train_idx])
-            proba = pipe.predict_proba(Xs.iloc[val_idx])[:, 1]
+            ytr = ys.iloc[train_idx]
+            # weight recomputed from each training fold — the validation fold never leaks in
+            w = float((ytr == 0).sum() / (ytr == 1).sum())
+            model = XGBClassifier(**params, scale_pos_weight=w)
+            model.fit(Xs.iloc[train_idx], ytr)
+            proba = model.predict_proba(Xs.iloc[val_idx])[:, 1]
             aucs.append(roc_auc_score(ys.iloc[val_idx], proba))
         return float(np.mean(aucs))
 
@@ -99,7 +97,7 @@ def tune_xgb_classifier(X: pd.DataFrame, y: pd.Series, config: Config) -> dict:
         "engine": "Optuna TPE (Bayesian)",
         "n_trials": config.tuning_trials,
         "tuning_sample": len(Xs),
-        "objective": "3-fold CV ROC-AUC (maximized, SMOTE inside each fold)",
+        "objective": "3-fold CV ROC-AUC (maximized, class weights inside each fold)",
         "best_cv_roc_auc": round(study.best_value, 4),
         "best_params": study.best_params,
     }
@@ -124,7 +122,7 @@ def cv_regression(model_factory, X: pd.DataFrame, y: pd.Series, config: Config) 
 
 
 def cv_classification(pipeline_factory, X: pd.DataFrame, y: pd.Series, config: Config) -> dict:
-    # factory must return a fresh (SMOTE → model) pipeline so resampling stays inside each training fold
+    # factory returns a fresh weighted estimator; nothing is resampled, evaluation folds stay raw
     folds = StratifiedKFold(n_splits=config.cv_folds, shuffle=True,
                             random_state=config.random_state)
     aucs, f1s = [], []

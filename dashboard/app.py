@@ -804,17 +804,17 @@ ALGORITHM_CARDS = [
     {
         "phase": "Phase 4", "rq": "RQ3",
         "title": "Target-miss risk classification",
-        "algorithm": "SMOTE + Logistic Regression · Random Forest · XGBoost",
+        "algorithm": "Class-weighted Logistic Regression · Random Forest · XGBoost",
         "why": "The dataset has assigned targets, not realized sales, so the label "
-               "is an explicit peer-relative proxy. SMOTE runs only inside the "
-               "training fold — resampling before the split would leak.",
+               "is an explicit peer-relative proxy. Class weights handle the 37/63 "
+               "imbalance with real rows only — we measured SMOTE and it was worse.",
         "input": "Features + cluster id; label: total_target < 0.8 × peer median (cluster × type)",
         "output": "risk.parquet (at_risk + risk_score per shop) · best model",
         "steps": [
             "Build the peer-relative label per (cluster × shop type) → 36.6% base rate.",
             "Stratified 80/20 split (seed 42).",
-            "Wrap each model in an imblearn pipeline [SMOTE → model]: oversampling "
-            "happens only in fit(), never on the test set.",
+            "Weight the minority class (scale_pos_weight ≈ 1.7 / class_weight=balanced): "
+            "the loss changes, the data never does.",
             "Fit LogisticRegression (scaled), RandomForest, XGBoost.",
             "Score ROC-AUC / F1 / precision / recall on the raw test set.",
             "Pick the highest-AUC model; predict_proba → risk_score ∈ [0, 1].",
@@ -1072,7 +1072,7 @@ digraph pipeline {
             with st.expander("Full metrics (JSON)"):
                 st.json(spark_metrics)
             st.caption(
-                "MLlib has no XGBoost/SHAP/SMOTE/Isolation-Forest — the distributed "
+                "MLlib has no XGBoost/SHAP/Isolation-Forest — the distributed "
                 "run uses the nearest equivalents; matching row counts across both "
                 "paths cross-validate the data preparation."
             )
@@ -1351,9 +1351,9 @@ with tab_rq3:
                 f"is an explicit proxy: `{clf.get('label_definition', '')}` "
                 f"(threshold {clf.get('risk_threshold', 0.8)}). Base rate "
                 f"{clf.get('label_rate', 0):.1%}. Logistic regression, Random Forest "
-                "and XGBoost are trained on a stratified 80/20 split; SMOTE "
-                "oversampling runs only inside the training fold so the test set "
-                "is never touched."
+                "and XGBoost are trained on a stratified 80/20 split with class "
+                "weighting — the imbalance is handled in the loss function, so "
+                "every training row stays a real shop."
             )
 
         section_header("RQ3 · Result", f"Best model: {clf.get('best_model', '?')}")
@@ -1392,11 +1392,11 @@ with tab_rq3:
                 ]
                 st.dataframe(pd.DataFrame(imb_rows), width="stretch", hide_index=True)
                 st.caption(
-                    "Same XGBoost, same stratified split. AUC moves by only ~0.006 across "
-                    "strategies — at this moderate 37/63 imbalance the choice mainly trades "
-                    "precision for recall. SMOTE stays in the reference lane because the "
-                    "proposal names it (applied inside training folds only); the Spark lane "
-                    "uses class weights, which this measurement supports equally well."
+                    "Same XGBoost, same stratified split. Class weights match SMOTE's AUC while "
+                    "beating it on recall and F1, run 5.6× faster, and use only real shops — "
+                    "no synthetic rows anywhere. That is why both lanes (scikit-learn and "
+                    "Spark MLlib) weight the loss instead of resampling; SMOTE was measured "
+                    "and rejected."
                 )
         risk_view = f[f["risk_score"].notna()]
         if not risk_view.empty:

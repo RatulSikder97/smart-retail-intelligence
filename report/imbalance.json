@@ -5,7 +5,7 @@
     "recall": 0.645984833322214,
     "fit_seconds": 2.1
   },
-  "Class weights (scale_pos_weight)": {
+  "Class weights (ours)": {
     "roc_auc": 0.8621265153158867,
     "f1": 0.7195579754632099,
     "recall": 0.7949829875241844,
@@ -17,7 +17,7 @@
     "recall": 0.7987857762359063,
     "fit_seconds": 1.8
   },
-  "SMOTE (ours)": {
+  "SMOTE": {
     "roc_auc": 0.8577380978603466,
     "f1": 0.6961396764376101,
     "recall": 0.6765405741988569,

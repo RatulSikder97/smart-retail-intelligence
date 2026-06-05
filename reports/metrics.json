@@ -11,7 +11,7 @@
     "phase_1": 35.0,
     "phase_2": 43.9,
     "phase_3": 164.0,
-    "phase_4": 477.7,
+    "phase_4": 158.0,
     "phase_5": 58.0
   },
   "phase_2_clustering": {
@@ -130,28 +130,28 @@
   "phase_4_classification": {
     "models": {
       "logistic_regression": {
-        "roc_auc": 0.7601313899794617,
-        "f1": 0.6184114971524672,
-        "precision": 0.5421630225349753,
-        "recall": 0.7196166077345609
+        "roc_auc": 0.7601781425112207,
+        "f1": 0.6186727303995567,
+        "precision": 0.5423373925861404,
+        "recall": 0.7200169012831632
       },
       "random_forest": {
-        "roc_auc": 0.8444791476857922,
-        "f1": 0.6822340570804315,
-        "precision": 0.6985947004125008,
-        "recall": 0.6666221896057108
+        "roc_auc": 0.8617137768837335,
+        "f1": 0.7202121844060659,
+        "precision": 0.6610052959212116,
+        "recall": 0.7910690061600729
       },
       "xgboost": {
-        "roc_auc": 0.8566586101645389,
-        "f1": 0.6948209542998444,
-        "precision": 0.7159844284534623,
-        "recall": 0.674872684413014
+        "roc_auc": 0.8621265153158867,
+        "f1": 0.7195579754632099,
+        "precision": 0.6572048387689818,
+        "recall": 0.7949829875241844
       },
       "xgboost_tuned": {
-        "roc_auc": 0.8692912389308101,
-        "f1": 0.7116926973406501,
-        "precision": 0.7307079604554186,
-        "recall": 0.6936420041363667
+        "roc_auc": 0.8751155442365014,
+        "f1": 0.7353808004227729,
+        "precision": 0.6771349965375906,
+        "recall": 0.8045900326906398
       }
     },
     "best_model": "xgboost_tuned",
@@ -162,27 +162,27 @@
       "engine": "Optuna TPE (Bayesian)",
       "n_trials": 30,
       "tuning_sample": 100000,
-      "objective": "3-fold CV ROC-AUC (maximized, SMOTE inside each fold)",
-      "best_cv_roc_auc": 0.8435,
+      "objective": "3-fold CV ROC-AUC (maximized, class weights inside each fold)",
+      "best_cv_roc_auc": 0.8447,
       "best_params": {
-        "n_estimators": 550,
+        "n_estimators": 600,
         "max_depth": 10,
-        "learning_rate": 0.04451836808538962,
-        "subsample": 0.8925117520309815,
-        "colsample_bytree": 0.9770744481113529,
-        "min_child_weight": 3,
-        "reg_lambda": 2.3824122438365998
+        "learning_rate": 0.04027737519470627,
+        "subsample": 0.7173114714656396,
+        "colsample_bytree": 0.7291174012977222,
+        "min_child_weight": 2,
+        "reg_lambda": 1.676531121434458
       }
     },
     "cv": {
       "folds": 5,
       "roc_auc": {
-        "mean": 0.8697,
-        "std": 0.0006
+        "mean": 0.8757,
+        "std": 0.0005
       },
       "f1": {
-        "mean": 0.712,
-        "std": 0.0011
+        "mean": 0.7357,
+        "std": 0.0012
       }
     }
   },

@@ -244,7 +244,7 @@ def rq3_section(metrics: dict, risk_by_division: pd.Series | None) -> str:
 sales, so: `{c.get('label_definition', '')}` with threshold
 {c.get('risk_threshold', 0.8)} — a shop is at-risk when it materially
 under-indexes its (cluster × shop-type) peers. Base rate:
-{c.get('label_rate', 0):.1%}. SMOTE is applied to training folds only.
+{c.get('label_rate', 0):.1%}. Class weights handle the imbalance; no rows are resampled.
 
 | Model | ROC-AUC | F1 | Precision | Recall |
 |---|---|---|---|---|
