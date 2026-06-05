@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="480" viewBox="0 0 1040 480" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#5B6B7C"/>
+    </marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#1a7a4b"/>
+    </marker>
+  </defs>
+
+  <!-- ==================== lanes ==================== -->
+  <rect x="196" y="22" width="622" height="200" rx="12" fill="#f4f8fd" stroke="#b9cde4" stroke-width="1.2"/>
+  <text x="507" y="44" text-anchor="middle" font-size="13" font-weight="bold" fill="#16385C">Reference lane &#8212; scikit-learn (exact proposal algorithms)</text>
+
+  <rect x="196" y="252" width="622" height="200" rx="12" fill="#fdf8ec" stroke="#e4cf9a" stroke-width="1.2"/>
+  <text x="507" y="274" text-anchor="middle" font-size="13" font-weight="bold" fill="#8a6d1d">Distributed lane &#8212; Hadoop HDFS + Apache Spark (same phases)</text>
+
+  <!-- ==================== source ==================== -->
+  <g>
+    <rect x="20" y="182" width="146" height="110" rx="10" fill="#ffffff" stroke="#5B6B7C" stroke-width="1.4"/>
+    <g transform="translate(73,192)">
+      <path d="M2 0 h26 l10 10 v30 h-36 z" fill="#fff" stroke="#5B6B7C" stroke-width="1.5"/>
+      <path d="M28 0 v10 h10" fill="none" stroke="#5B6B7C" stroke-width="1.5"/>
+      <text x="19" y="30" text-anchor="middle" font-size="10" fill="#5B6B7C" font-weight="bold">CSV</text>
+    </g>
+    <text x="93" y="252" text-anchor="middle" font-size="12" font-weight="bold" fill="#16385C">Raw dataset</text>
+    <text x="93" y="268" text-anchor="middle" font-size="10.5" fill="#41556E">832,881 shops &#183; 42 SKUs</text>
+    <text x="93" y="283" text-anchor="middle" font-size="10.5" fill="#41556E">3 files &#183; 206 MB</text>
+  </g>
+
+  <!-- ==================== reference lane boxes ==================== -->
+  <!-- P1 -->
+  <g>
+    <rect x="216" y="92" width="140" height="96" rx="9" fill="#fff" stroke="#2a78d6" stroke-width="1.5"/>
+    <g transform="translate(226,102)" fill="none" stroke="#2a78d6" stroke-width="1.5">
+      <path d="M0 0 h24 l-9 11 v9 l-6 4 v-13 z"/>
+    </g>
+    <text x="292" y="118" text-anchor="middle" font-size="12" font-weight="bold" fill="#16385C">Phase 1</text>
+    <text x="286" y="138" text-anchor="middle" font-size="10.5" fill="#41556E">cleaning &#183; GPS checks</text>
+    <text x="286" y="153" text-anchor="middle" font-size="10.5" fill="#41556E">BallTree densities</text>
+    <text x="286" y="168" text-anchor="middle" font-size="10.5" fill="#41556E">48 features</text>
+  </g>
+  <!-- P2 -->
+  <g>
+    <rect x="382" y="92" width="132" height="96" rx="9" fill="#fff" stroke="#2a78d6" stroke-width="1.5"/>
+    <g transform="translate(390,98)">
+      <circle cx="6" cy="7" r="3" fill="#2a78d6"/><circle cx="16" cy="4" r="3" fill="#1baf7a"/>
+      <circle cx="11" cy="15" r="3" fill="#eda100"/><circle cx="21" cy="12" r="3" fill="#e34948"/>
+    </g>
+    <text x="462" y="118" text-anchor="middle" font-size="12" font-weight="bold" fill="#16385C">Phase 2 &#183; RQ1</text>
+    <text x="448" y="138" text-anchor="middle" font-size="10.5" fill="#41556E">K-Means (k = 8)</text>
+    <text x="448" y="153" text-anchor="middle" font-size="10.5" fill="#41556E">hierarchical + DBSCAN</text>
+    <text x="448" y="168" text-anchor="middle" font-size="10.5" fill="#41556E">cross-checks</text>
+  </g>
+  <!-- P3/P4/P5 stack -->
+  <g>
+    <rect x="540" y="58" width="258" height="42" rx="8" fill="#fff" stroke="#2a78d6" stroke-width="1.5"/>
+    <text x="669" y="76" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#16385C">Phase 3 &#183; RQ2 &#8212; regression</text>
+    <text x="669" y="92" text-anchor="middle" font-size="10" fill="#41556E">linear / RF / XGBoost / LightGBM &#183; SHAP</text>
+
+    <rect x="540" y="110" width="258" height="42" rx="8" fill="#fff" stroke="#2a78d6" stroke-width="1.5"/>
+    <text x="669" y="128" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#16385C">Phase 4 &#183; RQ3 &#8212; risk classification</text>
+    <text x="669" y="144" text-anchor="middle" font-size="10" fill="#41556E">SMOTE-in-fold &#183; LogReg / RF / XGBoost</text>
+
+    <rect x="540" y="162" width="258" height="42" rx="8" fill="#fff" stroke="#2a78d6" stroke-width="1.5"/>
+    <text x="669" y="180" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#16385C">Phase 5 &#183; RQ4 &#8212; anomaly detection</text>
+    <text x="669" y="196" text-anchor="middle" font-size="10" fill="#41556E">per-cluster Isolation Forest + LOF</text>
+  </g>
+
+  <!-- ==================== distributed lane boxes ==================== -->
+  <g>
+    <rect x="216" y="300" width="172" height="122" rx="9" fill="#fff" stroke="#eda100" stroke-width="1.5"/>
+    <g transform="translate(228,310)" stroke="#eda100" stroke-width="1.4" fill="#fff">
+      <ellipse cx="16" cy="4" rx="14" ry="4"/>
+      <path d="M2 4 v9 a14 4 0 0 0 28 0 v-9"/>
+      <path d="M2 13 v9 a14 4 0 0 0 28 0 v-9"/>
+    </g>
+    <text x="315" y="324" text-anchor="middle" font-size="12" font-weight="bold" fill="#16385C">HDFS storage</text>
+    <text x="302" y="346" text-anchor="middle" font-size="10.5" fill="#41556E">1 namenode &#183; 9 datanodes</text>
+    <text x="302" y="361" text-anchor="middle" font-size="10.5" fill="#41556E">replication factor 2</text>
+    <text x="302" y="376" text-anchor="middle" font-size="10.5" fill="#41556E">warehouse partitioned</text>
+    <text x="302" y="391" text-anchor="middle" font-size="10.5" fill="#41556E">by division (8 + 1)</text>
+  </g>
+  <g>
+    <rect x="428" y="300" width="166" height="122" rx="9" fill="#fff" stroke="#eda100" stroke-width="1.5"/>
+    <!-- spark bolt icon -->
+    <path transform="translate(442,310)" d="M12 0 L2 16 h8 L6 30 L22 12 h-9 L18 0 z" fill="#eda100"/>
+    <text x="525" y="324" text-anchor="middle" font-size="12" font-weight="bold" fill="#16385C">Spark SQL</text>
+    <text x="511" y="346" text-anchor="middle" font-size="10.5" fill="#41556E">distributed cleaning:</text>
+    <text x="511" y="361" text-anchor="middle" font-size="10.5" fill="#41556E">dedup &#183; GPS validation</text>
+    <text x="511" y="376" text-anchor="middle" font-size="10.5" fill="#41556E">window-join of targets</text>
+    <text x="511" y="391" text-anchor="middle" font-size="10.5" fill="#41556E">grid-window densities</text>
+  </g>
+  <g>
+    <rect x="634" y="300" width="164" height="122" rx="9" fill="#fff" stroke="#eda100" stroke-width="1.5"/>
+    <g transform="translate(646,308)">
+      <circle cx="10" cy="10" r="4" fill="none" stroke="#eda100" stroke-width="1.4"/>
+      <circle cx="24" cy="6" r="3" fill="#eda100"/>
+      <circle cx="22" cy="20" r="3" fill="#eda100"/>
+      <line x1="13" y1="9" x2="21" y2="7" stroke="#eda100" stroke-width="1.2"/>
+      <line x1="13" y1="12" x2="19" y2="18" stroke="#eda100" stroke-width="1.2"/>
+    </g>
+    <text x="730" y="324" text-anchor="middle" font-size="12" font-weight="bold" fill="#16385C">Spark MLlib</text>
+    <text x="716" y="346" text-anchor="middle" font-size="10.5" fill="#41556E">K-Means &#183; Bisecting</text>
+    <text x="716" y="361" text-anchor="middle" font-size="10.5" fill="#41556E">GBT regression + class.</text>
+    <text x="716" y="376" text-anchor="middle" font-size="10.5" fill="#41556E">centroid-distance</text>
+    <text x="716" y="391" text-anchor="middle" font-size="10.5" fill="#41556E">anomaly ranking</text>
+  </g>
+
+  <!-- ==================== outputs ==================== -->
+  <g>
+    <rect x="856" y="182" width="164" height="110" rx="10" fill="#eef8f2" stroke="#1a7a4b" stroke-width="1.5"/>
+    <g transform="translate(910,192)">
+      <rect x="0" y="0" width="44" height="30" rx="3" fill="#fff" stroke="#1a7a4b" stroke-width="1.5"/>
+      <rect x="7" y="15" width="6" height="10" fill="#2a78d6"/>
+      <rect x="18" y="8" width="6" height="17" fill="#1baf7a"/>
+      <rect x="29" y="12" width="6" height="13" fill="#eda100"/>
+    </g>
+    <text x="938" y="248" text-anchor="middle" font-size="12" font-weight="bold" fill="#14532d">Deliverables</text>
+    <text x="938" y="265" text-anchor="middle" font-size="10.5" fill="#2f6247">dashboard &#183; report</text>
+    <text x="938" y="280" text-anchor="middle" font-size="10.5" fill="#2f6247">audit lists &#183; metrics</text>
+  </g>
+
+  <!-- ==================== connectors (edge-anchored) ==================== -->
+  <g stroke="#5B6B7C" stroke-width="1.6" fill="none">
+    <!-- raw -> P1 : right edge (166,207) up to left edge of P1 (216,140) -->
+    <path d="M166 210 h20 v-70 h30" marker-end="url(#a)"/>
+    <!-- raw -> HDFS -->
+    <path d="M166 264 h20 v97 h30" marker-end="url(#a)"/>
+    <!-- P1 -> P2 -->
+    <line x1="356" y1="140" x2="382" y2="140" marker-end="url(#a)"/>
+    <!-- P2 -> P3/P4/P5 -->
+    <path d="M514 140 h13 v-61 h13" marker-end="url(#a)"/>
+    <line x1="514" y1="140" x2="540" y2="131" marker-end="url(#a)"/>
+    <path d="M514 140 h13 v43 h13" marker-end="url(#a)"/>
+    <!-- HDFS -> Spark SQL -> MLlib -->
+    <line x1="388" y1="361" x2="428" y2="361" marker-end="url(#a)"/>
+    <line x1="594" y1="361" x2="634" y2="361" marker-end="url(#a)"/>
+  </g>
+  <!-- outputs -->
+  <g stroke="#1a7a4b" stroke-width="1.6" fill="none">
+    <!-- phases 3-5 -> deliverables -->
+    <path d="M798 131 h29 v80 h29" marker-end="url(#ag)"/>
+    <!-- MLlib -> deliverables -->
+    <path d="M798 361 h29 v-80 h29" marker-end="url(#ag)"/>
+  </g>
+  <text x="176" y="200" font-size="10" fill="#5B6B7C">shops +</text>
+  <text x="176" y="212" font-size="10" fill="#5B6B7C">targets</text>
+  <text x="177" y="288" font-size="10" fill="#5B6B7C">ingest</text>
+  <text x="838" y="176" font-size="10" fill="#1a7a4b" text-anchor="middle">results</text>
+  <text x="838" y="306" font-size="10" fill="#1a7a4b" text-anchor="middle">cross-</text>
+  <text x="838" y="318" font-size="10" fill="#1a7a4b" text-anchor="middle">validates</text>
+
+  <!-- equality badge between lanes -->
+  <g>
+    <rect x="390" y="226" width="234" height="22" rx="11" fill="#fff" stroke="#c9d6e6" stroke-width="1"/>
+    <text x="507" y="241" text-anchor="middle" font-size="10.5" fill="#41556E">identical row counts: 832,881 &#8594; 719,817 &#8594; 613,660</text>
+  </g>
+</svg>

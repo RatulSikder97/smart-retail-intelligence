@@ -298,3 +298,62 @@ arrow(0.74, 0.25, 0.82, 0.40, "cross-validates")
 ax.set_xlim(0, 1); ax.set_ylim(0, 1)
 save(fig, "f15_architecture.png")
 print("architecture figure written")
+
+# ------------------------------------------------ professional EDA upgrades
+# F2 (regenerated): two-panel target distribution — linear (clipped) + log scale
+t = features.loc[features.has_target, "total_target"]
+t_pos = t[t > 0]
+fig, axes = plt.subplots(1, 2, figsize=(COL_W * 1.9, 2.0))
+cap = t.quantile(0.99)
+axes[0].hist(t[t <= cap], bins=60, color=BLUE, zorder=3)
+axes[0].axvline(t.median(), color=RED, lw=0.9, label=f"median = {t.median():.1f}")
+axes[0].axvline(t.mean(), color="#444444", lw=0.9, ls="--", label=f"mean = {t.mean():.1f}")
+axes[0].set_xlabel("monthly total target (clipped at p99)")
+axes[0].set_ylabel("shops"); axes[0].yaxis.set_major_formatter(compact)
+axes[0].legend(frameon=False); axes[0].set_title("(a) linear scale", fontsize=8)
+import numpy as np
+bins = np.logspace(np.log10(max(t_pos.min(), 0.01)), np.log10(t_pos.max()), 60)
+axes[1].hist(t_pos, bins=bins, color=BLUE, zorder=3)
+axes[1].set_xscale("log")
+axes[1].set_xlabel("monthly total target (log scale, full range)")
+axes[1].set_ylabel("shops"); axes[1].yaxis.set_major_formatter(compact)
+axes[1].set_title("(b) log scale — the wholesale tail", fontsize=8)
+fig.tight_layout()
+save(fig, "f2_target_distribution.png")
+
+# F9 (regenerated): 2x2 with panel letters
+fig, axes = plt.subplots(2, 2, figsize=(COL_W * 1.9, 3.5))
+panels = [
+    ("density_1km", "(a) shops within 1 km", axes[0][0]),
+    ("dist_to_district_centre_km", "(b) km to district centre", axes[0][1]),
+    ("n_products_targeted", "(c) products targeted (of 17)", axes[1][0]),
+]
+for col, label, ax in panels:
+    v = features_full[col].dropna()
+    ax.hist(v[v <= v.quantile(0.99)], bins=40, color=BLUE, zorder=3)
+    ax.set_title(label, fontsize=8, loc="left")
+    ax.set_ylabel("shops"); ax.yaxis.set_major_formatter(compact)
+ax = axes[1][1]
+ax.hist(t[t <= cap], bins=40, color=BLUE, zorder=3)
+ax.set_title("(d) monthly total target", fontsize=8, loc="left")
+ax.set_ylabel("shops"); ax.yaxis.set_major_formatter(compact)
+fig.tight_layout()
+save(fig, "f9_feature_distributions.png")
+
+# F16 — target by division: median with IQR
+j = features[features.has_target].dropna(subset=["total_target"])
+grp = j.groupby("division")["total_target"]
+stats = pd.DataFrame({"q1": grp.quantile(0.25), "med": grp.quantile(0.5),
+                      "q3": grp.quantile(0.75)}).drop("Unknown", errors="ignore")
+stats = stats.sort_values("med")
+fig, ax = plt.subplots(figsize=(COL_W, 2.3))
+y = range(len(stats))
+ax.hlines(y, stats["q1"], stats["q3"], color="#b9cde4", lw=5, zorder=2)
+ax.plot(stats["med"], y, "o", color=BLUE, ms=5, zorder=3)
+for i, (med, q3) in enumerate(zip(stats["med"], stats["q3"])):
+    ax.text(q3 + 0.6, i, f"{med:.1f}", va="center", fontsize=7, color="#41556E")
+ax.set_yticks(list(y)); ax.set_yticklabels(stats.index)
+ax.set_xlabel("monthly total target — median (dot) and IQR (band)")
+ax.grid(axis="y", visible=False)
+save(fig, "f16_target_by_division.png")
+print("EDA upgrades written")
