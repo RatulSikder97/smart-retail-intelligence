@@ -56,7 +56,7 @@
   <p style="margin-top: 1.0in;">Submitted by:</p>
   <p>Ratul Sikder (ID: 2506102)</p>
   <p>Fahim Rahman (ID: 2506108)</p>
-  <p style="margin-top: 0.9in;">July 2026</p>
+  <p style="margin-top: 0.9in;">June 2026</p>
 </div>
 
 <div class="frontpage">
@@ -171,7 +171,7 @@
 <p>On the infrastructure side, the Hadoop Distributed File System [15] gives replicated block storage across data nodes, and Apache Spark [16] has become the de-facto engine for distributed data processing, with MLlib [17] as its machine-learning library. We follow the pattern common in industry: the distributed engines handle storage and data preparation, and one strong node trains the models whose exact algorithms MLlib does not provide. The dataset itself is documented in [1], which reports a 13.58% missing-GPS rate; our own profiling reproduced this figure exactly, which gave us some confidence in the source. As far as we could find, no published work has combined clustering, regression, classification, and anomaly detection on this dataset in a single pipeline. That gap is what this project tries to fill.</p>
 <h2 class="sec">3. Data</h2>
 
-<p class="noindent">For this project we work with the publicly available dataset titled &ldquo;Comprehensive Retail Network Dataset of Bangladesh&rdquo; from Mendeley Data [1] (dataset DOI 10.17632/mgzvngzng2.1, article DOI 10.1016/j.dib.2025.112326, CC BY 4.0). The data was collected between February 2022 and October 2024, and we downloaded it on 5 July 2026. Every statistic in this section comes from our own profiling code run on the actual files; nothing is copied from the dataset paper. Fig. 2 shows where the data sits in our overall architecture. Each record passes through two independent preparation lanes: the scikit-learn reference lane and the distributed Hadoop/Spark lane described in Section 3.5. The outputs of the two lanes cross-validate each other.</p>
+<p class="noindent">For this project we work with the publicly available dataset titled &ldquo;Comprehensive Retail Network Dataset of Bangladesh&rdquo; from Mendeley Data [1] (dataset DOI 10.17632/mgzvngzng2.1, article DOI 10.1016/j.dib.2025.112326, CC BY 4.0). The data was collected between February 2022 and October 2024, and we downloaded it on 5 June 2026. Every statistic in this section comes from our own profiling code run on the actual files; nothing is copied from the dataset paper. Fig. 2 shows where the data sits in our overall architecture. Each record passes through two independent preparation lanes: the scikit-learn reference lane and the distributed Hadoop/Spark lane described in Section 3.5. The outputs of the two lanes cross-validate each other.</p>
 
 <div class="figure"><img src="figures/fig_architecture.svg" style="width: 6.4in;">
 <p class="figcaption">Fig. 2. Pipeline architecture. The same raw data flows through a scikit-learn reference lane (the exact proposal algorithms) and a distributed Hadoop HDFS + Apache Spark lane; matching row counts across the two lanes cross-validate the preparation.</p></div>
@@ -585,7 +585,7 @@
 <h2 class="sec" style="page-break-before: always;">Appendix A: Files Accompanying This Report</h2>
 <table class="data">
   <tr><th>Path</th><th>Content</th></tr>
-  <tr><td><code>src/smart_retail/</code></td><td>Python package: configuration, loaders, profiling, feature engineering, the four model phases, Bayesian tuning + cross-validation, pipeline CLI, report generator</td></tr>
+  <tr><td><code>src/smart_retail/</code></td><td>Python package organised by stage: <code>exploration/</code> (profiling), <code>preprocessing/</code> (schema, loaders, feature engineering), <code>modeling/</code> (the four model phases plus Bayesian tuning + cross-validation), pipeline CLI, report generator</td></tr>
   <tr><td><code>dashboard/app.py</code></td><td>Interactive Streamlit dashboard (8 views, global filters, live cluster topology)</td></tr>
   <tr><td><code>spark_jobs/</code></td><td>Distributed jobs: HDFS upload, Spark SQL ETL, division-partitioned warehouse builder, 5-phase MLlib pipeline</td></tr>
   <tr><td><code>docker-compose.yml</code>, <code>Dockerfile</code>, <code>Dockerfile.spark</code></td><td>Containers: pipeline, dashboard, tests, HDFS namenode + 9 datanodes, Spark master + workers</td></tr>
