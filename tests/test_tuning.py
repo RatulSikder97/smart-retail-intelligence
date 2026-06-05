@@ -28,6 +28,8 @@ def test_regression_tuning_and_cv(tuned_setup):
     assert result.tuning["n_trials"] == 3
     assert set(result.tuning["best_params"]) >= {"n_estimators", "max_depth", "learning_rate"}
     assert result.tuning["best_cv_rmse"] > 0
+    # tuned model competes as its own candidate; the default stays visible
+    assert "xgboost_tuned" in result.metrics and "xgboost" in result.metrics
 
     assert result.cv is not None
     assert result.cv["folds"] == 3
