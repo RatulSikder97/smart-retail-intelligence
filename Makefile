@@ -1,4 +1,4 @@
-.PHONY: build pipeline dashboard test shell clean
+.PHONY: build pipeline dashboard test shell clean spark-up spark-etl spark-down
 
 build:            ## Build the Docker image
 	docker compose build
@@ -14,6 +14,15 @@ test:             ## Run the test suite inside Docker
 
 shell:            ## Interactive shell inside the container
 	docker compose run --rm --entrypoint bash pipeline
+
+spark-up:         ## Start the Spark standalone cluster (master UI :8080)
+	docker compose --profile spark up -d
+
+spark-etl:        ## Run the distributed ETL job on the Spark cluster
+	docker compose --profile spark --profile spark-jobs run --rm spark-etl
+
+spark-down:       ## Stop the Spark cluster
+	docker compose --profile spark down
 
 clean:            ## Remove generated artifacts (keeps raw data)
 	rm -rf data/processed models reports

@@ -30,3 +30,6 @@ venv/
 
 # Local env
 .env
+
+# Spark artifacts (regenerable)
+data/spark/

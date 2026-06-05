@@ -51,6 +51,30 @@ docker compose run --rm pipeline
 docker compose up dashboard
 ```
 
+## Big-data layer (Spark)
+
+A Spark 3.5 standalone cluster ships in the same compose file for the
+distributed-processing part of the course:
+
+```bash
+make spark-up     # spark-master (UI http://localhost:8080) + spark-worker (:8081)
+make spark-etl    # distributed ETL job over the raw CSVs → data/spark/
+make spark-down
+```
+
+`spark_jobs/etl_preprocess.py` re-expresses the phase-1 cleaning rules as
+distributed Spark SQL (dedup, GPS validation, valued-target window join) and
+writes `data/spark/clean_shops.parquet` plus per-division analytics. It
+reproduces the pandas pipeline's counts exactly (832,881 → 719,817 → 613,660)
+— a cross-validation of both implementations.
+
+**Where is Hadoop?** Spark bundles the Hadoop 3 client libraries (this build
+is `spark-3.5-bin-hadoop3`), which is how it reads/writes the shared volume.
+A full HDFS + YARN cluster adds nothing at 206 MB of input — the mounted
+volume plays the storage role — and the classic Hadoop Docker images are
+amd64-only (slow emulation on Apple Silicon). If the course requires visible
+HDFS daemons, that can be added as another compose profile.
+
 ## Local development (no Docker)
 
 ```bash

@@ -33,3 +33,54 @@ services:
       - ./dataset:/app/dataset:ro
       - ./tests:/app/tests:ro
     command: pytest -v
+
+  # ---- big-data layer (start with: docker compose --profile spark up -d) ----
+  # Spark standalone cluster; Spark bundles the Hadoop 3 client libraries, so
+  # no separate HDFS/YARN is needed at this data size — the shared ./data
+  # volume plays the storage role.
+  spark-master:
+    image: apache/spark:3.5.4
+    profiles: ["spark"]
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+    ports:
+      - "7077:7077"   # cluster endpoint
+      - "8080:8080"   # master web UI
+    volumes:
+      - ./dataset:/data/dataset:ro
+      - ./data:/data/out
+      - ./spark_jobs:/opt/jobs:ro
+
+  spark-worker:
+    image: apache/spark:3.5.4
+    profiles: ["spark"]
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_WORKER_CORES=4
+      - SPARK_WORKER_MEMORY=4g
+    depends_on:
+      - spark-master
+    ports:
+      - "8081:8081"   # worker web UI
+    volumes:
+      - ./dataset:/data/dataset:ro
+      - ./data:/data/out
+      - ./spark_jobs:/opt/jobs:ro
+
+  spark-etl:
+    image: apache/spark:3.5.4
+    profiles: ["spark-jobs"]
+    command: >
+      /opt/spark/bin/spark-submit
+      --master spark://spark-master:7077
+      --deploy-mode client
+      /opt/jobs/etl_preprocess.py
+    depends_on:
+      - spark-master
+      - spark-worker
+    volumes:
+      - ./dataset:/data/dataset:ro
+      - ./data:/data/out
+      - ./spark_jobs:/opt/jobs:ro
