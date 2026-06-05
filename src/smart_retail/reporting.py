@@ -64,6 +64,65 @@ duplicate / ghost-shop problem that motivated this project.
 """
 
 
+def feature_engineering_section(metrics: dict) -> str:
+    q = metrics.get("phase_1_preprocessing", {})
+    return f"""
+### Feature engineering
+
+From the cleaned records, **{q.get('n_feature_columns', 0)} model features** are
+engineered per shop:
+
+| Group | Features | How they are computed |
+|---|---|---|
+| Neighbourhood density | `density_500m`, `density_1km`, `density_5km` | BallTree (haversine) neighbour counts within each radius, excluding the shop itself |
+| Centrality | `dist_to_district_centre_km` | Great-circle distance to the centroid of the shop's district (zila) |
+| Product mix | `n_products_targeted` | Number of the 17 products with a positive target for the shop |
+| Position | `latitude`, `longitude` | Validated GPS coordinates |
+| Structure (one-hot) | shop type (12), style (3), importance (3), place nature, division | Explicit "Unknown" level instead of dropping ~10% categorical gaps |
+
+**Comment.** Density and centrality translate the proposal's
+"urban shops over-stocked / rural shops stock-out" hypothesis into measurable
+inputs; the SHAP ranking in RQ2 confirms they carry real signal. The monthly
+target (`total_target`) is joined for {q.get('n_shops_with_target', 0):,} shops
+and used as the regression label — never as a model input.
+"""
+
+
+def conclusion_section(metrics: dict) -> str:
+    q = metrics.get("phase_1_preprocessing", {})
+    c = metrics.get("phase_2_clustering", {})
+    r = metrics.get("phase_3_regression", {})
+    cl = metrics.get("phase_4_classification", {})
+    a = metrics.get("phase_5_anomaly", {})
+    durations = metrics.get("durations_sec", {})
+    best_reg = r.get("models", {}).get(r.get("best_model", ""), {})
+    best_clf = cl.get("models", {}).get(cl.get("best_model", ""), {})
+    return f"""
+### Conclusion & recommended actions
+
+End-to-end, the pipeline turns {q.get('n_raw_shop_rows', 0):,} raw book entries
+into: **{c.get('best_k', '?')} interpretable archetypes**, a sales model
+(R² {best_reg.get('r2', float('nan')):.2f}), a target-miss risk ranking
+(ROC-AUC {best_clf.get('roc_auc', float('nan')):.3f}), and
+{a.get('n_top_anomalies', 0):,} triage-ready anomalies — in
+{sum(durations.values()):.0f}s of compute.
+
+Recommended actions for the distributor:
+
+1. **Audit the data-poor segment first** — the archetype with zero product mix
+   plus the {q.get('n_raw_shop_rows', 0) - q.get('n_final_shops', 0):,} entries
+   without GPS are the cheapest wins against the 15–25% capacity waste estimate.
+2. **Rebalance targets where the model and the book disagree** — shops whose
+   predicted volume far exceeds the assigned target are under-served demand;
+   the reverse are over-allocation risks (RQ3 list, worst in the highest-risk
+   division).
+3. **Field-verify the anomaly top decile per division**, prioritising shops
+   that are simultaneously RQ3 at-risk.
+4. **Refresh quarterly** — the pipeline is deterministic (seed 42) and fully
+   containerised, so re-running on updated books is one command.
+"""
+
+
 def rq1_section(metrics: dict, profiles: pd.DataFrame | None) -> str:
     c = metrics.get("phase_2_clustering", {})
     best_k = c.get("best_k")
@@ -224,10 +283,12 @@ def build_report(
     """All report sections as {section key: markdown}, in reading order."""
     return {
         "data_quality": data_quality_section(metrics),
+        "feature_engineering": feature_engineering_section(metrics),
         "rq1": rq1_section(metrics, profiles),
         "rq2": rq2_section(metrics, shap_importance),
         "rq3": rq3_section(metrics, risk_by_division),
         "rq4": rq4_section(metrics, top_anomalies),
+        "conclusion": conclusion_section(metrics),
     }
 
 

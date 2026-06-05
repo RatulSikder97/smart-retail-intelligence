@@ -18,9 +18,27 @@ def real_metrics(config: Config):
 
 def test_build_report_covers_all_sections(real_metrics):
     sections = reporting.build_report(real_metrics)
-    assert list(sections) == ["data_quality", "rq1", "rq2", "rq3", "rq4"]
+    assert list(sections) == [
+        "data_quality", "feature_engineering",
+        "rq1", "rq2", "rq3", "rq4", "conclusion",
+    ]
     for key, md in sections.items():
         assert md.strip(), key
+
+
+def test_feature_engineering_section_lists_feature_groups(real_metrics):
+    md = reporting.feature_engineering_section(real_metrics)
+    n_features = real_metrics["phase_1_preprocessing"]["n_feature_columns"]
+    assert f"{n_features} model features" in md
+    for feature in ("density_500m", "dist_to_district_centre_km", "n_products_targeted"):
+        assert feature in md
+
+
+def test_conclusion_summarises_end_to_end(real_metrics):
+    md = reporting.conclusion_section(real_metrics)
+    assert f"{real_metrics['phase_1_preprocessing']['n_raw_shop_rows']:,}" in md
+    assert f"{real_metrics['phase_5_anomaly']['n_top_anomalies']:,}" in md
+    assert "Recommended actions" in md
 
 
 def test_data_quality_section_explains_missing_gps(real_metrics):
