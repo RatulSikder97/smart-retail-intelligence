@@ -23,25 +23,26 @@ FIG.mkdir(parents=True, exist_ok=True)
 plt.rcParams.update({
     "font.family": "serif",
     "font.serif": ["Times New Roman", "Times", "DejaVu Serif"],
-    "font.size": 8,
-    "axes.titlesize": 8,
-    "axes.labelsize": 8,
-    "xtick.labelsize": 7.5,
-    "ytick.labelsize": 7.5,
-    "legend.fontsize": 7.5,
+    "font.size": 9,
+    "axes.titlesize": 9,
+    "axes.labelsize": 9,
+    "xtick.labelsize": 8,
+    "ytick.labelsize": 8,
+    "legend.fontsize": 8,
     "axes.spines.top": False,
     "axes.spines.right": False,
-    "axes.linewidth": 0.6,
-    "xtick.major.width": 0.6,
-    "ytick.major.width": 0.6,
+    "axes.linewidth": 0.7,
+    "xtick.major.width": 0.7,
+    "ytick.major.width": 0.7,
     "axes.grid": True,
-    "grid.color": "#d9d9d9",
-    "grid.linewidth": 0.4,
+    "grid.color": "#e2e7ec",
+    "grid.linewidth": 0.5,
     "axes.axisbelow": True,
     "figure.dpi": 300,
     "savefig.dpi": 300,
 })
-COL_W = 3.45  # IEEE single-column width in inches
+COL_W = 4.3   # figures render 1:1 at the report display width
+WIDE_W = 6.2  # full text-block width for two-panel figures and diagrams
 BLUE, RED = "#2a78d6", "#c0392b"
 CLUSTER_COLORS = ["#2a78d6", "#1baf7a", "#eda100", "#008300",
                   "#4a3aa7", "#e34948", "#e87ba4", "#eb6834"]
@@ -65,7 +66,7 @@ def save(fig, name):
 
 # F1 — shops per division
 counts = features["division"].value_counts().drop("Unknown", errors="ignore").sort_values()
-fig, ax = plt.subplots(figsize=(COL_W, 2.1))
+fig, ax = plt.subplots(figsize=(COL_W, 2.6))
 ax.barh(counts.index, counts.values, color=BLUE, height=0.62, zorder=3)
 for i, v in enumerate(counts.values):
     ax.text(v + counts.max() * 0.015, i, f"{v:,}", va="center", fontsize=7)
@@ -78,7 +79,7 @@ save(fig, "f1_division_counts.png")
 # F2 — monthly target distribution (clipped at p99)
 t = features.loc[features.has_target, "total_target"]
 cap = t.quantile(0.99)
-fig, ax = plt.subplots(figsize=(COL_W, 1.9))
+fig, ax = plt.subplots(figsize=(COL_W, 2.4))
 ax.hist(t[t <= cap], bins=60, color=BLUE, zorder=3)
 ax.axvline(t.median(), color=RED, lw=0.9,
            label=f"median = {t.median():.1f}")
@@ -96,7 +97,7 @@ ks = sorted(int(k) for k in km)
 sil = [km[str(k)]["silhouette"] for k in ks]
 db = [km[str(k)]["davies_bouldin"] for k in ks]
 best_k = metrics["phase_2_clustering"]["best_k"]
-fig, axes = plt.subplots(2, 1, figsize=(COL_W, 2.7), sharex=True)
+fig, axes = plt.subplots(2, 1, figsize=(COL_W, 3.4), sharex=True)
 axes[0].plot(ks, sil, "o-", color=BLUE, lw=1, ms=3.5, zorder=3)
 axes[0].set_ylabel("silhouette\n(higher better)")
 axes[1].plot(ks, db, "o-", color=BLUE, lw=1, ms=3.5, zorder=3)
@@ -111,7 +112,7 @@ save(fig, "f3_k_selection.png")
 
 # F4 — cluster sizes
 sizes = clusters["cluster"].value_counts().sort_index()
-fig, ax = plt.subplots(figsize=(COL_W, 1.9))
+fig, ax = plt.subplots(figsize=(COL_W, 2.4))
 ax.bar([f"C{i}" for i in sizes.index], sizes.values,
        color=[CLUSTER_COLORS[i % 8] for i in sizes.index], width=0.65, zorder=3)
 for i, v in enumerate(sizes.values):
@@ -124,7 +125,7 @@ save(fig, "f4_cluster_sizes.png")
 
 # F5 — SHAP top 10
 top = shap_imp.head(10).iloc[::-1]
-fig, ax = plt.subplots(figsize=(COL_W, 2.2))
+fig, ax = plt.subplots(figsize=(COL_W, 2.75))
 ax.barh(top["feature"], top["mean_abs_shap"], color=BLUE, height=0.62, zorder=3)
 ax.set_xlabel("mean |SHAP value|")
 ax.grid(axis="y", visible=False)
@@ -134,7 +135,7 @@ save(fig, "f5_shap.png")
 merged = risk.merge(features[["shop_code", "division"]], on="shop_code")
 rate = (merged.groupby("division")["at_risk"].mean()
         .drop("Unknown", errors="ignore").sort_values())
-fig, ax = plt.subplots(figsize=(COL_W, 2.0))
+fig, ax = plt.subplots(figsize=(COL_W, 2.5))
 ax.barh(rate.index, rate.values * 100, color=RED, height=0.62, zorder=3)
 for i, v in enumerate(rate.values):
     ax.text(v * 100 + 0.6, i, f"{v:.1%}", va="center", fontsize=7)
@@ -148,7 +149,7 @@ q = metrics["phase_1_preprocessing"]
 stages = ["Raw records", "Unique codes", "Valid GPS", "With target"]
 vals = [q["n_raw_shop_rows"], q["n_unique_shops"],
         q["n_final_shops"], q["n_shops_with_target"]]
-fig, ax = plt.subplots(figsize=(COL_W, 1.7))
+fig, ax = plt.subplots(figsize=(COL_W, 2.1))
 ax.barh(stages[::-1], vals[::-1], color=BLUE, height=0.6, zorder=3)
 for i, v in enumerate(vals[::-1]):
     ax.text(v + max(vals) * 0.015, i, f"{v:,}", va="center", fontsize=7)
@@ -168,7 +169,7 @@ features_full = pd.read_parquet(ROOT / "data/processed/features.parquet",
 
 # F8 — shops per business type
 tc = features_full["shop_type"].value_counts().head(12).sort_values()
-fig, ax = plt.subplots(figsize=(COL_W, 2.3))
+fig, ax = plt.subplots(figsize=(COL_W, 2.9))
 ax.barh(tc.index, tc.values, color=BLUE, height=0.62, zorder=3)
 for i, v in enumerate(tc.values):
     ax.text(v + tc.max() * 0.015, i, f"{v:,}", va="center", fontsize=7)
@@ -177,7 +178,7 @@ ax.xaxis.set_major_formatter(compact); ax.grid(axis="y", visible=False)
 save(fig, "f8_shop_types.png")
 
 # F9 — engineered feature distributions (2x2 panel)
-fig, axes = plt.subplots(2, 2, figsize=(COL_W * 1.9, 3.4))
+fig, axes = plt.subplots(2, 2, figsize=(WIDE_W, 3.2))
 panels = [
     ("density_1km", "shops within 1 km", axes[0][0]),
     ("dist_to_district_centre_km", "km to district centre", axes[0][1]),
@@ -200,7 +201,7 @@ save(fig, "f9_feature_distributions.png")
 prof = json.loads((ROOT / "reports/dataset_profile.json").read_text())
 cols = prof["files"]["shop_info_with_geo.csv"]["columns"]
 miss = pd.Series({c["column"]: c["missing_pct"] for c in cols if c["missing_pct"] > 0}).sort_values()
-fig, ax = plt.subplots(figsize=(COL_W, 2.2))
+fig, ax = plt.subplots(figsize=(COL_W, 2.75))
 ax.barh(miss.index, miss.values, color=RED, height=0.6, zorder=3)
 for i, v in enumerate(miss.values):
     ax.text(v + 1.2, i, f"{v:.1f}%", va="center", fontsize=7)
@@ -211,7 +212,7 @@ save(fig, "f10_missingness.png")
 # F11 — spatial map of archetypes (sampled scatter)
 merged = features_full.merge(clusters, on="shop_code")
 sample = merged.sample(60_000, random_state=42)
-fig, ax = plt.subplots(figsize=(COL_W * 1.35, 4.1))
+fig, ax = plt.subplots(figsize=(COL_W, 3.9))
 for c in sorted(sample["cluster"].unique()):
     s = sample[sample["cluster"] == c]
     ax.scatter(s["longitude"], s["latitude"], s=0.4, color=CLUSTER_COLORS[int(c) % 8],
@@ -225,7 +226,7 @@ save(fig, "f11_cluster_map.png")
 # F13 — actual vs predicted: hex-binned density of every labelled shop (no sampling)
 preds = pd.read_parquet(ROOT / "data/processed/predictions.parquet")
 cap = preds[["actual", "predicted"]].quantile(0.99).max()
-fig, ax = plt.subplots(figsize=(COL_W, 2.9))
+fig, ax = plt.subplots(figsize=(COL_W, 3.6))
 hb = ax.hexbin(preds["actual"], preds["predicted"], gridsize=60, bins="log",
                cmap="Blues", extent=(0, cap, 0, cap), linewidths=0)
 cb = fig.colorbar(hb, ax=ax, shrink=0.85, pad=0.02)
@@ -241,7 +242,7 @@ save(fig, "f13_actual_vs_predicted.png")
 anom = pd.read_parquet(ROOT / "data/processed/anomalies.parquet", columns=["combined_score"])
 scores = anom["combined_score"].dropna()
 decile_cut = scores.quantile(0.90)  # empirical, not 0.90: the mean of two ranks concentrates
-fig, ax = plt.subplots(figsize=(COL_W, 1.8))
+fig, ax = plt.subplots(figsize=(COL_W, 2.25))
 ax.hist(scores, bins=50, color=BLUE, zorder=3)
 ax.axvline(decile_cut, color=RED, lw=0.9,
            label=f"top-decile threshold ({decile_cut:.2f})")
@@ -277,7 +278,7 @@ def _arrow(ax, x1, y1, x2, y2, color="#7a8a9a"):
                 arrowprops=dict(arrowstyle="-|>", color=color, lw=0.9,
                                 shrinkA=1, shrinkB=1))
 
-fig, ax = _diagram_axes(COL_W * 2.0, 3.1)
+fig, ax = _diagram_axes(WIDE_W, 2.8)
 
 # lane containers
 ax.add_patch(mpatches.FancyBboxPatch((0.205, 0.545), 0.575, 0.415, boxstyle="round,pad=0.006",
@@ -335,7 +336,7 @@ steps = [
     ("5", "Evaluate", "Optuna TPE · 5-fold CV\n47 automated tests"),
     ("6", "Deliver", "dashboard · report\naudit lists"),
 ]
-fig, ax = _diagram_axes(COL_W * 2.0, 1.55)
+fig, ax = _diagram_axes(WIDE_W, 1.4)
 bw, gap = 0.148, 0.0206
 x = 0.005
 for i, (num, title, body) in enumerate(steps):
@@ -355,26 +356,26 @@ print("architecture figure written")
 # F2 (regenerated): two-panel target distribution — linear (clipped) + log scale
 t = features.loc[features.has_target, "total_target"]
 t_pos = t[t > 0]
-fig, axes = plt.subplots(1, 2, figsize=(COL_W * 1.9, 2.0))
+fig, axes = plt.subplots(1, 2, figsize=(WIDE_W, 1.9))
 cap = t.quantile(0.99)
 axes[0].hist(t[t <= cap], bins=60, color=BLUE, zorder=3)
 axes[0].axvline(t.median(), color=RED, lw=0.9, label=f"median = {t.median():.1f}")
 axes[0].axvline(t.mean(), color="#444444", lw=0.9, ls="--", label=f"mean = {t.mean():.1f}")
 axes[0].set_xlabel("monthly total target (clipped at p99)")
 axes[0].set_ylabel("shops"); axes[0].yaxis.set_major_formatter(compact)
-axes[0].legend(frameon=False); axes[0].set_title("(a) linear scale", fontsize=8)
+axes[0].legend(frameon=False); axes[0].set_title("(a) linear scale", fontsize=9)
 import numpy as np
 bins = np.logspace(np.log10(max(t_pos.min(), 0.01)), np.log10(t_pos.max()), 60)
 axes[1].hist(t_pos, bins=bins, color=BLUE, zorder=3)
 axes[1].set_xscale("log")
 axes[1].set_xlabel("monthly total target (log scale, full range)")
 axes[1].set_ylabel("shops"); axes[1].yaxis.set_major_formatter(compact)
-axes[1].set_title("(b) log scale — the wholesale tail", fontsize=8)
+axes[1].set_title("(b) log scale — the wholesale tail", fontsize=9)
 fig.tight_layout()
 save(fig, "f2_target_distribution.png")
 
 # F9 (regenerated): 2x2 with panel letters
-fig, axes = plt.subplots(2, 2, figsize=(COL_W * 1.9, 3.5))
+fig, axes = plt.subplots(2, 2, figsize=(WIDE_W, 3.3))
 panels = [
     ("density_1km", "(a) shops within 1 km", axes[0][0]),
     ("dist_to_district_centre_km", "(b) km to district centre", axes[0][1]),
@@ -383,11 +384,11 @@ panels = [
 for col, label, ax in panels:
     v = features_full[col].dropna()
     ax.hist(v[v <= v.quantile(0.99)], bins=40, color=BLUE, zorder=3)
-    ax.set_title(label, fontsize=8, loc="left")
+    ax.set_title(label, fontsize=9, loc="left")
     ax.set_ylabel("shops"); ax.yaxis.set_major_formatter(compact)
 ax = axes[1][1]
 ax.hist(t[t <= cap], bins=40, color=BLUE, zorder=3)
-ax.set_title("(d) monthly total target", fontsize=8, loc="left")
+ax.set_title("(d) monthly total target", fontsize=9, loc="left")
 ax.set_ylabel("shops"); ax.yaxis.set_major_formatter(compact)
 fig.tight_layout()
 save(fig, "f9_feature_distributions.png")
@@ -398,7 +399,7 @@ grp = j.groupby("division")["total_target"]
 stats = pd.DataFrame({"q1": grp.quantile(0.25), "med": grp.quantile(0.5),
                       "q3": grp.quantile(0.75)}).drop("Unknown", errors="ignore")
 stats = stats.sort_values("med")
-fig, ax = plt.subplots(figsize=(COL_W, 2.3))
+fig, ax = plt.subplots(figsize=(COL_W, 2.9))
 y = range(len(stats))
 ax.hlines(y, stats["q1"], stats["q3"], color="#b9cde4", lw=5, zorder=2)
 ax.plot(stats["med"], y, "o", color=BLUE, ms=5, zorder=3)

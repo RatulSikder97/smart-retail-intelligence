@@ -24,11 +24,11 @@ share = share.sort_values(ascending=False)
     json.dumps({k: round(float(v), 4) for k, v in share.items()}, indent=2))
 print(share.round(4).to_string())
 
-plt.rcParams.update({"font.family": "serif", "font.size": 8,
+plt.rcParams.update({"font.family": "serif", "font.size": 9,
                      "axes.spines.top": False, "axes.spines.right": False,
-                     "axes.grid": True, "grid.color": "#d9d9d9",
-                     "grid.linewidth": 0.4, "axes.axisbelow": True, "savefig.dpi": 300})
-fig, ax = plt.subplots(figsize=(3.6, 3.9))
+                     "axes.grid": True, "grid.color": "#e2e7ec",
+                     "grid.linewidth": 0.5, "axes.axisbelow": True, "savefig.dpi": 300})
+fig, ax = plt.subplots(figsize=(4.3, 4.65))
 bg = features.sample(60_000, random_state=SEED)
 ax.scatter(bg["longitude"], bg["latitude"], s=0.4, color="#c9d2da", linewidths=0,
            rasterized=True, label="all shops (60k sample)")
@@ -36,12 +36,12 @@ an = top.sample(20_000, random_state=SEED).sort_values("combined_score")
 sc = ax.scatter(an["longitude"], an["latitude"], s=0.9, c=an["combined_score"],
                 cmap="YlOrRd", vmin=0.79, vmax=1.0, linewidths=0, rasterized=True)
 cb = fig.colorbar(sc, ax=ax, shrink=0.75, pad=0.02)
-cb.set_label("combined anomaly score", fontsize=7)
-cb.ax.tick_params(labelsize=6.5)
+cb.set_label("combined anomaly score", fontsize=8.5)
+cb.ax.tick_params(labelsize=8)
 ax.set_xlabel("longitude")
 ax.set_ylabel("latitude")
 ax.set_aspect(1.08)
-ax.legend(frameon=False, loc="lower right", fontsize=6.5, markerscale=8)
+ax.legend(frameon=False, loc="lower right", fontsize=8, markerscale=8)
 fig.savefig(ROOT / "report/figures/f19_anomaly_map.png",
             bbox_inches="tight", pad_inches=0.02)
 print("wrote f19_anomaly_map.png")

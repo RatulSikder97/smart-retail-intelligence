@@ -36,11 +36,11 @@ FIG = ROOT / "report" / "figures"
 SEED = 42
 
 plt.rcParams.update({
-    "font.family": "serif", "font.size": 8, "axes.titlesize": 8,
-    "axes.labelsize": 8, "xtick.labelsize": 7.5, "ytick.labelsize": 7.5,
-    "legend.fontsize": 7, "axes.spines.top": False, "axes.spines.right": False,
-    "axes.linewidth": 0.6, "axes.grid": True, "grid.color": "#d9d9d9",
-    "grid.linewidth": 0.4, "axes.axisbelow": True, "savefig.dpi": 300,
+    "font.family": "serif", "font.size": 9, "axes.titlesize": 9,
+    "axes.labelsize": 9, "xtick.labelsize": 8, "ytick.labelsize": 8,
+    "legend.fontsize": 8, "axes.spines.top": False, "axes.spines.right": False,
+    "axes.linewidth": 0.7, "axes.grid": True, "grid.color": "#e2e7ec",
+    "grid.linewidth": 0.5, "axes.axisbelow": True, "savefig.dpi": 300,
 })
 
 print("loading features…")
@@ -123,12 +123,12 @@ for name, pipe in clf_models.items():
 (ROOT / "report" / "cv_all_models.json").write_text(json.dumps(out, indent=2))
 
 # ROC figure
-fig, ax = plt.subplots(figsize=(3.45, 2.9))
+fig, ax = plt.subplots(figsize=(4.3, 3.6))
 colors = {"Logistic regression": "#8aa0b4", "Random Forest": "#1baf7a",
           "XGBoost (defaults)": "#eda100", "XGBoost (tuned)": "#2a78d6"}
 for name, (fpr, tpr) in roc_points.items():
     auc = out["classification"][name]["roc_auc"]
-    ax.plot(fpr, tpr, lw=1.1, color=colors[name], label=f"{name} (AUC {auc:.3f})")
+    ax.plot(fpr, tpr, lw=1.4, color=colors[name], label=f"{name} (AUC {auc:.3f})")
 ax.plot([0, 1], [0, 1], color="#999", lw=0.7, ls="--")
 ax.set_xlabel("false positive rate")
 ax.set_ylabel("true positive rate")

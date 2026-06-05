@@ -97,12 +97,12 @@ print("SVR", results["SVR (RBF, 10k rows only)"])
 (ROOT / "report/alternatives.json").write_text(json.dumps(results, indent=2))
 
 # figure: fit time (log) vs test R2
-plt.rcParams.update({"font.family": "serif", "font.size": 8,
+plt.rcParams.update({"font.family": "serif", "font.size": 9,
                      "axes.spines.top": False, "axes.spines.right": False,
-                     "axes.grid": True, "grid.color": "#d9d9d9",
-                     "grid.linewidth": 0.4, "axes.axisbelow": True,
+                     "axes.grid": True, "grid.color": "#e2e7ec",
+                     "grid.linewidth": 0.5, "axes.axisbelow": True,
                      "savefig.dpi": 300})
-fig, ax = plt.subplots(figsize=(3.6, 2.6))
+fig, ax = plt.subplots(figsize=(4.3, 3.1))
 style = {  # name: (color, dx, dy, ha) — offsets hand-placed so labels never collide
     "Linear regression": ("#8aa0b4", 5, 4, "left"),
     "k-NN (k=15)": ("#8aa0b4", 5, -11, "left"),
@@ -116,10 +116,10 @@ from matplotlib.ticker import FuncFormatter
 for name, r in results.items():
     color, dx, dy, ha = style[name]
     x = max(r["fit_seconds"], 0.05)   # log axis cannot show 0.0 s
-    ax.scatter(x, r["r2"], s=28, color=color, zorder=3)
+    ax.scatter(x, r["r2"], s=42, color=color, zorder=3)
     ax.annotate(name.replace(" (RBF, 10k rows only)", " (10k only)"),
                 (x, r["r2"]), textcoords="offset points", xytext=(dx, dy),
-                fontsize=6.6, ha=ha)
+                fontsize=8, ha=ha)
 ax.set_xscale("log")
 ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
 ax.set_xlim(0.035, 15)

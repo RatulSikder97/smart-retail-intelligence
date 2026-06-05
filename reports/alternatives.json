@@ -24,7 +24,7 @@
     "train_rows": 50000,
     "r2": 0.10596222616135809,
     "rmse": 266.75203993801347,
-    "fit_seconds": 2.0,
+    "fit_seconds": 2.1,
     "predict_seconds": 0.03
   },
   "XGBoost": {
@@ -45,7 +45,7 @@
     "train_rows": 10000,
     "r2": 0.0141624897556617,
     "rmse": 280.11249662395306,
-    "fit_seconds": 1.5,
-    "predict_seconds": 3.53
+    "fit_seconds": 1.6,
+    "predict_seconds": 3.83
   }
 }
