@@ -71,7 +71,8 @@ reproduces the pandas pipeline's counts exactly (832,881 → 719,817 → 613,660
 ### Scaling out: regional partitioning + dynamic topology
 
 ```bash
-WORKERS=3 DATANODES=3 make spark-up   # scale storage + compute horizontally
+WORKERS=2 DATANODES=9 make spark-up   # one datanode per data partition:
+                                      # 8 divisions + the 'Unknown' bucket
 make spark-partition                  # division-partitioned warehouse in HDFS
 DIVISIONS=Khulna,Barisal make spark-pipeline   # regional (pruned) MLlib run
 make spark-pipeline                   # full national run
