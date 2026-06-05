@@ -47,7 +47,7 @@ st.markdown(
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 :root {
-  --ground: #F7F8FA; --surface: #FFFFFF; --border: #E4E7EC;
+  --ground: #F7F8FA; --surface: #FFFFFF; --border: #EAECF0;
   --ink: #0F1728; --ink-2: #475467; --ink-3: #667085;
   --accent: #2563EB; --accent-soft: #EFF4FF; --green: #12B76A;
   --shadow-sm: 0 1px 2px rgba(16,24,40,.06);
@@ -480,9 +480,7 @@ if "features" not in art:
 
 base = build_base(tuple(sorted(art.keys())))
 
-with st.container(border=True):
-    st.markdown('<div class="panel-label">Filters · apply to every analysis view</div>',
-                unsafe_allow_html=True)
+with st.expander("Filters — all analysis views", expanded=False):
     fc1, fc2, fc3, fc4, fc5 = st.columns([2, 2, 2, 2, 1.6])
     sel_divisions = fc1.multiselect(
         "Division", sorted(base["division"].unique()), placeholder="All divisions"
