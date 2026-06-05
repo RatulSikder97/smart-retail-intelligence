@@ -222,24 +222,30 @@ leg = ax.legend(frameon=False, markerscale=14, ncol=4, loc="lower right",
                 columnspacing=0.8, handletextpad=0.1)
 save(fig, "f11_cluster_map.png")
 
-# F13 — actual vs predicted (best regression model)
-preds = pd.read_parquet(ROOT / "data/processed/predictions.parquet").sample(30_000, random_state=42)
+# F13 — actual vs predicted: hex-binned density of every labelled shop (no sampling)
+preds = pd.read_parquet(ROOT / "data/processed/predictions.parquet")
 cap = preds[["actual", "predicted"]].quantile(0.99).max()
 fig, ax = plt.subplots(figsize=(COL_W, 2.9))
-ax.scatter(preds["actual"], preds["predicted"], s=0.8, alpha=0.25, color=BLUE,
-           rasterized=True, linewidths=0)
-ax.plot([0, cap], [0, cap], color=RED, lw=0.8, ls="--", label="perfect prediction")
+hb = ax.hexbin(preds["actual"], preds["predicted"], gridsize=60, bins="log",
+               cmap="Blues", extent=(0, cap, 0, cap), linewidths=0)
+cb = fig.colorbar(hb, ax=ax, shrink=0.85, pad=0.02)
+cb.set_label("shops per cell (log)", fontsize=7)
+cb.ax.tick_params(labelsize=6.5)
+ax.plot([0, cap], [0, cap], color=RED, lw=0.9, ls="--", label="perfect prediction")
 ax.set_xlim(0, cap); ax.set_ylim(0, cap)
 ax.set_xlabel("assigned monthly target"); ax.set_ylabel("model prediction")
-ax.legend(frameon=False)
+ax.legend(frameon=False, loc="upper left")
 save(fig, "f13_actual_vs_predicted.png")
 
 # F14 — anomaly combined-score distribution
 anom = pd.read_parquet(ROOT / "data/processed/anomalies.parquet", columns=["combined_score"])
+scores = anom["combined_score"].dropna()
+decile_cut = scores.quantile(0.90)  # empirical, not 0.90: the mean of two ranks concentrates
 fig, ax = plt.subplots(figsize=(COL_W, 1.8))
-ax.hist(anom["combined_score"].dropna(), bins=50, color=BLUE, zorder=3)
-ax.axvline(0.90, color=RED, lw=0.9, label="top-decile threshold")
-ax.set_xlabel("combined anomaly score (mean of per-cluster percentile ranks)")
+ax.hist(scores, bins=50, color=BLUE, zorder=3)
+ax.axvline(decile_cut, color=RED, lw=0.9,
+           label=f"top-decile threshold ({decile_cut:.2f})")
+ax.set_xlabel("combined anomaly score")
 ax.set_ylabel("shops"); ax.yaxis.set_major_formatter(compact)
 ax.legend(frameon=False)
 save(fig, "f14_anomaly_scores.png")

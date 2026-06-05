@@ -456,7 +456,7 @@
 </table>
 
 <div class="figure"><img src="figures/f13_actual_vs_predicted.png">
-<p class="figcaption">Fig. 14. Assigned monthly target versus model prediction (30,000-shop sample, axes clipped at the 99th percentile). The model tracks the bulk of the distribution; the extreme tail resists point prediction.</p></div>
+<p class="figcaption">Fig. 14. Assigned monthly target versus model prediction, hex-binned over every labelled shop (613,660; log colour scale, axes clipped at the 99th percentile). The model tracks the bulk of the distribution; the extreme tail resists point prediction.</p></div>
 
 <p>Fig. 15 shows the SHAP [9] feature attribution of the winning model. Product-mix breadth (<code>n_products_targeted</code>) and the top importance tier dominate, and micro-location comes next: density within 500 m, the raw coordinates, and distance to the district centre. So location and assortment drive expected volume, not shop type alone. This supports the proposal&rsquo;s premise that intuition-based allocation leaves measurable signal unused.</p>
 
