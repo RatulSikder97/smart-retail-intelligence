@@ -75,15 +75,15 @@
     <tr><td class="l1">4.1&emsp;Experimental Setup</td><td class="pg">16</td></tr>
     <tr><td class="l1">4.2&emsp;Unsupervised Learning: Shop Archetypes (RQ1)</td><td class="pg">16</td></tr>
     <tr><td class="l1">4.3&emsp;Supervised Learning: Sales-Target Regression (RQ2)</td><td class="pg">20</td></tr>
-    <tr><td class="l1">4.4&emsp;Supervised Learning: Target-Miss Risk Classification (RQ3)</td><td class="pg">24</td></tr>
-    <tr><td class="l1">4.5&emsp;Unsupervised Learning: Anomaly Detection (RQ4)</td><td class="pg">27</td></tr>
-    <tr><td class="l1">4.6&emsp;Distributed Execution on the Spark Cluster</td><td class="pg">29</td></tr>
-    <tr><td class="l1">4.7&emsp;Summary Comparison Under Cross-Validation</td><td class="pg">30</td></tr>
-    <tr><td class="l1">4.8&emsp;Threats to Validity</td><td class="pg">31</td></tr>
-    <tr><td>5&emsp;Conclusion</td><td class="pg">31</td></tr>
-    <tr><td>References</td><td class="pg">32</td></tr>
-    <tr><td>Appendix A: Files accompanying this report</td><td class="pg">34</td></tr>
-    <tr><td>Appendix B: Reproduction and key source code excerpts</td><td class="pg">34</td></tr>
+    <tr><td class="l1">4.4&emsp;Supervised Learning: Target-Miss Risk Classification (RQ3)</td><td class="pg">23</td></tr>
+    <tr><td class="l1">4.5&emsp;Unsupervised Learning: Anomaly Detection (RQ4)</td><td class="pg">26</td></tr>
+    <tr><td class="l1">4.6&emsp;Distributed Execution on the Spark Cluster</td><td class="pg">28</td></tr>
+    <tr><td class="l1">4.7&emsp;Summary Comparison Under Cross-Validation</td><td class="pg">29</td></tr>
+    <tr><td class="l1">4.8&emsp;Threats to Validity</td><td class="pg">29</td></tr>
+    <tr><td>5&emsp;Conclusion</td><td class="pg">30</td></tr>
+    <tr><td>References</td><td class="pg">31</td></tr>
+    <tr><td>Appendix A: Files accompanying this report</td><td class="pg">32</td></tr>
+    <tr><td>Appendix B: Reproduction and key source code excerpts</td><td class="pg">32</td></tr>
   </table>
 </div>
 
@@ -102,14 +102,14 @@
     <tr><td>10.&emsp;Internal criteria for the K-Means k scan</td><td class="pg">17</td></tr>
     <tr><td>11.&emsp;Cluster profiles (medians over the full dataset)</td><td class="pg">19</td></tr>
     <tr><td>12.&emsp;All candidate families trained on a common 50,000-shop subsample</td><td class="pg">21</td></tr>
-    <tr><td>13.&emsp;Hyperparameter search space and selected values (regression)</td><td class="pg">22</td></tr>
-    <tr><td>14.&emsp;Regression performance on the held-out test set</td><td class="pg">23</td></tr>
-    <tr><td>15.&emsp;Regression performance under 5-fold cross-validation</td><td class="pg">23</td></tr>
-    <tr><td>16.&emsp;Hyperparameter search space and selected values (classification)</td><td class="pg">25</td></tr>
-    <tr><td>17.&emsp;Risk classification performance on the held-out test set</td><td class="pg">25</td></tr>
-    <tr><td>18.&emsp;Confusion matrix of the winning classifier (out-of-fold)</td><td class="pg">26</td></tr>
-    <tr><td>19.&emsp;Reference versus distributed execution</td><td class="pg">30</td></tr>
-    <tr><td>20.&emsp;All algorithms under 5-fold cross-validation</td><td class="pg">30</td></tr>
+    <tr><td>13.&emsp;Hyperparameter search space and selected values (regression)</td><td class="pg">21</td></tr>
+    <tr><td>14.&emsp;Regression performance on the held-out test set</td><td class="pg">22</td></tr>
+    <tr><td>15.&emsp;Regression performance under 5-fold cross-validation</td><td class="pg">22</td></tr>
+    <tr><td>16.&emsp;Hyperparameter search space and selected values (classification)</td><td class="pg">24</td></tr>
+    <tr><td>17.&emsp;Risk classification performance on the held-out test set</td><td class="pg">24</td></tr>
+    <tr><td>18.&emsp;Confusion matrix of the winning classifier (out-of-fold)</td><td class="pg">25</td></tr>
+    <tr><td>19.&emsp;Reference versus distributed execution</td><td class="pg">28</td></tr>
+    <tr><td>20.&emsp;All algorithms under 5-fold cross-validation</td><td class="pg">29</td></tr>
   </table>
 </div>
 
@@ -128,13 +128,13 @@
     <tr><td>10.&emsp;Model selection for the number of clusters</td><td class="pg">18</td></tr>
     <tr><td>11.&emsp;Archetype sizes</td><td class="pg">19</td></tr>
     <tr><td>12.&emsp;Spatial map of the eight archetypes</td><td class="pg">20</td></tr>
-    <tr><td>13.&emsp;Training time versus accuracy of all candidate families</td><td class="pg">22</td></tr>
-    <tr><td>14.&emsp;Assigned target versus model prediction</td><td class="pg">24</td></tr>
-    <tr><td>15.&emsp;Top-10 SHAP feature attributions</td><td class="pg">24</td></tr>
-    <tr><td>16.&emsp;Out-of-fold ROC curves of the risk classifiers</td><td class="pg">26</td></tr>
-    <tr><td>17.&emsp;Share of shops labelled at-risk, by division</td><td class="pg">27</td></tr>
-    <tr><td>18.&emsp;Distribution of the combined anomaly score</td><td class="pg">28</td></tr>
-    <tr><td>19.&emsp;Country map of the flagged top-decile anomalies</td><td class="pg">29</td></tr>
+    <tr><td>13.&emsp;Training time versus accuracy of all candidate families</td><td class="pg">21</td></tr>
+    <tr><td>14.&emsp;Assigned target versus model prediction</td><td class="pg">23</td></tr>
+    <tr><td>15.&emsp;Top-10 SHAP feature attributions</td><td class="pg">23</td></tr>
+    <tr><td>16.&emsp;Out-of-fold ROC curves of the risk classifiers</td><td class="pg">25</td></tr>
+    <tr><td>17.&emsp;Share of shops labelled at-risk, by division</td><td class="pg">26</td></tr>
+    <tr><td>18.&emsp;Distribution of the combined anomaly score</td><td class="pg">27</td></tr>
+    <tr><td>19.&emsp;Country map of the flagged top-decile anomalies</td><td class="pg">28</td></tr>
   </table>
 </div>
 
@@ -392,7 +392,7 @@
 <div class="figure"><img src="figures/f4_cluster_sizes.png">
 <p class="figcaption">Fig. 11. Archetype sizes over the full dataset.</p></div>
 
-<div class="figure"><img src="figures/f11_cluster_map.png" style="width: 6.2in;">
+<div class="figure"><img src="figures/f11_cluster_map.png" style="width: 3.1in;">
 <p class="figcaption">Fig. 12. Spatial map of the eight archetypes (60,000-shop sample). The segmentation follows the country&rsquo;s regional structure, with the metro-Dhaka core (C3) and the Chittagong corridor (C6) clearly visible.</p></div>
 <h3 class="sub">4.3 Supervised Learning: Sales-Target Regression (RQ2)</h3>
 
@@ -517,7 +517,7 @@
 
 <p>Where do the flagged shops sit on the map? Fig. 19 plots the top decile over the full network, and the geography is informative twice over. First, shops whose division is <code>Unknown</code> are flagged at a 39.1% rate &mdash; nearly four times the 10% decile baseline &mdash; so the anomaly detector, working only from per-cluster feature ranks, independently converges on the same data-poor population that the clustering isolated as the ghost-shop segment in Section 4.2. Two unsupervised methods with entirely different mechanics pointing at the same records is the strongest internal corroboration this project can offer without field verification. Second, among the named divisions the flag rate runs from 6.6% in Dhaka to 21.7% in Barisal: the denser the surrounding network, the more ordinary any single shop looks, so oddity concentrates in the thin southern and coastal periphery, with visible pockets such as the Bagerhat strip in Khulna where dense micro-markets sit in an otherwise sparse region. That inversion is useful operationally, because it directs audit attention away from the well-monitored metro cores and toward exactly the areas a field organisation sees least often.</p>
 
-<div class="figure"><img src="figures/f19_anomaly_map.png" style="width: 6.2in;">
+<div class="figure"><img src="figures/f19_anomaly_map.png" style="width: 3.46in;">
 <p class="figcaption">Fig. 19. Country map of the flagged top-decile anomalies (colour = combined score) over a 60,000-shop background sample (grey points). Flag rates are lowest in metro Dhaka (6.6%) and highest in the thin coastal periphery (Barisal 21.7%); shops with an Unknown division are flagged at 39.1%.</p></div>
 
 <h3 class="sub">4.6 Distributed Execution on the Spark Cluster</h3>

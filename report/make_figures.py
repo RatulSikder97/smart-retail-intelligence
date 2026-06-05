@@ -212,7 +212,7 @@ save(fig, "f10_missingness.png")
 # F11 — spatial map of archetypes (sampled scatter)
 merged = features_full.merge(clusters, on="shop_code")
 sample = merged.sample(60_000, random_state=42)
-fig, ax = plt.subplots(figsize=(6.2, 4.8))
+fig, ax = plt.subplots(figsize=(5.8, 3.9))
 for c in sorted(sample["cluster"].unique()):
     s = sample[sample["cluster"] == c]
     ax.scatter(s["longitude"], s["latitude"], s=0.8, color=CLUSTER_COLORS[int(c) % 8],

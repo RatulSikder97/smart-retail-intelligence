@@ -28,7 +28,7 @@ plt.rcParams.update({"font.family": "serif", "font.size": 9,
                      "axes.spines.top": False, "axes.spines.right": False,
                      "axes.grid": True, "grid.color": "#e2e7ec",
                      "grid.linewidth": 0.5, "axes.axisbelow": True, "savefig.dpi": 300})
-fig, ax = plt.subplots(figsize=(6.2, 4.8))
+fig, ax = plt.subplots(figsize=(5.8, 3.9))
 bg = features.sample(60_000, random_state=SEED)
 ax.scatter(bg["longitude"], bg["latitude"], s=0.9, color="#b7c2cd", linewidths=0,
            rasterized=True)  # background context; explained in the caption
