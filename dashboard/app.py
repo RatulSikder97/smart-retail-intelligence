@@ -1149,6 +1149,7 @@ with tab_rq1:
                   "davies_bouldin": v["davies_bouldin"]} for k, v in km.items()]
             ).sort_values("k")
             c1, c2 = st.columns(2)
+            chosen = pd.DataFrame({"k": [best_k]})
             for col, metric, better in (
                 (c1, "silhouette", "higher is better"),
                 (c2, "davies_bouldin", "lower is better"),
@@ -1157,11 +1158,23 @@ with tab_rq1:
                     alt.Chart(selection)
                     .mark_line(color=SEQUENTIAL_HUE, strokeWidth=2,
                                point=alt.OverlayMarkDef(size=80, color=SEQUENTIAL_HUE))
-                    .encode(x=alt.X("k:O", title="k"), y=alt.Y(metric, title=metric),
+                    .encode(x=alt.X("k:O", title="number of clusters k",
+                                    axis=alt.Axis(labelAngle=0)),
+                            y=alt.Y(metric, title=metric,
+                                    scale=alt.Scale(zero=False)),
                             tooltip=["k", metric])
-                    .properties(height=210, title=f"{metric} ({better})")
                 )
-                col.altair_chart(line, width="stretch")
+                marker = (
+                    alt.Chart(chosen)
+                    .mark_rule(color=STATUS_SERIOUS, strokeDash=[4, 3], strokeWidth=1.5)
+                    .encode(x=alt.X("k:O"))
+                )
+                col.altair_chart(
+                    (line + marker).properties(
+                        height=210, title=f"{metric} ({better}) — dashed line: chosen k = {best_k}"
+                    ),
+                    width="stretch",
+                )
 
         counts = (
             f["cluster"].value_counts().rename_axis("cluster")
