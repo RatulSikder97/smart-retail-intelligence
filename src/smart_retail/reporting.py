@@ -41,6 +41,14 @@ def data_quality_section(metrics: dict) -> str:
     n_final = q.get("n_final_shops", 0)
     n_target = q.get("n_shops_with_target", 0)
     return f"""
+### The dataset
+
+**Comprehensive Retail Network Dataset of Bangladesh** (Shahin, Swarna & Farid,
+2025) — Mendeley `mgzvngzng2` v1, CC BY 4.0, collected Feb 2022 – Oct 2024.
+Three files: shop records with GPS and structure ({n_raw:,} rows), monthly
+sales targets for 17 products per shop (853,732 rows), and a 42-SKU product
+catalogue (5 brands, 9 product types) with price tiers.
+
 ### Data quality & preprocessing
 
 | Step | Count |

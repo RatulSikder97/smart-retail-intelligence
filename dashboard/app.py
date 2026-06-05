@@ -19,6 +19,7 @@ from streamlit_folium import st_folium
 
 from smart_retail import pipeline, reporting
 from smart_retail.config import Config
+from smart_retail.data import loader, schema
 from smart_retail.features.engineering import TARGET_COLUMN, numeric_feature_columns
 
 # Validated categorical palette (fixed slot order — clusters keep their color
@@ -64,6 +65,10 @@ def load_artifacts() -> dict:
     shap_path = CFG.reports_dir / "shap_importance.csv"
     if shap_path.exists():
         art["shap"] = pd.read_csv(shap_path)
+    try:
+        art["products"] = loader.load_products(CFG)
+    except (FileNotFoundError, ValueError):
+        pass  # raw dataset not mounted — dataset KPIs fall back to metrics only
     return art
 
 
@@ -367,6 +372,59 @@ if f.empty:
 
 # --------------------------------------------------------------------------
 with tab_overview:
+    st.subheader("Dataset at a glance")
+    st.caption(
+        "Full dataset — these counts describe the source data and are not "
+        "affected by the sidebar filters. Source: Mendeley `mgzvngzng2` v1 "
+        "(Shahin, Swarna & Farid, 2025), collected Feb 2022 – Oct 2024."
+    )
+    quality = art.get("metrics", {}).get("phase_1_preprocessing", {})
+    d1, d2, d3, d4, d5 = st.columns(5)
+    d1.metric("Raw shop records", f"{quality.get('n_raw_shop_rows', len(base)):,}")
+    d2.metric(
+        "Outlets analysed", f"{quality.get('n_final_shops', len(base)):,}",
+        f"-{quality.get('n_invalid_or_missing_gps', 0):,} missing GPS",
+        delta_color="off",
+    )
+    d3.metric(
+        "Shops with sales target",
+        f"{quality.get('n_shops_with_target', int(base['has_target'].sum())):,}",
+        f"{quality.get('n_shops_with_target', 0) / max(quality.get('n_final_shops', 1), 1):.0%} of outlets",
+        delta_color="off",
+    )
+    if "products" in art:
+        products = art["products"]
+        d4.metric(
+            "SKU variants", len(products),
+            f"{products['brand'].nunique()} brands · {products['type'].nunique()} types",
+            delta_color="off",
+        )
+    else:
+        d4.metric("SKU variants", "42", "5 brands · 9 types", delta_color="off")
+    d5.metric("Targeted products / shop", len(schema.PRODUCT_TARGET_COLUMNS))
+
+    g1, g2, g3, g4 = st.columns(4)
+    g1.metric("Divisions", base["division"].nunique())
+    g2.metric("Districts (zila)", base["zila"].nunique())
+    g3.metric("Sub-districts (upazila)", base["upazila"].nunique())
+    g4.metric("Model features", quality.get("n_feature_columns", "—"))
+
+    with st.expander("Source files"):
+        st.markdown(
+            f"""
+| File | Rows | Content |
+|---|---|---|
+| `{schema.SHOP_FILE}` | {quality.get('n_raw_shop_rows', 0):,} | Shop location (GPS), type, style, importance, division/zila/upazila |
+| `{schema.TARGET_FILE}` | 853,732 | Monthly sales target per shop for {len(schema.PRODUCT_TARGET_COLUMNS)} products + `Total` |
+| `{schema.PRODUCT_FILE}` | {len(art['products']) if 'products' in art else 42} | SKU catalogue: brand, type, packaging, price tiers, volume |
+
+License CC BY 4.0 · DOI [10.17632/mgzvngzng2.1](https://data.mendeley.com/datasets/mgzvngzng2/1) ·
+article DOI [10.1016/j.dib.2025.112326](https://doi.org/10.1016/j.dib.2025.112326)
+"""
+        )
+    st.divider()
+
+    st.subheader("Current view")
     c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Shops in view", f"{len(f):,}")
     c2.metric("Divisions", f["division"].nunique())
