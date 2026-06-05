@@ -51,7 +51,7 @@ While the cluster is up you can watch it work: the namenode web UI is at http://
 
   `--tune` runs the Optuna search and `--cv` adds 5-fold cross-validation of the best model. This is slow, so we kept it out of the default run.
 - The k-NN imputation sensitivity experiment: add `--impute-knn` to the same command. By default we keep missing categories as an explicit `Unknown` level, because the shops with missing fields turned out to be a signal in themselves. The flag fills geo fields and high-confidence categoricals instead, marks every filled value with a flag column, and writes the comparison to `reports/imputation_sensitivity.json`.
-- Regenerating the report figures after a full pipeline run: `report/make_figures.py` (along with `report/make_cv_extras.py`, `report/make_alternatives.py`, `report/make_imbalance.py`, and `report/make_anomaly_map.py`) rebuilds the PNGs in `report/figures/` and the evidence JSONs from the saved metrics.
+- Regenerating the report figures after a full pipeline run: `report/make_figures.py` (along with `report/make_cv_extras.py`, `report/make_alternatives.py`, `report/make_imbalance.py`, and `report/make_anomaly_map.py`) rebuilds the PNGs in `report/figures/` and the evidence JSONs from the saved metrics. The two flow diagrams come from `report/make_diagrams.py` (browser-rendered HTML/CSS), with icons fetched once by `report/fetch_icons.py`.
 
 ## Project layout
 
