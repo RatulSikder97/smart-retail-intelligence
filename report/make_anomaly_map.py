@@ -34,7 +34,7 @@ ax.scatter(bg["longitude"], bg["latitude"], s=0.4, color="#c9d2da", linewidths=0
            rasterized=True, label="all shops (60k sample)")
 an = top.sample(20_000, random_state=SEED).sort_values("combined_score")
 sc = ax.scatter(an["longitude"], an["latitude"], s=0.9, c=an["combined_score"],
-                cmap="YlOrRd", vmin=0.90, vmax=1.0, linewidths=0, rasterized=True)
+                cmap="YlOrRd", vmin=0.79, vmax=1.0, linewidths=0, rasterized=True)
 cb = fig.colorbar(sc, ax=ax, shrink=0.75, pad=0.02)
 cb.set_label("combined anomaly score", fontsize=7)
 cb.ax.tick_params(labelsize=6.5)

@@ -770,7 +770,8 @@ ALGORITHM_CARDS = [
         "algorithm": "K-Means (selected) · Agglomerative + DBSCAN cross-checks",
         "why": "k is not assumed: every k from 3–9 is scored on two independent "
                "criteria, and both point to 8. DBSCAN collapsing to one cluster "
-               "(98.7% noise) is reported — the network is a continuous fabric.",
+               "(98.7% noise) is reported — the network is a continuous fabric — "
+               "and 10 bootstrap refits confirm the taxonomy is not a one-run artifact.",
         "input": "Standard-scaled 48-feature matrix (719,817 × 48)",
         "output": "cluster per shop · cluster_profiles.csv · kmeans model",
         "steps": [
@@ -779,6 +780,8 @@ ALGORITHM_CARDS = [
             "Score each k: silhouette on a 10k subsample + Davies–Bouldin on all rows.",
             "Pick the best-silhouette k → 8.",
             "Cross-check with Agglomerative (Ward) and DBSCAN on a 20k subsample.",
+            "Stress-test: 10 bootstrap refits on 100k shops — ARI 0.53 ± 0.15; the "
+            "ghost segment is recovered perfectly (Jaccard 1.00) in every resample.",
             "Profile each cluster: median density, distance, target, dominant categories.",
         ],
     },
@@ -796,7 +799,9 @@ ALGORITHM_CARDS = [
             "Fit LinearRegression (scaled), RandomForest (100 trees, depth ≤ 20), "
             "XGBoost (300 × depth 8), LightGBM (300 trees, 63 leaves).",
             "Evaluate RMSE / MAE / R² on the untouched test set.",
-            "Select the lowest-RMSE model → XGBoost.",
+            "Select the lowest-RMSE model → XGBoost — then 5-fold CV reverses the "
+            "ranking: the split winner is unstable (R² 0.02 ± 0.61); LightGBM "
+            "(0.37 ± 0.08) and tuned XGBoost (0.33 ± 0.06) are the deployment picks.",
             "Explain it with SHAP TreeExplainer on ≤ 2,000 test rows.",
             "Predict every labelled shop with the winner.",
         ],
@@ -836,6 +841,8 @@ ALGORITHM_CARDS = [
             "combined_score = mean of the two percentile ranks.",
             "Export the top decile with full context for fraud / data-error / "
             "opportunity triage.",
+            "Map the flags: Unknown-division shops are flagged at 39% (4× the decile "
+            "baseline) — a second method independently confirming the ghost segment.",
         ],
     },
 ]
@@ -1352,11 +1359,14 @@ with tab_rq2:
             "Interpretation",
             f"The linear baseline explains almost nothing (R² {baseline_r2:.2f}) while "
             f"{reg.get('best_model', '?')} reaches R² {best_r2:.2f} on the same inputs — the "
-            "relationship is real but non-linear. SHAP puts assortment breadth and "
-            "importance tier first, then micro-location (density within 500 m, "
-            "coordinates, distance to the district centre). Shops far above the "
-            "diagonal in the scatter are under-targeted relative to their profile; "
-            "far below, over-targeted.",
+            "relationship is real but non-linear. The honest caveat from cross-validation: "
+            "the split winner is unstable on the heavy-tailed target (R² 0.02 ± 0.61 "
+            "across folds), so for deployment the report recommends LightGBM "
+            "(0.37 ± 0.08) or the Bayesian-tuned XGBoost (0.33 ± 0.06), never the raw "
+            "split winner. SHAP puts assortment breadth and importance tier first, then "
+            "micro-location (density within 500 m, coordinates, distance to the district "
+            "centre). Shops far above the diagonal in the scatter are under-targeted "
+            "relative to their profile; far below, over-targeted.",
         )
 
 # ==========================================================================
@@ -1469,8 +1479,11 @@ with tab_rq3:
         section(
             "Interpretation",
             f"ROC-AUC {best_auc:.2f} from structural features alone is strong "
-            "discrimination for a proxy label; with realized sales the identical "
-            "pipeline retrains into a true will-miss-next-quarter model." + geo_note,
+            "discrimination for a proxy label, and the class weighting is doing its "
+            "job where it counts: at the 0.5 threshold the model catches ~80 of every "
+            "100 truly at-risk shops (recall 0.80), the expensive error for a "
+            "distributor. With realized sales the identical pipeline retrains into a "
+            "true will-miss-next-quarter model." + geo_note,
         )
 
 # ==========================================================================
@@ -1497,10 +1510,39 @@ with tab_rq4:
         anomaly_view = f[f["combined_score"].notna()]
         c1, c2, c3 = st.columns(3)
         c1.metric("Shops scored (view)", f"{len(anomaly_view):,}")
-        c2.metric("Top decile in view", f"{len(anomaly_view[anomaly_view['combined_score'] >= 0.90]):,}")
+        decile_cut = (art["top_anomalies"]["combined_score"].min()
+                      if art.get("top_anomalies") is not None else 0.79)
+        c2.metric("Top decile in view", f"{len(anomaly_view[anomaly_view['combined_score'] >= decile_cut]):,}")
         c3.metric("Top decile (full run)", f"{anom.get('n_top_anomalies', 0):,}")
 
         section_header("RQ4 · Result", "Ranked anomalies")
+        score_view = f[f["combined_score"].notna()]
+        if not score_view.empty:
+            hist_src = score_view[["combined_score"]].sample(
+                min(len(score_view), 50_000), random_state=42
+            )
+            hist = (
+                alt.Chart(hist_src)
+                .mark_bar(color=SEQUENTIAL_HUE, opacity=0.85, binSpacing=1)
+                .encode(
+                    x=alt.X("combined_score", bin=alt.Bin(maxbins=60),
+                            title="combined anomaly score"),
+                    y=alt.Y("count()", title="shops"),
+                )
+                .properties(height=220,
+                            title="Distribution of the combined score (current view)")
+            )
+            rule = (
+                alt.Chart(pd.DataFrame({"v": [decile_cut]}))
+                .mark_rule(color=STATUS_SERIOUS, strokeDash=[5, 4])
+                .encode(x="v")
+            )
+            st.altair_chart(hist + rule, width="stretch")
+            st.caption(
+                f"Everything right of the dashed line (score ≥ {decile_cut:.2f}, the "
+                "empirical 90th percentile) is the exported top decile — the same cut "
+                "shown in Fig. 18 of the report."
+            )
         map_top = (
             anomaly_view.sort_values("combined_score", ascending=False)
             .dropna(subset=["latitude", "longitude"]).head(MAP_SAMPLE)
