@@ -42,6 +42,13 @@ class Config:
     test_size: float = 0.2
     shap_sample_size: int = 2_000
 
+    # --- Bayesian tuning + cross-validation (phases 3 & 4) ---
+    tune: bool = False            # Optuna TPE search for the XGBoost candidate
+    tuning_trials: int = 30
+    tuning_sample_size: int = 100_000
+    cv: bool = False              # 5-fold CV of the best model (mean ± std)
+    cv_folds: int = 5
+
     # --- phase 4: classification ---
     risk_threshold: float = 0.8  # at-risk if Total < 0.8 * peer-group median
 

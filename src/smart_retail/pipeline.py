@@ -94,11 +94,16 @@ def phase_3_regress(config: Config, features: pd.DataFrame) -> dict:
         config.reports_dir / "shap_importance.csv", index=False
     )
     joblib.dump(result.best_model, config.models_dir / "regression_best.joblib")
-    return {
+    out = {
         "models": result.metrics,
         "best_model": result.best_model_name,
         "n_features": len(result.feature_names),
     }
+    if result.tuning:
+        out["tuning"] = result.tuning
+    if result.cv:
+        out["cv"] = result.cv
+    return out
 
 
 def phase_4_classify(
@@ -107,13 +112,18 @@ def phase_4_classify(
     result = run_classification(features, cluster_labels, config)
     result.risk_scores.to_parquet(config.processed_dir / RISK_PARQUET, index=False)
     joblib.dump(result.best_model, config.models_dir / "classification_best.joblib")
-    return {
+    out = {
         "models": result.metrics,
         "best_model": result.best_model_name,
         "label_definition": result.label_definition,
         "label_rate": result.label_rate,
         "risk_threshold": config.risk_threshold,
     }
+    if result.tuning:
+        out["tuning"] = result.tuning
+    if result.cv:
+        out["cv"] = result.cv
+    return out
 
 
 def phase_5_anomaly(
@@ -197,6 +207,18 @@ def main() -> None:
         help="Sensitivity experiment: k-NN impute geo fields + high-confidence "
              "shop_style (see README; off by default)",
     )
+    parser.add_argument(
+        "--tune",
+        action="store_true",
+        help="Bayesian (Optuna TPE) hyperparameter search for the XGBoost "
+             "candidate in phases 3 and 4",
+    )
+    parser.add_argument(
+        "--cv",
+        action="store_true",
+        help="5-fold cross-validation of the best model in phases 3 and 4 "
+             "(headline metrics as mean ± std)",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -204,6 +226,10 @@ def main() -> None:
     config = Config.from_env()
     if args.impute_knn:
         config.impute_knn = True
+    if args.tune:
+        config.tune = True
+    if args.cv:
+        config.cv = True
     run(phases, config, nrows=args.nrows)
     log.info("pipeline complete — metrics in %s", config.reports_dir / METRICS_JSON)
 

@@ -141,9 +141,17 @@ python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 python -m smart_retail.pipeline          # full pipeline
 python -m smart_retail.pipeline --phases 1,2   # selected phases
+python -m smart_retail.pipeline --phases 3,4 --tune --cv   # Bayesian tuning + 5-fold CV
 pytest
 streamlit run dashboard/app.py
 ```
+
+`--tune` runs an Optuna TPE (Bayesian) search over the XGBoost candidate —
+30 trials, each scored by 3-fold CV on a 100k-shop sample (RMSE for
+regression, ROC-AUC with SMOTE inside every fold for classification) — then
+retrains the winner on the full split. `--cv` adds 5-fold cross-validation of
+the best model so the headline metrics report as mean ± std. Both land in
+`reports/metrics.json` and on the dashboard's RQ2/RQ3 tabs.
 
 ## Outputs
 

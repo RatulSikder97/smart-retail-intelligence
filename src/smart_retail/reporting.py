@@ -202,6 +202,20 @@ R² {winner.get('r2', float('nan')):.2f} and cuts RMSE by
 {1 - winner.get('rmse', 1) / max(baseline.get('rmse', 1), 1e-9):.0%} —
 the target-to-shop relationship is real but strongly non-linear.
 """
+    if r.get("tuning"):
+        t = r["tuning"]
+        text += (
+            f"\nHyperparameters of the winner were selected by {t['engine']} "
+            f"({t['n_trials']} trials, {t['objective']}).\n"
+        )
+    if r.get("cv"):
+        cv = r["cv"]
+        text += (
+            f"\n**Stability.** {cv['folds']}-fold cross-validation: "
+            f"R² {cv['r2']['mean']:.3f} ± {cv['r2']['std']:.3f}, "
+            f"RMSE {cv['rmse']['mean']:.1f} ± {cv['rmse']['std']:.1f} — "
+            "the headline numbers are not a lucky split.\n"
+        )
     if shap_importance is not None and not shap_importance.empty:
         top = shap_importance.head(5)
         drivers = "; ".join(
@@ -246,6 +260,19 @@ under-indexes its (cluster × shop-type) peers. Base rate:
 discrimination from structural features alone; with realized sales data the
 same pipeline retrains unchanged into a true "will miss next quarter" model.
 """
+    if c.get("tuning"):
+        t = c["tuning"]
+        text += (
+            f"\nHyperparameters of the winner were selected by {t['engine']} "
+            f"({t['n_trials']} trials, {t['objective']}).\n"
+        )
+    if c.get("cv"):
+        cv = c["cv"]
+        text += (
+            f"\n**Stability.** {cv['folds']}-fold cross-validation: "
+            f"ROC-AUC {cv['roc_auc']['mean']:.3f} ± {cv['roc_auc']['std']:.3f}, "
+            f"F1 {cv['f1']['mean']:.3f} ± {cv['f1']['std']:.3f}.\n"
+        )
     if risk_by_division is not None and len(risk_by_division) > 0:
         known = risk_by_division.drop("Unknown", errors="ignore").sort_values()
         lo_name, lo = known.index[0], known.iloc[0]

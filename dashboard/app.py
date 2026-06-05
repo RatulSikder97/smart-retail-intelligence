@@ -1215,6 +1215,19 @@ with tab_rq2:
             models.style.format({"rmse": "{:.3f}", "mae": "{:.3f}", "r2": "{:.3f}"}),
             width="stretch", hide_index=True,
         )
+        if reg.get("cv"):
+            cv = reg["cv"]
+            st.markdown(
+                f"**{cv['folds']}-fold cross-validation** — "
+                f"R² {cv['r2']['mean']:.3f} ± {cv['r2']['std']:.3f} · "
+                f"RMSE {cv['rmse']['mean']:.1f} ± {cv['rmse']['std']:.1f}"
+            )
+        if reg.get("tuning"):
+            t = reg["tuning"]
+            with st.expander(f"Hyperparameter tuning — {t['engine']}, {t['n_trials']} trials"):
+                st.caption(f"{t['objective']} on {t['tuning_sample']:,} sampled shops · "
+                           f"best trial RMSE {t['best_cv_rmse']}")
+                st.json(t["best_params"])
         c1, c2 = st.columns(2)
         with c1:
             st.altair_chart(
@@ -1289,6 +1302,19 @@ with tab_rq3:
             models.style.format("{:.3f}", subset=models.columns[1:].tolist()),
             width="stretch", hide_index=True,
         )
+        if clf.get("cv"):
+            cv = clf["cv"]
+            st.markdown(
+                f"**{cv['folds']}-fold cross-validation** — "
+                f"ROC-AUC {cv['roc_auc']['mean']:.3f} ± {cv['roc_auc']['std']:.3f} · "
+                f"F1 {cv['f1']['mean']:.3f} ± {cv['f1']['std']:.3f}"
+            )
+        if clf.get("tuning"):
+            t = clf["tuning"]
+            with st.expander(f"Hyperparameter tuning — {t['engine']}, {t['n_trials']} trials"):
+                st.caption(f"{t['objective']} on {t['tuning_sample']:,} sampled shops · "
+                           f"best trial ROC-AUC {t['best_cv_roc_auc']}")
+                st.json(t["best_params"])
         risk_view = f[f["risk_score"].notna()]
         if not risk_view.empty:
             c1, c2 = st.columns(2)
