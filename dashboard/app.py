@@ -872,29 +872,43 @@ with tab_method:
     with sub_flow:
         st.graphviz_chart("""
 digraph pipeline {
-  rankdir=LR; bgcolor=transparent;
+  rankdir=LR; bgcolor=transparent; compound=true;
   node [shape=box, style="rounded,filled", fillcolor="#eef4fb", color="#2a78d6",
         fontname="Helvetica", fontsize=11];
   edge [color="#8a8a8a", fontname="Helvetica", fontsize=9];
-  raw [label="Raw CSVs\\n832,881 shops · 42 SKUs"];
-  hdfs [label="HDFS\\nnamenode + datanode", fillcolor="#fdf3e2", color="#eda100"];
-  spark [label="Spark cluster\\ndistributed ETL + MLlib", fillcolor="#fdf3e2", color="#eda100"];
-  p1 [label="Phase 1\\ncleaning + features"];
-  p2 [label="Phase 2 (RQ1)\\nclustering"];
-  p3 [label="Phase 3 (RQ2)\\nregression"];
-  p4 [label="Phase 4 (RQ3)\\nrisk classification"];
-  p5 [label="Phase 5 (RQ4)\\nanomaly detection"];
+  raw [label="Raw CSVs\\n832,881 shops · 42 SKUs", fillcolor="#f5f7fa", color="#5B6B7C"];
   dash [label="Dashboard + report", fillcolor="#e8f5ee", color="#1baf7a"];
-  raw -> p1 -> p2;
-  p2 -> p3; p2 -> p4; p2 -> p5;
+
+  subgraph cluster_ref {
+    label="Reference lane — scikit-learn (exact proposal algorithms)";
+    fontname="Helvetica"; fontsize=10; color="#c9d6e6"; style=rounded;
+    p1 [label="Phase 1\\ncleaning + features"];
+    p2 [label="Phase 2 (RQ1)\\nclustering"];
+    p3 [label="Phase 3 (RQ2)\\nregression"];
+    p4 [label="Phase 4 (RQ3)\\nrisk classification"];
+    p5 [label="Phase 5 (RQ4)\\nanomaly detection"];
+    p1 -> p2; p2 -> p3; p2 -> p4; p2 -> p5;
+  }
+
+  subgraph cluster_dist {
+    label="Distributed lane — Hadoop + Spark (same phases, MLlib)";
+    fontname="Helvetica"; fontsize=10; color="#eeddb3"; style=rounded;
+    hdfs [label="HDFS storage\\nraw + division-partitioned\\nwarehouse", fillcolor="#fdf3e2", color="#eda100"];
+    sp [label="Spark MLlib\\nphases 1–5, distributed", fillcolor="#fdf3e2", color="#eda100"];
+    hdfs -> sp;
+  }
+
+  raw -> p1;
+  raw -> hdfs [label="ingest"];
   p3 -> dash; p4 -> dash; p5 -> dash;
-  raw -> hdfs -> spark;
-  spark -> dash [label="distributed run"];
+  sp -> dash [label="cross-validates the reference"];
 }
 """)
         st.caption(
-            "Two paths over the same raw data: scikit-learn (reference, exact "
-            "proposal algorithms) and Hadoop/Spark (distributed)."
+            "The same five phases run in both lanes: scikit-learn is the "
+            "reference (exact proposal algorithms); the Hadoop/Spark lane "
+            "re-executes them distributed, storing everything in HDFS — "
+            "matching row counts across lanes cross-validate the preparation."
         )
         if require(art, "metrics"):
             quality = art["metrics"].get("phase_1_preprocessing", {})
