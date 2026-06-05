@@ -1516,6 +1516,33 @@ with tab_rq4:
                          "shop_type", "shop_importance", "density_1km", TARGET_COLUMN]].head(500),
                 width="stretch", hide_index=True,
             )
+        if art.get("top_anomalies") is not None and "division" in base.columns:
+            with st.expander("Where the flags concentrate — geography as evidence"):
+                flag_share = (
+                    art["top_anomalies"].groupby("division").size()
+                    / base.groupby("division").size()
+                ).dropna().sort_values(ascending=False).reset_index()
+                flag_share.columns = ["division", "flag_rate"]
+                share_bars = (
+                    alt.Chart(flag_share)
+                    .mark_bar(cornerRadiusEnd=4, height={"band": 0.6}, color=STATUS_SERIOUS)
+                    .encode(
+                        x=alt.X("flag_rate", title="share of division flagged",
+                                axis=alt.Axis(format=".0%")),
+                        y=alt.Y("division", sort=None, title=None),
+                        tooltip=["division", alt.Tooltip("flag_rate", format=".1%")],
+                    )
+                    .properties(height=260, title="Top-decile flag rate by division (baseline 10%)")
+                )
+                st.altair_chart(share_bars, width="stretch")
+                st.caption(
+                    "Shops with an Unknown division are flagged at ~39% — four times "
+                    "the decile baseline — so the anomaly detector independently "
+                    "converges on the same data-poor population the clustering isolated "
+                    "as the ghost-shop segment (RQ1). Among named divisions the rate runs "
+                    "from ~7% in dense metro Dhaka to ~22% in thin coastal Barisal: the "
+                    "denser the network, the more ordinary any one shop looks."
+                )
         section(
             "Interpretation",
             "A high combined score means both detectors agree the shop is unlike "
