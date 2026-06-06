@@ -1,6 +1,7 @@
 # Data & artifacts (large / regenerable)
 dataset/
-data/processed/
+data/processed/*
+!data/processed/*.parquet
 /models/
 reports/figures/
 *.parquet

@@ -19,6 +19,10 @@ from pathlib import Path
 import streamlit as st
 from streamlit_folium import st_folium
 
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))  # Streamlit Cloud runs from the repo root
+
 from smart_retail import pipeline, reporting
 from smart_retail.config import Config
 from smart_retail.preprocessing import loader, schema
