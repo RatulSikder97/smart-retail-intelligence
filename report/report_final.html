@@ -526,7 +526,7 @@
 
 <p class="tcaption">TABLE 19<br>Reference Versus Distributed Execution</p>
 <table class="data">
-  <tr><th>Aspect</th><th>scikit-learn (reference)</th><th>Hadoop + Spark (distributed)</th></tr>
+  <tr><th>Aspect</th><th>Reference (scikit-learn)</th><th>Distributed (Hadoop + Spark)</th></tr>
   <tr><td>Storage</td><td>local parquet volumes</td><td>HDFS, 9 datanodes, replication 2, division-partitioned warehouse</td></tr>
   <tr><td>Clean shops / with target</td><td class="num">719,817 / 613,660</td><td class="num">719,817 / 613,660 (identical)</td></tr>
   <tr><td>Clustering</td><td>K-Means, best k = 8 (silhouette 0.187)</td><td>MLlib K-Means, best k = 3 (silhouette 0.295, grid densities)</td></tr>

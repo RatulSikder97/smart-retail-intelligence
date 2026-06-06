@@ -294,7 +294,7 @@ save(fig, "f14_flagged_profile.png")
 print("extra figures written")
 
 # Figs 1-2 (f_overview.png, f15_architecture.png) are built by report/make_diagrams.py
-# (browser-rendered HTML/CSS with real technology icons from report/fetch_icons.py).
+# (monochrome matplotlib flow diagrams in classic journal style).
 print("architecture figure written")
 
 # ------------------------------------------------ professional EDA upgrades
