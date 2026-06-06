@@ -916,36 +916,39 @@ with tab_method:
     with sub_flow:
         st.graphviz_chart("""
 digraph pipeline {
-  rankdir=LR; bgcolor=transparent; compound=true;
-  node [shape=box, style="rounded,filled", fillcolor="#eef4fb", color="#2a78d6",
-        fontname="Helvetica", fontsize=11];
-  edge [color="#8a8a8a", fontname="Helvetica", fontsize=9];
-  raw [label="Raw CSVs\\n832,881 shops · 42 SKUs", fillcolor="#f5f7fa", color="#5B6B7C"];
-  dash [label="Dashboard + report", fillcolor="#e8f5ee", color="#1baf7a"];
+  rankdir=LR; bgcolor=transparent; compound=true; nodesep=0.35; ranksep=0.55;
+  node [shape=box, style="rounded,filled", fillcolor="white", color="#2563EB",
+        fontname="Inter, Helvetica", fontsize=11, penwidth=1.2, margin="0.18,0.12"];
+  edge [color="#475467", fontname="Inter, Helvetica", fontsize=9, penwidth=1.1,
+        arrowsize=0.7];
+  raw [label="Raw dataset\\n3 CSVs · 206 MB · 832,881 rows", color="#667085"];
+  dash [label="Deliverables\\ndashboard · report · audit lists", color="#12B76A"];
 
   subgraph cluster_ref {
     label="Reference lane — scikit-learn (exact proposal algorithms)";
-    fontname="Helvetica"; fontsize=10; color="#c9d6e6"; style=rounded;
-    p1 [label="Phase 1\\ncleaning + features"];
-    p2 [label="Phase 2 (RQ1)\\nclustering"];
-    p3 [label="Phase 3 (RQ2)\\nregression"];
-    p4 [label="Phase 4 (RQ3)\\nrisk classification"];
-    p5 [label="Phase 5 (RQ4)\\nanomaly detection"];
-    p1 -> p2; p2 -> p3; p2 -> p4; p2 -> p5;
+    fontname="Inter, Helvetica"; fontsize=10; fontcolor="#31506e";
+    color="#B2CCFF"; style="rounded"; bgcolor="#F8FAFF";
+    p1 [label="Phase 1\\ncleaning · 48 features"];
+    p2 [label="Phase 2 (RQ1)\\nK-Means, k = 8"];
+    p34 [label="Phases 3–4 (RQ2–3)\\nXGBoost · weights · SHAP"];
+    p5 [label="Phase 5 (RQ4)\\nIForest + LOF"];
+    p1 -> p2 -> p34 -> p5;
   }
 
   subgraph cluster_dist {
-    label="Distributed lane — Hadoop + Spark (same phases, MLlib)";
-    fontname="Helvetica"; fontsize=10; color="#eeddb3"; style=rounded;
-    hdfs [label="HDFS storage\\nraw + division-partitioned\\nwarehouse", fillcolor="#fdf3e2", color="#eda100"];
-    sp [label="Spark MLlib\\nphases 1–5, distributed", fillcolor="#fdf3e2", color="#eda100"];
-    hdfs -> sp;
+    label="Distributed lane — Hadoop HDFS + Apache Spark (same phases)";
+    fontname="Inter, Helvetica"; fontsize=10; fontcolor="#8a5a00";
+    color="#F0D399"; style="rounded"; bgcolor="#FFFDF7";
+    hdfs [label="HDFS warehouse\\n9 datanodes · repl. 2 · by division", color="#D79B00"];
+    sql [label="Spark SQL\\ndistributed cleaning · densities", color="#D79B00"];
+    ml [label="Spark MLlib\\nphases 2–5 · regional runs", color="#D79B00"];
+    hdfs -> sql -> ml;
   }
 
   raw -> p1;
   raw -> hdfs [label="ingest"];
-  p3 -> dash; p4 -> dash; p5 -> dash;
-  sp -> dash [label="cross-validates the reference"];
+  p5 -> dash;
+  ml -> dash [label="row counts cross-validate"];
 }
 """)
         st.caption(
