@@ -236,18 +236,61 @@ ax.set_xlabel("assigned monthly target"); ax.set_ylabel("model prediction")
 ax.legend(frameon=False, loc="upper left")
 save(fig, "f13_actual_vs_predicted.png")
 
-# F14 — anomaly combined-score distribution
-anom = pd.read_parquet(ROOT / "data/processed/anomalies.parquet", columns=["combined_score"])
-scores = anom["combined_score"].dropna()
-decile_cut = scores.quantile(0.90)  # empirical, not 0.90: the mean of two ranks concentrates
-fig, ax = plt.subplots(figsize=(COL_W, 2.25))
-ax.hist(scores, bins=50, color=BLUE, zorder=3)
-ax.axvline(decile_cut, color=RED, lw=0.9,
-           label=f"top-decile threshold ({decile_cut:.2f})")
-ax.set_xlabel("combined anomaly score")
-ax.set_ylabel("shops"); ax.yaxis.set_major_formatter(compact)
-ax.legend(frameon=False)
-save(fig, "f14_anomaly_scores.png")
+# F14 — what a flagged shop looks like, in plain units: the flagged top decile
+# against all other shops on neighbourhood crowding and assigned target. (A
+# histogram of the combined score is a triangle BY CONSTRUCTION — the mean of
+# two near-uniform ranks — so the data-driven view is the profile of the
+# flagged set itself.)
+import numpy as np
+
+anom = pd.read_parquet(ROOT / "data/processed/anomalies.parquet",
+                       columns=["shop_code", "combined_score"])
+af = pd.read_parquet(ROOT / "data/processed/features.parquet",
+                     columns=["shop_code", "density_500m", "density_1km",
+                              "density_5km", "total_target"]).merge(anom, on="shop_code")
+decile_cut = af["combined_score"].quantile(0.90)  # empirical, not 0.90: the mean of two ranks concentrates
+flagged = af["combined_score"] >= decile_cut
+fig, axes = plt.subplots(1, 2, figsize=(WIDE_W, 2.3))
+bar_w = 0.36
+
+radii = [("density_500m", "500 m"), ("density_1km", "1 km"), ("density_5km", "5 km")]
+xs = np.arange(len(radii))
+med_oth = [af.loc[~flagged, c].median() for c, _ in radii]
+med_flg = [af.loc[flagged, c].median() for c, _ in radii]
+ax = axes[0]
+bars = list(ax.bar(xs - bar_w / 2, med_oth, bar_w, color=BLUE, zorder=3,
+                   label="all other shops"))
+bars += list(ax.bar(xs + bar_w / 2, med_flg, bar_w, color=RED, zorder=3,
+                    label="flagged top decile"))
+for b in bars:
+    ax.text(b.get_x() + b.get_width() / 2, b.get_height() + 22,
+            f"{b.get_height():,.0f}", ha="center", fontsize=7)
+ax.set_xticks(xs); ax.set_xticklabels([lbl for _, lbl in radii])
+ax.set_ylabel("median neighbouring shops")
+ax.set_xlabel("radius around the shop")
+ax.set_ylim(0, max(med_flg) * 1.18)
+ax.grid(axis="x", visible=False)
+ax.set_title("(a) how crowded the location is", fontsize=9, loc="left")
+
+ax = axes[1]
+xs2 = np.arange(2)
+tgt_oth = [af.loc[~flagged, "total_target"].median(), af.loc[~flagged, "total_target"].mean()]
+tgt_flg = [af.loc[flagged, "total_target"].median(), af.loc[flagged, "total_target"].mean()]
+bars = list(ax.bar(xs2 - bar_w / 2, tgt_oth, bar_w, color=BLUE, zorder=3,
+                   label="all other shops"))
+bars += list(ax.bar(xs2 + bar_w / 2, tgt_flg, bar_w, color=RED, zorder=3,
+                    label="flagged top decile"))
+for b in bars:
+    ax.text(b.get_x() + b.get_width() / 2, b.get_height() + 1,
+            f"{b.get_height():.1f}", ha="center", fontsize=7)
+ax.set_xticks(xs2); ax.set_xticklabels(["median", "mean"])
+ax.set_ylabel("monthly total target")
+ax.set_ylim(0, max(tgt_flg) * 1.2)
+ax.grid(axis="x", visible=False)
+ax.set_title("(b) how big the assigned target is", fontsize=9, loc="left")
+ax.legend(frameon=False, loc="upper left")
+fig.tight_layout()
+save(fig, "f14_flagged_profile.png")
 print("extra figures written")
 
 # Figs 1-2 (f_overview.png, f15_architecture.png) are built by report/make_diagrams.py
