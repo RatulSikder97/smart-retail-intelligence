@@ -160,15 +160,11 @@ details[data-testid="stExpander"] summary:hover p { color: var(--ink); }
 }
 .hdr-left { display: flex; align-items: center; gap: 0.8rem; }
 .hdr-logo {
-  width: 38px; height: 38px; border-radius: 10px; flex: none;
-  background: linear-gradient(135deg, #1D2939 0%, #0F1728 100%);
-  display: flex; align-items: flex-end; justify-content: center; gap: 3px;
-  padding-bottom: 8px; box-shadow: var(--shadow-sm);
+  width: 40px; height: 40px; border-radius: 11px; flex: none;
+  background: #0F1728; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-sm);
 }
-.hdr-logo i { display: block; width: 4px; border-radius: 2px; background: #667085; }
-.hdr-logo i:nth-child(1) { height: 8px; }
-.hdr-logo i:nth-child(2) { height: 16px; background: #60A5FA; }
-.hdr-logo i:nth-child(3) { height: 12px; background: #fff; }
+.hdr-logo img { width: 22px; height: 22px; display: block; }
 .wordmark { font-size: 1.14rem; font-weight: 680; color: var(--ink);
             letter-spacing: -0.02em; line-height: 1.2; }
 .hdr-sub { font-size: 0.79rem; color: var(--ink-3); margin-top: 1px; }
@@ -176,10 +172,13 @@ details[data-testid="stExpander"] summary:hover p { color: var(--ink); }
 .hdr-meta b { color: var(--ink-2); font-weight: 600; }
 
 /* ---- header stat group ---- */
-.hdr-right { display: flex; align-items: center; gap: 18px; }
-.hstat { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.25; }
-.hstat span { font-size: 0.68rem; font-weight: 500; color: var(--ink-3); }
-.hstat b { font-size: 0.98rem; font-weight: 650; color: var(--ink);
+.hdr-right { display: flex; align-items: center; }
+.hdr-right .live-dot { margin-right: 20px; }
+.hstat { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.3;
+         padding: 0 18px; border-left: 1px solid var(--border); }
+.hstat:last-child { padding-right: 0; }
+.hstat span { font-size: 0.67rem; font-weight: 500; color: var(--ink-3); }
+.hstat b { font-size: 1.02rem; font-weight: 650; color: var(--ink);
            font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 
 /* ---- facts strip ---- */
@@ -457,14 +456,16 @@ _hstats = "".join(
         ("Risk AUC", f"{_clf_best.get('roc_auc', float('nan')):.3f}"),
     ]
 ) if _m else ""
+import base64 as _b64
+_logo = _b64.b64encode((Path(__file__).parent / "assets/logo_store.png").read_bytes()).decode()
 st.markdown(
     f"""
 <div class="hdr">
   <div class="hdr-left">
-    <div class="hdr-logo"><i></i><i></i><i></i></div>
+    <div class="hdr-logo"><img src="data:image/png;base64,{_logo}"></div>
     <div>
       <div class="wordmark">Smart Retail Intelligence</div>
-      <div class="hdr-sub">Bangladesh FMCG network · MITE 431 term project · R. Sikder &amp; F. Rahman · Mendeley (CC BY 4.0)</div>
+      <div class="hdr-sub">Bangladesh FMCG distribution network · MITE 431</div>
     </div>
   </div>
   <div class="hdr-right">
