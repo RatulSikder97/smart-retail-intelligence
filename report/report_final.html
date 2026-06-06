@@ -78,10 +78,10 @@
     <tr><td class="l1">4.4&emsp;Supervised Learning: Target-Miss Risk Classification (RQ3)</td><td class="pg">23</td></tr>
     <tr><td class="l1">4.5&emsp;Unsupervised Learning: Anomaly Detection (RQ4)</td><td class="pg">26</td></tr>
     <tr><td class="l1">4.6&emsp;Distributed Execution on the Spark Cluster</td><td class="pg">28</td></tr>
-    <tr><td class="l1">4.7&emsp;Summary Comparison Under Cross-Validation</td><td class="pg">29</td></tr>
+    <tr><td class="l1">4.7&emsp;Summary Comparison Under Cross-Validation</td><td class="pg">28</td></tr>
     <tr><td class="l1">4.8&emsp;Threats to Validity</td><td class="pg">29</td></tr>
-    <tr><td>5&emsp;Conclusion</td><td class="pg">30</td></tr>
-    <tr><td>References</td><td class="pg">31</td></tr>
+    <tr><td>5&emsp;Conclusion</td><td class="pg">29</td></tr>
+    <tr><td>References</td><td class="pg">30</td></tr>
     <tr><td>Appendix A: Files accompanying this report</td><td class="pg">32</td></tr>
     <tr><td>Appendix B: Reproduction and key source code excerpts</td><td class="pg">32</td></tr>
   </table>
@@ -101,7 +101,7 @@
     <tr><td>9.&emsp;Algorithm selection rationale per research question</td><td class="pg">16</td></tr>
     <tr><td>10.&emsp;Internal criteria for the K-Means k scan</td><td class="pg">17</td></tr>
     <tr><td>11.&emsp;Cluster profiles (medians over the full dataset)</td><td class="pg">19</td></tr>
-    <tr><td>12.&emsp;All candidate families trained on a common 50,000-shop subsample</td><td class="pg">21</td></tr>
+    <tr><td>12.&emsp;All candidate families trained on a common 50,000-shop subsample</td><td class="pg">20</td></tr>
     <tr><td>13.&emsp;Hyperparameter search space and selected values (regression)</td><td class="pg">21</td></tr>
     <tr><td>14.&emsp;Regression performance on the held-out test set</td><td class="pg">22</td></tr>
     <tr><td>15.&emsp;Regression performance under 5-fold cross-validation</td><td class="pg">22</td></tr>
@@ -134,7 +134,7 @@
     <tr><td>16.&emsp;Out-of-fold ROC curves of the risk classifiers</td><td class="pg">25</td></tr>
     <tr><td>17.&emsp;Share of shops labelled at-risk, by division</td><td class="pg">26</td></tr>
     <tr><td>18.&emsp;Profile of the flagged anomaly decile</td><td class="pg">27</td></tr>
-    <tr><td>19.&emsp;Country map of the flagged top-decile anomalies</td><td class="pg">28</td></tr>
+    <tr><td>19.&emsp;Country map of the flagged top-decile anomalies</td><td class="pg">27</td></tr>
   </table>
 </div>
 
@@ -161,7 +161,7 @@
 <p>Fig. 1 shows the full workflow of the project in six steps: from getting the dataset, through distributed storage, cleaning and feature engineering, the four modelling phases, and evaluation with Bayesian tuning and cross-validation, to the delivered dashboard, report, and audit lists.</p>
 
 <div class="figure"><img src="figures/f_overview.png" style="width: 6.5in;">
-<p class="figcaption">Fig. 1. Overall methodology of the project: six steps from dataset acquisition to delivery. Step 4 answers the four research questions; steps 2&ndash;4 additionally run on the distributed Hadoop/Spark lane (Fig. 2).</p></div>
+<p class="figcaption">Fig. 1. Overall methodology of the project.</p></div>
 
 <p>The rest of this report is organised as follows. Section 2 reviews the literature on the methods we use. Section 3 describes the data: the files, how we turn them into model-ready features, an exploratory analysis, how we treat missing values, and the distributed preparation on HDFS and Spark. Section 4 presents the methodology and results one research question at a time, then the distributed execution results, and finally a summary comparison of all algorithms under cross-validation. Section 5 closes with numbered findings, recommended actions, limitations, and future work. Two appendices list the files that accompany this report and give reproduction instructions with key source-code excerpts.</p>
 <h2 class="sec">2. Review of Literature</h2>
@@ -176,7 +176,7 @@
 <p class="noindent">For this project we work with the publicly available dataset titled &ldquo;Comprehensive Retail Network Dataset of Bangladesh&rdquo; from Mendeley Data [1] (dataset DOI 10.17632/mgzvngzng2.1, article DOI 10.1016/j.dib.2025.112326, CC BY 4.0). The data was collected between February 2022 and October 2024, and we downloaded it on 5 June 2026. Every statistic in this section comes from our own profiling code run on the actual files; nothing is copied from the dataset paper. Fig. 2 shows where the data sits in our overall architecture. Each record passes through two independent preparation lanes: the scikit-learn reference lane and the distributed Hadoop/Spark lane described in Section 3.5. The outputs of the two lanes cross-validate each other.</p>
 
 <div class="figure"><img src="figures/f15_architecture.png" style="width: 6.5in;">
-<p class="figcaption">Fig. 2. Pipeline architecture. The same raw data flows through a scikit-learn reference lane and a distributed Hadoop HDFS + Apache Spark lane; matching row counts across the two lanes cross-validate the preparation.</p></div>
+<p class="figcaption">Fig. 2. Pipeline architecture: the scikit-learn reference lane and the distributed Hadoop/Spark lane.</p></div>
 
 <h3 class="sub">3.1 Data Description</h3>
 
@@ -250,7 +250,7 @@
 </table>
 
 <div class="figure"><img src="figures/f7_funnel.png">
-<p class="figcaption">Fig. 3. The preprocessing funnel from raw records to model-ready shops.</p></div>
+<p class="figcaption">Fig. 3. The preprocessing funnel.</p></div>
 
 <p>From the cleaned records we build 48 model features per shop, listed by group in Table 6. The spatial features are our attempt to turn the over-stock/stock-out idea from the proposal into actual numbers. We compute neighbourhood density with a BallTree under the haversine metric. The tree answers all 719,817 radius queries in seconds, since it runs in O(n log n) rather than the O(n&sup2;) of a pairwise scan; our first naive attempt at a pairwise version simply did not finish, which is what pushed us to the tree. Centrality is the great-circle distance to the shop centroid of the district. We one-hot encode the low-cardinality categoricals, so an attribute with n levels becomes n indicator columns, and we keep <code>Unknown</code> as an explicit level instead of dropping it (Section 3.4 explains why). The monthly target <code>Total</code> serves only as the supervised label. It never enters the model as an input.</p>
 
@@ -276,28 +276,28 @@
 <p class="figcaption">Fig. 4. Clean outlets per division (719,817 shops).</p></div>
 
 <div class="figure"><img src="figures/f8_shop_types.png">
-<p class="figcaption">Fig. 5. Shops per business type (top 12 labels). The second-largest label is the explicit <code>Unknown</code> level.</p></div>
+<p class="figcaption">Fig. 5. Shops per business type (top 12 labels).</p></div>
 
 <p>Fig. 6 shows the distributions of the four principal engineered features. Neighbourhood density is heavily right-skewed. Most shops have fewer than one hundred neighbours within a kilometre, while the metro-Dhaka core reaches thousands. Distance to the district centre peaks around 10&ndash;20 km. The product-mix count concentrates at 5&ndash;7 products, with a visible spike at zero that the data-poor segment creates. Fig. 7 shows the monthly total target among the 613,660 joined shops, and it is extremely right-tailed: the median is 14.1 but the mean is 28.9, and the raw file reaches 91,283. In other words, a small population of wholesale-style outlets carries targets three orders of magnitude above the typical shop. This skew follows us through Section 4. It is why squared-error regression metrics jump around across resampling folds, and why anomaly detection has to compare shops only with their own kind.</p>
 
 <p>Two more structures in Fig. 6 deserve comment, because they anticipate later findings. The product-mix distribution (panel c) is bimodal. There is a large mode at 5&ndash;7 products, the standard assortment a field representative assigns, and an isolated spike at exactly zero. That spike is not a natural tail; it is the 85,167-shop joint-missingness population, and we can say so with some confidence because a genuine behavioural variable would decay smoothly towards zero. The density distribution (panel a) spans three orders of magnitude, from single-digit neighbour counts in rural upazilas to more than a thousand inside the Dhaka metropolitan core &mdash; anyone who has walked past the back-to-back mudi shops of Old Dhaka will find that figure believable. This spread is the raw material from which the clustering of Section 4.2 recovers an urban&ndash;rural taxonomy without ever being told what &ldquo;urban&rdquo; means.</p>
 
 <div class="figure"><img src="figures/f9_feature_distributions.png" style="width: 6.2in;">
-<p class="figcaption">Fig. 6. Distributions of the principal engineered features, clipped at the 99th percentile: (a) neighbour density within 1 km; (b) distance to the district centre; (c) product-mix breadth; (d) the monthly total target.</p></div>
+<p class="figcaption">Fig. 6. Distributions of the principal engineered features (clipped at the 99th percentile).</p></div>
 
 <div class="figure"><img src="figures/f2_target_distribution.png" style="width: 6.2in;">
-<p class="figcaption">Fig. 7. Distribution of the monthly total target among joined shops: (a) linear scale clipped at the 99th percentile; (b) full range on a log scale, exposing the wholesale tail that reaches 91,283.</p></div>
+<p class="figcaption">Fig. 7. Distribution of the monthly total target among joined shops.</p></div>
 
 <p class="noindent">Fig. 8 completes the exploratory picture with the geography of the targets themselves. Median monthly targets stay in a fairly narrow band across divisions (roughly 11 in Rangpur to 20 in Dhaka). Dhaka&rsquo;s wider inter-quartile range reflects its mix of metro key accounts and ordinary shops. Taken together, this tells us that division alone is a weak predictor and shop-level features are needed, which Section 4.3 confirms.</p>
 
 <div class="figure"><img src="figures/f16_target_by_division.png">
-<p class="figcaption">Fig. 8. Monthly total target by division: median (dot) and inter-quartile range (band) among joined shops.</p></div>
+<p class="figcaption">Fig. 8. Monthly target by division: median and inter-quartile range.</p></div>
 <h3 class="sub">3.4 Data Cleaning and Handling Missing Values</h3>
 
 <p class="noindent">Fig. 9 profiles the missing values in every raw column. Two patterns caught our attention. First, 113,064 rows (13.58%) carry no GPS at all. Their latitude and longitude cells are empty and the geometry field is literally <code>POINT EMPTY</code>, so the coordinates were simply never captured during the survey; this matches the missing rate the dataset authors themselves report [1]. We dropped these rows instead of imputing them, because an invented location would corrupt every spatial feature we build later. Two checks reassured us here: the remaining count equals the published outlet count exactly, and zero non-null coordinates fall outside the national bounding box. Second, the categorical attributes go missing together. Exactly 85,167 records (10.23%) lack the business type, and the very same records also lack style, importance, and organizer. We kept these shops under an explicit <code>Unknown</code> level, and this turned out to be the right call. Section 4.2 shows the clustering isolates exactly this population as its own archetype, so the missingness itself becomes the ghost-shop audit list that motivated the project in the first place. The nearly empty <code>visit_target</code> column (99.69% missing) was dropped.</p>
 
 <div class="figure"><img src="figures/f10_missingness.png">
-<p class="figcaption">Fig. 9. Missing values per raw column of the shop file. The 10.23% block is the jointly missing attribute group; 13.58% of rows have no GPS at all.</p></div>
+<p class="figcaption">Fig. 9. Missing values per raw column of the shop file.</p></div>
 
 <p>Refilling missing categoricals from spatial neighbours is the obvious suggestion, and it was our first instinct too, so we tested it instead of dismissing it. For shops whose attributes are known, we hid the true value and predicted it from the majority vote of the 10 nearest neighbours (haversine distance). Table 7 compares the outcome with a majority-class baseline. The location-determined fields are almost perfectly recoverable, and <code>shop_style</code> does carry real spatial signal. But <code>shop_type</code> would be wrong for one shop in three, which makes sense once you picture a bazar lane where a mudi shop, a pharmacy, and a tea stall sit side by side. What surprised us more is that <code>shop_importance</code> imputation is <i>worse</i> than blind majority guessing. So we impute only the geographic fields. Style can optionally be imputed at a &ge;70% neighbour-agreement threshold, behind an explicit flag with per-row indicator columns. The business attributes are never imputed.</p>
 
@@ -367,7 +367,7 @@
 </table>
 
 <div class="figure"><img src="figures/f3_k_selection.png">
-<p class="figcaption">Fig. 10. Model selection for the number of clusters (dotted line: chosen k = 8). The silhouette peaks at 8; Davies&ndash;Bouldin is near its minimum there.</p></div>
+<p class="figcaption">Fig. 10. Model selection for the number of clusters (dotted line: chosen k = 8).</p></div>
 
 <p>We ran two more algorithms as structural cross-checks. Agglomerative clustering with Ward&rsquo;s linkage on a 20,000-shop subsample supports the K-Means structure (silhouette 0.145, Davies&ndash;Bouldin 1.80 at k = 8). DBSCAN [5] (&epsilon; = 0.5, minPts = 50 in the standardised space) collapses to a single cluster with 98.7% of points marked as noise. We report this outcome rather than hide it, because it actually tells us something. The retail network is one dense continuous fabric, not a set of separated islands. That also explains the modest silhouette: the archetypes blend into each other at their boundaries. Anyone who has walked a Dhaka street where three mudi shops share one block would find this unsurprising.</p>
 
@@ -393,7 +393,7 @@
 <p class="figcaption">Fig. 11. Archetype sizes over the full dataset.</p></div>
 
 <div class="figure"><img src="figures/f11_cluster_map.png" style="width: 3.1in;">
-<p class="figcaption">Fig. 12. Spatial map of the eight archetypes (60,000-shop sample). The segmentation follows the country&rsquo;s regional structure, with the metro-Dhaka core (C3) and the Chittagong corridor (C6) clearly visible.</p></div>
+<p class="figcaption">Fig. 12. Spatial map of the eight archetypes (60,000-shop sample).</p></div>
 <h3 class="sub">4.3 Supervised Learning: Sales-Target Regression (RQ2)</h3>
 
 <p class="noindent">The 613,660 shops that carry a target were split 80/20 into training and test sets. We benchmarked four models of increasing capacity. <i>Linear regression</i> on standardised inputs is our baseline; we keep it mainly as a diagnostic, to see how much of the signal is linear in the first place. <i>Random Forest</i> [6] (100 trees, depth &le; 20, minimum leaf 5) controls variance through bagging. <i>XGBoost</i> [7] (300 trees, depth 8, learning rate 0.1 &mdash; the fixed un-tuned baseline our tables label &ldquo;defaults&rdquo;, as opposed to the Optuna-tuned variant) and <i>LightGBM</i> [8] (300 trees, 63 leaves) are gradient-boosted alternatives that grow their trees differently (level-wise versus leaf-wise).</p>
@@ -417,7 +417,7 @@
 </table>
 
 <div class="figure"><img src="figures/f_alternatives.png">
-<p class="figcaption">Fig. 13. Training time against held-out accuracy for every candidate family on the common subsample. Only the tree ensembles (coloured) pull away from the weak baselines; SVR (red) was capped at 10,000 training rows because kernel training does not scale further.</p></div>
+<p class="figcaption">Fig. 13. Training time against held-out accuracy of all candidate families (common 50,000-shop subsample).</p></div>
 
 <p>The hyperparameters of the XGBoost candidate were then selected by Bayesian optimization with the Tree-structured Parzen Estimator (Optuna [13]): 30 trials, each scored by 3-fold cross-validated RMSE on a 100,000-shop training subsample. Table 13 gives the search space and the selected values. The search settled on a deliberately conservative configuration, with fewer trees, a slower learning rate, and strong subsampling. We let the tuned model compete in the benchmark as its own candidate, so the default-versus-tuned comparison stays visible.</p>
 
@@ -456,7 +456,7 @@
 </table>
 
 <div class="figure"><img src="figures/f13_actual_vs_predicted.png">
-<p class="figcaption">Fig. 14. Assigned monthly target versus model prediction (30,000-shop sample, axes clipped at the 99th percentile). The model tracks the bulk of the distribution; the extreme tail resists point prediction.</p></div>
+<p class="figcaption">Fig. 14. Assigned monthly target versus model prediction (30,000-shop sample, clipped at the 99th percentile).</p></div>
 
 <p>Fig. 15 shows the SHAP [9] feature attribution of the winning model. Product-mix breadth (<code>n_products_targeted</code>) and the top importance tier dominate, and micro-location comes next: density within 500 m, the raw coordinates, and distance to the district centre. So location and assortment drive expected volume, not shop type alone. This supports the proposal&rsquo;s premise that intuition-based allocation leaves measurable signal unused.</p>
 
@@ -492,7 +492,7 @@
 </table>
 
 <div class="figure"><img src="figures/f12_roc.png">
-<p class="figcaption">Fig. 16. Out-of-fold ROC curves of the four risk classifiers (5-fold cross-validation; every score produced by a model that never saw the shop in training).</p></div>
+<p class="figcaption">Fig. 16. Out-of-fold ROC curves of the four risk classifiers.</p></div>
 
 <p>What does the confusion matrix (Table 18) mean for a distributor? Of every 100 truly at-risk shops, the model now catches about 80 (recall 0.80) &mdash; this is where the class weighting earns its keep, since a missed at-risk shop is the expensive error in this use-case. Of every 100 shops the model flags, about 68 are genuinely at-risk (precision 0.68), so roughly two field visits in three are productive. The 85,680 false positives sit mostly near the 80% labelling threshold, where a visit is rarely useless anyway, and only 44,154 truly at-risk shops slip through. Deployments that value precision over coverage can simply raise the decision threshold; the ROC curve in Fig. 16 lays out the available trade-offs.</p>
 
@@ -513,12 +513,12 @@
 <p>To find shops that behave unlike their peers, we fitted Isolation Forest [11] (200 trees) and the Local Outlier Factor [12] (20 neighbours) separately <i>within each archetype</i>, never globally. A rural kiosk scored against metro superstores would always look anomalous, and that tells the analyst nothing &mdash; a small mudi shop is not a broken superstore, it is a different kind of business. We convert each method&rsquo;s raw score into a percentile rank within its cluster, and the combined score is the mean of the two ranks, so a shop is flagged only when both detectors, each tuned to a different failure shape, agree. The two rankings are in fact nearly independent across the bulk of the network (rank correlation 0.06), so the average acts as a soft AND-gate: no shop can enter the flagged set unless both detectors place it above the 58th percentile of its cluster. The top decile of the combined score (71,982 shops, score &ge; 0.79 &mdash; the empirical 90th percentile, which sits below 0.90 because the mean of two percentile ranks concentrates toward the middle) is exported with full context for manual triage into three buckets: data errors (wrong coordinates, duplicate entries), fraud candidates (targets or importance that do not fit the surroundings), and hidden opportunities (thriving shops in thin markets). Fig. 18 shows, in plain units, what kind of shop ends up flagged. The median flagged shop has 283 neighbouring shops within one kilometre against 77 for everyone else &mdash; nearly four times as crowded, a gap that repeats at 500 m (122 against 44) and persists, more mildly, at 5 km &mdash; and its assigned target is a third higher at the median (18.7 against 13.8) and nearly double at the mean (50.5 against 26.6), so the flagged tail also holds the books that are most oversized for their archetype. This is exactly the profile the triage buckets anticipate: entries whose recorded surroundings or targets do not fit the shop, packed into the dense micro-markets where duplicates and mis-registrations are easiest to hide. Shops that also appear in the RQ3 high-risk list are recommended as the first field visits.</p>
 
 <div class="figure"><img src="figures/f14_flagged_profile.png" style="width: 6.2in;">
-<p class="figcaption">Fig. 18. What a flagged shop looks like, compared with all other shops: (a) median count of neighbouring shops at three radii &mdash; flagged shops sit in markedly denser locations, up to nearly four times at street level; (b) the assigned monthly target &mdash; a third higher at the median and nearly double at the mean.</p></div>
+<p class="figcaption">Fig. 18. The flagged top decile against all other shops: (a) median neighbour counts; (b) monthly total target.</p></div>
 
 <p>Where do the flagged shops sit on the map? Fig. 19 plots the top decile over the full network, and the geography is informative twice over. First, shops whose division is <code>Unknown</code> are flagged at a 39.1% rate &mdash; nearly four times the 10% decile baseline &mdash; so the anomaly detector, working only from per-cluster feature ranks, independently converges on the same data-poor population that the clustering isolated as the ghost-shop segment in Section 4.2. Two unsupervised methods with entirely different mechanics pointing at the same records is the strongest internal corroboration this project can offer without field verification. Second, among the named divisions the flag rate runs from 6.6% in Dhaka to 21.7% in Barisal: the denser the surrounding network, the more ordinary any single shop looks, so oddity concentrates in the thin southern and coastal periphery, with visible pockets such as the Bagerhat strip in Khulna where dense micro-markets sit in an otherwise sparse region. That inversion is useful operationally, because it directs audit attention away from the well-monitored metro cores and toward exactly the areas a field organisation sees least often.</p>
 
 <div class="figure"><img src="figures/f19_anomaly_map.png" style="width: 3.46in;">
-<p class="figcaption">Fig. 19. Country map of the flagged top-decile anomalies (colour = combined score) over a 60,000-shop background sample (grey points). Flag rates are lowest in metro Dhaka (6.6%) and highest in the thin coastal periphery (Barisal 21.7%); shops with an Unknown division are flagged at 39.1%.</p></div>
+<p class="figcaption">Fig. 19. Country map of the flagged top-decile anomalies (colour: combined score) over a 60,000-shop background sample.</p></div>
 
 <h3 class="sub">4.6 Distributed Execution on the Spark Cluster</h3>
 
