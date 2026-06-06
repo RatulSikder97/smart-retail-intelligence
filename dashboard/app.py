@@ -14,6 +14,8 @@ import json
 import altair as alt
 import folium
 import pandas as pd
+from pathlib import Path
+
 import streamlit as st
 from streamlit_folium import st_folium
 
@@ -914,43 +916,8 @@ with tab_method:
 
     # ---------------------------------------------------------- flow
     with sub_flow:
-        st.graphviz_chart("""
-digraph pipeline {
-  rankdir=LR; bgcolor=transparent; compound=true; nodesep=0.35; ranksep=0.55;
-  node [shape=box, style="rounded,filled", fillcolor="white", color="#2563EB",
-        fontname="Inter, Helvetica", fontsize=11, penwidth=1.2, margin="0.18,0.12"];
-  edge [color="#475467", fontname="Inter, Helvetica", fontsize=9, penwidth=1.1,
-        arrowsize=0.7];
-  raw [label="Raw dataset\\n3 CSVs · 206 MB · 832,881 rows", color="#667085"];
-  dash [label="Deliverables\\ndashboard · report · audit lists", color="#12B76A"];
-
-  subgraph cluster_ref {
-    label="Reference lane — scikit-learn (exact proposal algorithms)";
-    fontname="Inter, Helvetica"; fontsize=10; fontcolor="#31506e";
-    color="#B2CCFF"; style="rounded"; bgcolor="#F8FAFF";
-    p1 [label="Phase 1\\ncleaning · 48 features"];
-    p2 [label="Phase 2 (RQ1)\\nK-Means, k = 8"];
-    p34 [label="Phases 3–4 (RQ2–3)\\nXGBoost · weights · SHAP"];
-    p5 [label="Phase 5 (RQ4)\\nIForest + LOF"];
-    p1 -> p2 -> p34 -> p5;
-  }
-
-  subgraph cluster_dist {
-    label="Distributed lane — Hadoop HDFS + Apache Spark (same phases)";
-    fontname="Inter, Helvetica"; fontsize=10; fontcolor="#8a5a00";
-    color="#F0D399"; style="rounded"; bgcolor="#FFFDF7";
-    hdfs [label="HDFS warehouse\\n9 datanodes · repl. 2 · by division", color="#D79B00"];
-    sql [label="Spark SQL\\ndistributed cleaning · densities", color="#D79B00"];
-    ml [label="Spark MLlib\\nphases 2–5 · regional runs", color="#D79B00"];
-    hdfs -> sql -> ml;
-  }
-
-  raw -> p1;
-  raw -> hdfs [label="ingest"];
-  p5 -> dash;
-  ml -> dash [label="row counts cross-validate"];
-}
-""")
+        st.image(str(Path(__file__).parent / "assets/pipeline_architecture.png"),
+                 use_container_width=True)
         st.caption(
             "The same five phases run in both lanes: scikit-learn is the "
             "reference (exact proposal algorithms); the Hadoop/Spark lane "
