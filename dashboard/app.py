@@ -13,6 +13,7 @@ import json
 
 import altair as alt
 import folium
+import numpy as np
 import pandas as pd
 from pathlib import Path
 
@@ -43,7 +44,8 @@ st.set_page_config(page_title="Smart Retail Intelligence", layout="wide")
 CFG = Config.from_env()
 
 # --------------------------------------------------------------------------
-# design system — "research instrument": IBM Plex, hairlines, quiet chrome
+# design system — "published analyst report": IBM Plex superfamily, one accent,
+# hairline rules on plain paper, numbered figures, algorithm boxes
 # --------------------------------------------------------------------------
 
 INK, MUTED, HAIRLINE, PANEL, NAVY = "#1C2A3A", "#5B6B7C", "#E5EAF0", "#F7F9FB", "#16385C"
@@ -51,18 +53,16 @@ INK, MUTED, HAIRLINE, PANEL, NAVY = "#1C2A3A", "#5B6B7C", "#E5EAF0", "#F7F9FB", 
 st.markdown(
     """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 :root {
-  --ground: #F7F8FA; --surface: #FFFFFF; --border: #EAECF0;
-  --ink: #0F1728; --ink-2: #475467; --ink-3: #667085;
-  --accent: #2563EB; --accent-soft: #EFF4FF; --green: #12B76A;
-  --shadow-sm: 0 1px 2px rgba(16,24,40,.06);
-  --shadow-md: 0 2px 4px rgba(16,24,40,.05), 0 4px 12px rgba(16,24,40,.05);
-  --radius: 12px;
+  --ground: #FFFFFF; --surface: #FFFFFF; --border: #E5EAF0;
+  --ink: #1C2A3A; --ink-2: #44556A; --ink-3: #5B6B7C;
+  --accent: #2A78D6;
+  --serif: 'IBM Plex Serif', Georgia, 'Times New Roman', serif;
+  --sans: 'IBM Plex Sans', -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
 }
-html, body, [data-testid="stAppViewContainer"] * {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
+html, body, [data-testid="stAppViewContainer"] * { font-family: var(--sans); }
 [data-testid="stIconMaterial"], span[class*="material-symbols"] {
   font-family: 'Material Symbols Rounded' !important;
 }
@@ -73,31 +73,58 @@ code, kbd, pre, [data-testid="stMetricValue"] { font-variant-numeric: tabular-nu
 .block-container { max-width: 1240px; padding-top: 0.55rem; padding-bottom: 3rem; }
 #MainMenu, footer, [data-testid="stToolbar"], [data-testid="stDecoration"] { display: none; }
 
-h1, h2, h3 { color: var(--ink); letter-spacing: -0.015em; }
-p, li { color: #344054; }
+h1, h2, h3 { font-family: var(--serif); color: var(--ink); letter-spacing: 0; font-weight: 600; }
+p, li { color: #33465C; }
 
-/* ---- segmented pill navigation ---- */
+/* ---- section bar: newspaper-style nav under the masthead ---- */
+.side-label { font-size: 0.68rem; font-weight: 600; color: var(--ink-3);
+              letter-spacing: 0.13em; text-transform: uppercase;
+              margin: 0.2rem 0 0.35rem 0; }
+[data-testid="stButtonGroup"] [data-baseweb="button-group"] { gap: 2px; flex-wrap: wrap; }
+button[data-testid="stBaseButton-pills"],
+button[data-testid="stBaseButton-pillsActive"] {
+  border: none !important; background: transparent !important;
+  border-radius: 3px !important; padding: 2px 13px !important;
+  min-height: 30px !important; height: 30px; margin: 0 !important;
+}
+button[data-testid="stBaseButton-pills"] p,
+button[data-testid="stBaseButton-pillsActive"] p {
+  font-size: 0.82rem !important; font-weight: 500; white-space: nowrap;
+}
+button[data-testid="stBaseButton-pills"] p { color: var(--ink-3); }
+button[data-testid="stBaseButton-pills"]:hover { background: #F0F3F7 !important; }
+button[data-testid="stBaseButton-pills"]:hover p { color: var(--ink); }
+button[data-testid="stBaseButton-pillsActive"] { background: var(--ink) !important; }
+button[data-testid="stBaseButton-pillsActive"] p { color: #fff !important; font-weight: 600; }
+button[data-testid="stPopoverButton"] {
+  border: 1px solid var(--border) !important; border-radius: 3px !important;
+  background: #fff !important; min-height: 30px !important; height: 30px;
+  padding: 2px 12px !important; float: right;
+}
+button[data-testid="stPopoverButton"] p { font-size: 0.8rem !important; color: var(--ink-2); }
+
+/* ---- editorial underline navigation (in-page sub-tabs) ---- */
 div[data-baseweb="tab-list"] {
-  gap: 2px; background: #EEF1F5; padding: 4px; border-radius: 12px;
-  width: fit-content; max-width: 100%; overflow-x: auto; margin-bottom: 0.35rem;
+  gap: 1.5rem; background: transparent; padding: 0; border-radius: 0;
+  width: 100%; max-width: 100%; overflow-x: auto; margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
 }
 button[data-baseweb="tab"] {
-  border-radius: 9px !important; padding: 0 14px !important; height: 34px;
+  border-radius: 0 !important; padding: 0 2px !important; height: 38px;
   background: transparent !important;
 }
 button[data-baseweb="tab"] p {
-  font-size: 0.82rem !important; color: var(--ink-3); font-weight: 500;
+  font-size: 0.84rem !important; color: var(--ink-3); font-weight: 500;
   white-space: nowrap;
 }
-button[data-baseweb="tab"][aria-selected="true"] {
-  background: #fff !important; box-shadow: var(--shadow-sm);
-}
+button[data-baseweb="tab"][aria-selected="true"] { background: transparent !important; }
 button[data-baseweb="tab"][aria-selected="true"] p { color: var(--ink); font-weight: 600; }
-div[data-baseweb="tab-highlight"], div[data-baseweb="tab-border"] { display: none; }
+div[data-baseweb="tab-highlight"] { background: var(--ink); height: 2px; }
+div[data-baseweb="tab-border"] { display: none; }
 
 /* ---- inputs ---- */
 div[data-baseweb="select"] > div {
-  background: #fff; border-color: var(--border) !important; border-radius: 9px;
+  background: #fff; border-color: var(--border) !important; border-radius: 3px;
   min-height: 36px;
 }
 div[data-baseweb="select"] span { font-size: 0.84rem; }
@@ -105,100 +132,120 @@ div[data-baseweb="select"] span { font-size: 0.84rem; }
 [data-testid="stWidgetLabel"] p { font-size: 0.8rem !important; color: var(--ink-2) !important; font-weight: 500; }
 
 /* ---- tables ---- */
-[data-testid="stDataFrame"] { background: var(--surface); border-radius: 10px; }
+[data-testid="stDataFrame"] { background: var(--surface); border-radius: 0; }
 [data-testid="stDataFrame"] thead th, [data-testid="stDataFrame"] [role="columnheader"] {
   font-size: 0.75rem !important; font-weight: 600; color: var(--ink-2) !important;
 }
 
-/* ---- cards ---- */
+/* ---- panels: hairline only, no shadow, no card chrome ---- */
 div[data-testid="stVerticalBlockBorderWrapper"] > div {
-  border-color: var(--border) !important; border-radius: var(--radius);
-  background: var(--surface); box-shadow: var(--shadow-sm);
+  border-color: var(--border) !important; border-radius: 3px;
+  background: var(--surface); box-shadow: none;
   padding: 0.85rem 1.05rem !important;
 }
 div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlock"] { gap: 0.6rem; }
 details[data-testid="stExpander"] {
-  border: 1px solid var(--border); border-radius: var(--radius);
-  background: var(--surface); box-shadow: var(--shadow-sm);
+  border: none; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  border-radius: 0; background: var(--surface); box-shadow: none;
 }
-details[data-testid="stExpander"] summary p { font-size: 0.85rem; font-weight: 550; color: var(--ink-2); }
+details[data-testid="stExpander"] summary p { font-size: 0.85rem; font-weight: 500; color: var(--ink-2); }
 details[data-testid="stExpander"] summary:hover p { color: var(--ink); }
 
 [data-testid="stMetricLabel"] p { font-size: 0.78rem !important; color: var(--ink-2) !important; font-weight: 500; }
-[data-testid="stMetricValue"] { font-size: 1.7rem; font-weight: 650; color: var(--ink); }
+[data-testid="stMetricValue"] { font-family: var(--mono); font-size: 1.55rem; font-weight: 500; color: var(--ink); }
 [data-testid="stMetricDelta"] { font-size: 0.74rem; }
 
-/* ---- KPI cards ---- */
-.stat-row { display: grid; gap: 14px; margin: 0.4rem 0 1.1rem 0; }
-.stat-tile {
-  border: 1px solid var(--border); border-radius: var(--radius);
-  background: var(--surface); box-shadow: var(--shadow-sm);
-  padding: 0.9rem 1.05rem; transition: box-shadow .15s ease;
-}
-.stat-tile:hover { box-shadow: var(--shadow-md); }
-.stat-tile.accent { border-top: 3px solid var(--accent); }
-.stat-label { font-size: 0.78rem; font-weight: 500; color: var(--ink-2);
+/* ---- headline figures: rule-bound row, no boxes ---- */
+.stat-row { display: grid; gap: 0; margin: 0.4rem 0 1.2rem 0;
+            border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.stat-tile { border: none; border-left: 1px solid var(--border); border-radius: 0;
+             background: none; box-shadow: none; padding: 0.65rem 1.1rem 0.6rem; }
+.stat-tile:first-child { border-left: none; padding-left: 2px; }
+.stat-tile.accent { border-top: none; }
+.stat-tile.accent .stat-value { color: var(--accent); }
+.stat-label { font-size: 0.7rem; font-weight: 500; color: var(--ink-3);
+              letter-spacing: 0.05em; text-transform: uppercase;
               white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.stat-value { font-size: 1.75rem; font-weight: 650; color: var(--ink);
-              font-variant-numeric: tabular-nums; line-height: 1.28; margin-top: 0.2rem;
-              letter-spacing: -0.01em; }
-.stat-context { font-size: 0.74rem; color: var(--ink-3); margin-top: 0.15rem; }
+.stat-value { font-family: var(--mono); font-size: 1.4rem; font-weight: 500; color: var(--ink);
+              font-variant-numeric: tabular-nums; line-height: 1.3; margin-top: 0.15rem; }
+.stat-context { font-size: 0.73rem; color: var(--ink-3); margin-top: 0.1rem; }
 
 /* ---- section headers ---- */
 .eyebrow {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 0.72rem; font-weight: 600; color: var(--accent);
-  background: var(--accent-soft); border: 1px solid #D6E4FF; border-radius: 999px;
-  padding: 3px 11px; margin-bottom: 0.4rem;
+  display: block; font-size: 0.7rem; font-weight: 600; color: var(--ink-3);
+  letter-spacing: 0.12em; text-transform: uppercase;
+  background: none; border: none; border-radius: 0; padding: 0; margin-bottom: 0.3rem;
 }
-.section-title { font-size: 1.18rem; font-weight: 680; color: var(--ink); margin: 0;
-                 letter-spacing: -0.015em; }
-.section-desc { font-size: 0.86rem; color: var(--ink-2); margin: 0.2rem 0 0.8rem 0; }
+.section-title { font-family: var(--serif); font-size: 1.3rem; font-weight: 600;
+                 color: var(--ink); margin: 0; letter-spacing: 0; }
+.section-desc { font-size: 0.86rem; color: var(--ink-2); margin: 0.25rem 0 0.9rem 0; }
 .panel-label { font-size: 0.8rem; font-weight: 600; color: var(--ink-2); margin-bottom: 0.25rem; }
 
-/* ---- header ---- */
+/* ---- masthead ---- */
 .hdr {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 0.4rem 0 0.85rem 0; border-bottom: 1px solid var(--border);
-  margin-bottom: 0.75rem;
+  display: flex; justify-content: space-between; align-items: flex-end;
+  padding: 0.7rem 0 0.7rem 0; border-bottom: 2px solid var(--ink);
+  margin-bottom: 0.45rem;
 }
-.hdr-left { display: flex; align-items: center; gap: 0.8rem; }
-.hdr-logo {
-  width: 40px; height: 40px; border-radius: 11px; flex: none;
-  background: #0F1728; display: flex; align-items: center; justify-content: center;
-  box-shadow: var(--shadow-sm);
-}
-.hdr-logo img { width: 22px; height: 22px; display: block; }
-.wordmark { font-size: 1.14rem; font-weight: 680; color: var(--ink);
-            letter-spacing: -0.02em; line-height: 1.2; }
-.hdr-sub { font-size: 0.79rem; color: var(--ink-3); margin-top: 1px; }
-.hdr-meta { font-size: 0.77rem; color: var(--ink-3); text-align: right; line-height: 1.5; }
-.hdr-meta b { color: var(--ink-2); font-weight: 600; }
+.wordmark { font-family: var(--serif); font-size: 1.55rem; font-weight: 600;
+            color: var(--ink); letter-spacing: 0; line-height: 1.15; }
+.hdr-sub { font-size: 0.76rem; color: var(--ink-3); margin-top: 3px;
+           letter-spacing: 0.06em; text-transform: uppercase; }
 
-/* ---- header stat group ---- */
-.hdr-right { display: flex; align-items: center; }
-.hdr-right .live-dot { margin-right: 20px; }
+/* ---- masthead figures ---- */
+.hdr-right { display: flex; align-items: flex-end; }
 .hstat { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.3;
          padding: 0 18px; border-left: 1px solid var(--border); }
 .hstat:last-child { padding-right: 0; }
-.hstat span { font-size: 0.67rem; font-weight: 500; color: var(--ink-3); }
-.hstat b { font-size: 1.02rem; font-weight: 650; color: var(--ink);
-           font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.hstat span { font-size: 0.65rem; font-weight: 500; color: var(--ink-3);
+              letter-spacing: 0.05em; text-transform: uppercase; }
+.hstat b { font-family: var(--mono); font-size: 1rem; font-weight: 500; color: var(--ink);
+           font-variant-numeric: tabular-nums; }
 
 /* ---- facts strip ---- */
 .facts { font-size: 0.8rem; color: var(--ink-2); margin: -0.2rem 0 1rem 0; }
 .facts b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 .facts .sep { margin: 0 8px; color: #D0D5DD; }
 
-.live-dot {
-  display: inline-flex; align-items: center; gap: 6px; margin-right: 10px;
-  font-size: 0.74rem; font-weight: 600; color: #027A48;
-  background: #ECFDF3; border: 1px solid #ABEFC6; border-radius: 999px;
-  padding: 2px 10px 2px 8px;
+/* ---- numbered figure captions ---- */
+.figcap { font-size: 0.77rem; color: var(--ink-3); margin: 0.3rem 0 1.1rem 0; line-height: 1.5; }
+.figcap > span { font-family: var(--mono); font-weight: 600; font-size: 0.72rem;
+                 color: var(--ink-2); margin-right: 7px; }
+
+/* ---- paper-style algorithm boxes ---- */
+.algo { border: 1px solid var(--ink); border-radius: 0; margin: 0.3rem 0 0.5rem 0;
+        background: var(--surface); }
+.algo-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+             padding: 0.5rem 0.85rem; border-bottom: 1px solid var(--ink); }
+.algo-no { font-family: var(--mono); font-size: 0.74rem; font-weight: 600; color: var(--ink); }
+.algo-title { font-family: var(--serif); font-size: 0.95rem; font-weight: 600; color: var(--ink); }
+.algo-rq { margin-left: auto; font-family: var(--mono); font-size: 0.68rem;
+           color: var(--ink-3); letter-spacing: 0.04em; }
+.algo-io { font-family: var(--mono); font-size: 0.72rem; line-height: 1.7;
+           color: var(--ink-2); padding: 0.45rem 0.85rem;
+           border-bottom: 1px solid var(--border); }
+.algo-io b { color: var(--ink); font-weight: 600; }
+.algo-body { padding: 0.5rem 0.85rem 0.6rem; }
+.algo-line { display: flex; align-items: baseline; gap: 10px;
+             font-family: var(--mono); font-size: 0.74rem; line-height: 1.85;
+             color: var(--ink); }
+.algo-ln { color: #A9B4C2; min-width: 1.15em; text-align: right; flex: none; }
+.algo-tx b { font-weight: 600; }
+.algo-note { margin-left: auto; padding-left: 14px; color: var(--accent);
+             white-space: nowrap; flex: none; }
+@media (max-width: 760px) {
+  .algo-line { flex-wrap: wrap; }
+  .algo-note { margin-left: calc(1.15em + 10px); padding-left: 0; }
 }
-.live-dot::before {
-  content: ''; width: 7px; height: 7px; border-radius: 50%;
-  background: var(--green); box-shadow: 0 0 0 3px rgba(18,183,106,.15);
+
+/* ---- small screens: compact masthead, 2-up stat grid ---- */
+@media (max-width: 640px) {
+  .wordmark { font-size: 1.15rem; }
+  .hdr-sub { font-size: 0.68rem; }
+  .hdr-right { display: none; }   /* headline stats repeat on the Overview page */
+  .stat-row { grid-template-columns: repeat(2, 1fr) !important; }
+  .stat-tile { border-left: none; padding-left: 2px; border-top: 1px solid var(--border); }
+  .stat-row .stat-tile:nth-child(-n+2) { border-top: none; }
 }
 </style>
 """,
@@ -207,19 +254,19 @@ details[data-testid="stExpander"] summary:hover p { color: var(--ink); }
 
 
 def _plex_theme():
-    axis = {"labelColor": MUTED, "titleColor": MUTED, "labelFont": "Inter",
-            "titleFont": "Inter", "labelFontSize": 11, "titleFontSize": 11,
+    axis = {"labelColor": MUTED, "titleColor": MUTED, "labelFont": "IBM Plex Sans",
+            "titleFont": "IBM Plex Sans", "labelFontSize": 11, "titleFontSize": 11,
             "gridColor": "#EEF2F6", "domain": False, "tickColor": "#EEF2F6",
             "labelLimit": 180}
     return {
         "config": {
-            "font": "Inter",
+            "font": "IBM Plex Sans",
             "axis": axis,
             # never drop category labels on y; keep smart thinning on x
             "axisY": {"labelOverlap": False},
             "view": {"stroke": None},
             "title": {"anchor": "start", "fontSize": 13, "fontWeight": 600,
-                      "color": INK, "font": "Inter"},
+                      "color": INK, "font": "IBM Plex Sans"},
             "legend": {"labelColor": MUTED, "titleColor": MUTED},
         }
     }
@@ -250,6 +297,19 @@ def section_header(eyebrow: str, title: str, description: str = "") -> None:
         (f'<div class="eyebrow">{eyebrow}</div>' if eyebrow else "")
         + f'<p class="section-title">{title}</p>'
         + (f'<p class="section-desc">{description}</p>' if description else ""),
+        unsafe_allow_html=True,
+    )
+
+
+_FIG_COUNTER = {"n": 0}
+
+
+def figcap(text: str) -> None:
+    """Report-style numbered figure caption; numbering follows render order,
+    which is stable because every tab renders on every run."""
+    _FIG_COUNTER["n"] += 1
+    st.markdown(
+        f'<div class="figcap"><span>Fig. {_FIG_COUNTER["n"]}</span>{text}</div>',
         unsafe_allow_html=True,
     )
 
@@ -402,33 +462,57 @@ def hbar(df: pd.DataFrame, value: str, label: str, color=SEQUENTIAL_HUE,
 
 
 def histogram(df: pd.DataFrame, column: str, title: str, clip_q: float = 0.99) -> alt.Chart:
-    values = df[[column]].dropna()
-    cap = float(values[column].quantile(clip_q))
-    clipped = values[values[column] <= cap]
+    # Bin server-side: embedding raw values in the Vega spec ships the whole
+    # sample to the browser, which is what made remote page loads crawl.
+    values = df[column].dropna()
+    cap = float(values.quantile(clip_q))
+    clipped = values[values <= cap]
+    counts, edges = np.histogram(clipped, bins=40)
+    bins = pd.DataFrame({"lo": edges[:-1], "hi": edges[1:], "shops": counts})
     return (
-        alt.Chart(clipped)
-        .mark_bar(color=SEQUENTIAL_HUE, opacity=0.85, binSpacing=1)
+        alt.Chart(bins)
+        .mark_bar(color=SEQUENTIAL_HUE, opacity=0.85)
         .encode(
-            x=alt.X(column, bin=alt.Bin(maxbins=40), title=title),
-            y=alt.Y("count()", title="shops"),
-            tooltip=[alt.Tooltip(column, bin=True), "count()"],
+            x=alt.X("lo:Q", bin="binned", title=title),
+            x2="hi:Q",
+            y=alt.Y("shops:Q", title="shops"),
+            tooltip=[
+                alt.Tooltip("lo:Q", title="from", format=",.1f"),
+                alt.Tooltip("hi:Q", title="to", format=",.1f"),
+                alt.Tooltip("shops:Q", format=","),
+            ],
         )
         .properties(height=180)
     )
 
 
 def shop_map(df: pd.DataFrame, color_fn, popup_cols: list[str]) -> folium.Map:
+    # One GeoJson layer instead of per-marker objects: ~10x smaller HTML payload,
+    # which is what dominates load time on remote hosting.
     m = folium.Map(
         location=[df["latitude"].mean(), df["longitude"].mean()],
-        zoom_start=7, tiles="cartodbpositron",
+        zoom_start=7, tiles="cartodbpositron", prefer_canvas=True,
     )
-    for _, row in df.iterrows():
-        folium.CircleMarker(
-            location=[row["latitude"], row["longitude"]],
-            radius=3, weight=0,
-            fill=True, fill_color=color_fn(row), fill_opacity=0.7,
-            popup=" | ".join(f"{c}: {row[c]}" for c in popup_cols if c in row),
-        ).add_to(m)
+    features = [
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [round(r["longitude"], 5), round(r["latitude"], 5)],
+            },
+            "properties": {
+                "color": color_fn(r),
+                "popup": " | ".join(f"{c}: {r[c]}" for c in popup_cols if c in r),
+            },
+        }
+        for r in df.to_dict("records")
+    ]
+    folium.GeoJson(
+        {"type": "FeatureCollection", "features": features},
+        marker=folium.CircleMarker(radius=3, weight=0, fill=True, fill_opacity=0.7),
+        style_function=lambda feat: {"fillColor": feat["properties"]["color"]},
+        popup=folium.GeoJsonPopup(fields=["popup"], labels=False),
+    ).add_to(m)
     return m
 
 
@@ -460,20 +544,14 @@ _hstats = "".join(
         ("Risk AUC", f"{_clf_best.get('roc_auc', float('nan')):.3f}"),
     ]
 ) if _m else ""
-import base64 as _b64
-_logo = _b64.b64encode((Path(__file__).parent / "assets/logo_store.png").read_bytes()).decode()
 st.markdown(
     f"""
 <div class="hdr">
-  <div class="hdr-left">
-    <div class="hdr-logo"><img src="data:image/png;base64,{_logo}"></div>
-    <div>
-      <div class="wordmark">Smart Retail Intelligence</div>
-      <div class="hdr-sub">Bangladesh FMCG distribution network · MITE 431</div>
-    </div>
+  <div>
+    <div class="wordmark">Smart Retail Intelligence</div>
+    <div class="hdr-sub">Bangladesh FMCG distribution network · MITE 431</div>
   </div>
   <div class="hdr-right">
-    <span class="live-dot">Live</span>
     {_hstats}
   </div>
 </div>
@@ -487,40 +565,49 @@ if "features" not in art:
 
 base = build_base(tuple(sorted(art.keys())))
 
-with st.expander("Filters — all analysis views", expanded=False):
-    fc1, fc2, fc3, fc4, fc5 = st.columns([2, 2, 2, 2, 1.6])
-    sel_divisions = fc1.multiselect(
-        "Division", sorted(base["division"].unique()), placeholder="All divisions"
-    )
-    cluster_options = (
-        sorted(base["cluster"].dropna().unique().astype(int))
-        if "cluster" in base else []
-    )
-    sel_clusters = fc2.multiselect(
-        "Archetype", cluster_options, placeholder="All archetypes",
-        format_func=lambda c: f"Cluster {c}",
-    )
-    sel_types = fc3.multiselect(
-        "Shop type", sorted(base["shop_type"].unique()), placeholder="All types"
-    )
-    sel_importance = fc4.multiselect(
-        "Importance", sorted(base["shop_importance"].unique()), placeholder="All tiers"
-    )
-    only_target = fc5.toggle("Has sales target")
+# --- section bar: masthead navigation, always visible on every device ----
+VIEWS = ["Overview", "Dataset", "Method", "Archetypes",
+         "Sales", "Risk", "Anomalies", "Report"]
+nav_col, filt_col = st.columns([6.2, 1], vertical_alignment="center")
+with nav_col:
+    view = st.pills("Sections", VIEWS, selection_mode="single",
+                    default="Overview", label_visibility="collapsed") or "Overview"
+with filt_col:
+    with st.popover("Filters"):
+        st.markdown('<div class="side-label">Filters · apply to analytical views</div>',
+                    unsafe_allow_html=True)
+        sel_divisions = st.multiselect(
+            "Division", sorted(base["division"].unique()), placeholder="All divisions"
+        )
+        cluster_options = (
+            sorted(base["cluster"].dropna().unique().astype(int))
+            if "cluster" in base else []
+        )
+        sel_clusters = st.multiselect(
+            "Archetype", cluster_options, placeholder="All archetypes",
+            format_func=lambda c: f"Cluster {c}",
+        )
+        sel_types = st.multiselect(
+            "Shop type", sorted(base["shop_type"].unique()), placeholder="All types"
+        )
+        sel_importance = st.multiselect(
+            "Importance", sorted(base["shop_importance"].unique()), placeholder="All tiers"
+        )
+        only_target = st.toggle("Has sales target")
 
-    mask = pd.Series(True, index=base.index)
-    if sel_divisions:
-        mask &= base["division"].isin(sel_divisions)
-    if sel_clusters and "cluster" in base:
-        mask &= base["cluster"].isin(sel_clusters)
-    if sel_types:
-        mask &= base["shop_type"].isin(sel_types)
-    if sel_importance:
-        mask &= base["shop_importance"].isin(sel_importance)
-    if only_target:
-        mask &= base["has_target"]
+mask = pd.Series(True, index=base.index)
+if sel_divisions:
+    mask &= base["division"].isin(sel_divisions)
+if sel_clusters and "cluster" in base:
+    mask &= base["cluster"].isin(sel_clusters)
+if sel_types:
+    mask &= base["shop_type"].isin(sel_types)
+if sel_importance:
+    mask &= base["shop_importance"].isin(sel_importance)
+if only_target:
+    mask &= base["has_target"]
 
-    f = base[mask]
+f = base[mask]
 
 filters_active = len(f) != len(base)
 
@@ -528,23 +615,14 @@ if f.empty:
     st.warning("The current filter combination matches no shops — clear a filter.")
     st.stop()
 
-(tab_overview, tab_dataset, tab_method, tab_rq1, tab_rq2,
- tab_rq3, tab_rq4, tab_report) = st.tabs(
-    ["Overview", "Dataset", "Method & pipeline", "RQ1 · Archetypes",
-     "RQ2 · Sales prediction", "RQ3 · Target-miss risk", "RQ4 · Anomalies", "Report"]
-)
-
 # ==========================================================================
-with tab_overview:
+if view == "Overview":
     quality = art.get("metrics", {}).get("phase_1_preprocessing", {})
 
     section_header(
         "", "Dataset at a glance",
         "Full dataset, independent of filters — Mendeley mgzvngzng2 v1, collected Feb 2022 – Oct 2024.",
     )
-    n_products_cat = len(art["products"]) if "products" in art else 42
-    brands = art["products"]["brand"].nunique() if "products" in art else 5
-    types_ = art["products"]["type"].nunique() if "products" in art else 9
     stat_row([
         ("Raw records", f"{quality.get('n_raw_shop_rows', len(base)):,}", "3 source files"),
         ("Outlets analysed", f"{quality.get('n_final_shops', len(base)):,}",
@@ -555,20 +633,6 @@ with tab_overview:
         ("Mean predicted risk", f"{base['risk_score'].mean():.1%}" if "risk_score" in base else "—",
          "across scored shops"),
     ])
-    _facts = [
-        ("Districts", base["zila"].nunique()),
-        ("Upazilas", base["upazila"].nunique()),
-        ("SKU variants", f"{n_products_cat} ({brands} brands · {types_} types)"),
-        ("Targeted products / shop", len(schema.PRODUCT_TARGET_COLUMNS)),
-        ("Model features", quality.get("n_feature_columns", "—")),
-    ]
-    st.markdown(
-        '<div class="facts">'
-        + '<span class="sep">·</span>'.join(f'{k} <b>{v}</b>' for k, v in _facts)
-        + "</div>",
-        unsafe_allow_html=True,
-    )
-
     if filters_active:
         st.markdown('<div style="height:0.4rem"></div>', unsafe_allow_html=True)
         section_header("Filtered view", "What the current filters select", "")
@@ -583,29 +647,31 @@ with tab_overview:
             accent=True,
         )
 
-    left, right = st.columns([3, 2])
+    sample = f.sample(min(MAP_SAMPLE, len(f)), random_state=0)
+    if "cluster" in sample:
+        st.markdown(cluster_legend(sample["cluster"].dropna().unique()),
+                    unsafe_allow_html=True)
+        color_fn = lambda row: cluster_color(row.get("cluster"))
+    else:
+        color_fn = lambda row: SEQUENTIAL_HUE
+    st_folium(
+        shop_map(sample, color_fn, ["shop_code", "division", "shop_type"]),
+        height=460, use_container_width=True, returned_objects=[],
+    )
+    figcap(
+        f"Network map. {len(sample):,}-shop random sample of the current "
+        "view, colored by archetype."
+    )
+
+    left, right = st.columns(2)
     with left:
-        st.markdown("**Network map**")
-        sample = f.sample(min(MAP_SAMPLE, len(f)), random_state=0)
-        if "cluster" in sample:
-            st.caption(f"{len(sample):,}-shop random sample, colored by archetype")
-            st.markdown(cluster_legend(sample["cluster"].dropna().unique()),
-                        unsafe_allow_html=True)
-            color_fn = lambda row: cluster_color(row.get("cluster"))
-        else:
-            color_fn = lambda row: SEQUENTIAL_HUE
-        st_folium(
-            shop_map(sample, color_fn, ["shop_code", "division", "shop_type"]),
-            height=460, use_container_width=True, returned_objects=[],
-        )
-    with right:
-        st.markdown("**Shops per division**")
         counts = f["division"].value_counts().rename_axis("division").reset_index(name="shops")
         st.altair_chart(
             hbar(counts, "shops", "division", value_title="shops", fmt=",").properties(height=280),
             width="stretch",
         )
-        st.markdown("**Shops per type (top 12)**")
+        figcap("Shops per division in the current view.")
+    with right:
         type_counts = (
             f["shop_type"].value_counts().head(12).rename_axis("shop_type")
             .reset_index(name="shops")
@@ -614,10 +680,10 @@ with tab_overview:
             hbar(type_counts, "shops", "shop_type", value_title="shops", fmt=",").properties(height=280),
             width="stretch",
         )
-        st.caption(
-            "'Unknown' = shop_type was never captured in the source survey "
-            "(10.23% of raw records) — kept as an explicit category rather "
-            "than dropped. Full explanation on the Dataset tab."
+        figcap(
+            "Shops per type, top 12. 'Unknown' = shop_type was never captured "
+            "in the source survey (10.23% of raw records) — kept as an explicit "
+            "category, not dropped; see the Dataset page."
         )
 
 # ==========================================================================
@@ -706,9 +772,26 @@ def render_column_detail(record: dict) -> None:
             )
 
 
-with tab_dataset:
+if view == "Dataset":
     section_header("The data", "In-depth dataset description",
                    "Every column of every source file, profiled from the actual data.")
+    _q_ds = art.get("metrics", {}).get("phase_1_preprocessing", {})
+    _n_products = len(art["products"]) if "products" in art else 42
+    _brands = art["products"]["brand"].nunique() if "products" in art else 5
+    _types = art["products"]["type"].nunique() if "products" in art else 9
+    _facts = [
+        ("Districts", base["zila"].nunique()),
+        ("Upazilas", base["upazila"].nunique()),
+        ("SKU variants", f"{_n_products} ({_brands} brands · {_types} types)"),
+        ("Targeted products / shop", len(schema.PRODUCT_TARGET_COLUMNS)),
+        ("Model features", _q_ds.get("n_feature_columns", "—")),
+    ]
+    st.markdown(
+        '<div class="facts">'
+        + '<span class="sep">·</span>'.join(f'{k} <b>{v}</b>' for k, v in _facts)
+        + "</div>",
+        unsafe_allow_html=True,
+    )
     profile = art.get("dataset_profile")
     if not profile:
         st.info(
@@ -804,6 +887,18 @@ ALGORITHM_CARDS = [
             "derive n_products_targeted and has_target.",
             "One-hot encode type, style, importance, place nature, division.",
         ],
+        "pseudo": [
+            (0, "drop duplicate shop_code rows (keep first)", ""),
+            (0, "keep GPS inside 20.5–26.7°N, 88.0–92.7°E", "719,817 shops"),
+            (0, "fill categorical gaps with explicit “Unknown”", ""),
+            (0, "T ← BallTree(lat, lon, metric = haversine)", ""),
+            (0, "<b>for</b> r ∈ {500 m, 1 km, 5 km} <b>do</b>", ""),
+            (1, "density_r(i) ← |T.query(i, r)| for every shop i", "n log n, not n²"),
+            (0, "dist_centre(i) ← haversine(i, district shop centroid)", ""),
+            (0, "join monthly targets, valued rows preferred", "613,656 with target"),
+            (0, "one-hot encode type · style · importance · place · division", "48 features"),
+            (0, "<b>return</b> features.parquet", ""),
+        ],
     },
     {
         "phase": "Phase 2", "rq": "RQ1",
@@ -824,6 +919,16 @@ ALGORITHM_CARDS = [
             "Stress-test: 10 bootstrap refits on 100k shops — ARI 0.53 ± 0.15; the "
             "ghost segment is recovered perfectly (Jaccard 1.00) in every resample.",
             "Profile each cluster: median density, distance, target, dominant categories.",
+        ],
+        "pseudo": [
+            (0, "X ← StandardScaler(features)", "719,817 × 48"),
+            (0, "<b>for</b> k = 3 … 9 <b>do</b>", ""),
+            (1, "fit KMeans(k, n_init = 10, seed 42)", ""),
+            (1, "s_k ← silhouette(10k sample); d_k ← Davies–Bouldin(all)", ""),
+            (0, "k* ← argmax_k s_k", "k* = 8"),
+            (0, "cross-check: Agglomerative (Ward) · DBSCAN on 20k", "DBSCAN: 98.7% noise"),
+            (0, "<b>for</b> b = 1 … 10 <b>do</b> bootstrap refit on 100k shops", "ARI 0.53 ± 0.15"),
+            (0, "<b>return</b> labels, centroids, cluster profiles", ""),
         ],
     },
     {
@@ -846,6 +951,15 @@ ALGORITHM_CARDS = [
             "Explain it with SHAP TreeExplainer on ≤ 2,000 test rows.",
             "Predict every labelled shop with the winner.",
         ],
+        "pseudo": [
+            (0, "train, test ← split 80 / 20 (seed 42)", ""),
+            (0, "<b>for</b> m ∈ {Linear, RF(100, d ≤ 20), XGB(300 × 8), LGBM(300, 63 lv)} <b>do</b>", ""),
+            (1, "fit m on train; RMSE · MAE · R² on test", ""),
+            (0, "m* ← argmin_m RMSE", "XGBoost"),
+            (0, "re-rank by 5-fold CV — split winner unstable", "LGBM 0.37 ± 0.08"),
+            (0, "SHAP TreeExplainer on ≤ 2,000 test rows", ""),
+            (0, "<b>return</b> predictions for all 613,660 labelled shops", ""),
+        ],
     },
     {
         "phase": "Phase 4", "rq": "RQ3",
@@ -865,6 +979,16 @@ ALGORITHM_CARDS = [
             "Optuna-tuned XGBoost as a separate fourth candidate when tuning is on.",
             "Score ROC-AUC / F1 / precision / recall on the raw test set.",
             "Pick the highest-AUC model; predict_proba → risk_score ∈ [0, 1].",
+        ],
+        "pseudo": [
+            (0, "<b>for</b> each peer group (cluster × shop type) <b>do</b>", ""),
+            (1, "at_risk(i) ← total_target(i) &lt; 0.8 · median(group)", "base rate 36.6%"),
+            (0, "stratified split 80 / 20 (seed 42)", ""),
+            (0, "weight the minority class in the loss", "scale_pos_weight ≈ 1.7"),
+            (0, "<b>for</b> m ∈ {LogReg, RF, XGB, XGB-Optuna} <b>do</b> fit; ROC-AUC · F1", ""),
+            (0, "m* ← argmax_m ROC-AUC", ""),
+            (0, "risk_score ← m*.predict_proba", "∈ [0, 1] per shop"),
+            (0, "<b>return</b> at_risk, risk_score", ""),
         ],
     },
     {
@@ -886,29 +1010,48 @@ ALGORITHM_CARDS = [
             "Map the flags: Unknown-division shops are flagged at 39% (4× the decile "
             "baseline) — a second method independently confirming the ghost segment.",
         ],
+        "pseudo": [
+            (0, "<b>for</b> each cluster c with ≥ 20 shops <b>do</b>", "never global"),
+            (1, "Z ← standardize(features of c)", ""),
+            (1, "a ← pct-rank(−IsolationForest(200 trees).score(Z))", ""),
+            (1, "b ← pct-rank(−LOF(20 neighbours).score(Z))", ""),
+            (1, "combined(i) ← (a_i + b_i) / 2", ""),
+            (0, "export top decile with full shop context", "71,982 shops"),
+            (0, "<b>return</b> anomalies, ranked top decile", "Unknown div. at 39%"),
+        ],
     },
 ]
 
 
-def render_algorithm_card(card: dict) -> None:
-    with st.container(border=True):
-        st.markdown(
-            f'<div class="eyebrow">{card["phase"]} · {card["rq"]}</div>'
-            f'<p class="section-title" style="font-size:1.02rem;">{card["title"]}</p>'
-            f'<p class="section-desc" style="margin-bottom:0.45rem;">{card["algorithm"]}</p>'
-            f'<div class="stat-label" style="white-space:normal;">IN&nbsp;&nbsp;'
-            f'<span style="text-transform:none;letter-spacing:0;color:#1C2A3A;">{card["input"]}</span></div>'
-            f'<div class="stat-label" style="white-space:normal;margin-top:2px;">OUT&nbsp;'
-            f'<span style="text-transform:none;letter-spacing:0;color:#1C2A3A;">{card["output"]}</span></div>',
-            unsafe_allow_html=True,
-        )
-        with st.expander(f"Internal steps ({len(card['steps'])})"):
-            for i, step in enumerate(card["steps"], start=1):
-                st.markdown(f"{i}. {step}")
-        st.caption(card["why"])
+def render_algorithm_card(no: int, card: dict) -> None:
+    """A journal-style 'Algorithm N' box: numbered pseudocode lines with
+    right-aligned result annotations, Input/Output header, prose steps behind
+    an expander for readers who prefer plain language."""
+    lines = "".join(
+        f'<div class="algo-line"><span class="algo-ln">{i}</span>'
+        f'<span class="algo-tx" style="padding-left:{indent * 1.2}em">{text}</span>'
+        + (f'<span class="algo-note">&#9656; {note}</span>' if note else "")
+        + "</div>"
+        for i, (indent, text, note) in enumerate(card["pseudo"], start=1)
+    )
+    st.markdown(
+        f'<div class="algo">'
+        f'<div class="algo-head"><span class="algo-no">Algorithm {no}</span>'
+        f'<span class="algo-title">{card["title"]}</span>'
+        f'<span class="algo-rq">{card["phase"]} · {card["rq"]}</span></div>'
+        f'<div class="algo-io"><b>Input</b>&nbsp;&nbsp; {card["input"]}<br>'
+        f'<b>Output</b>&nbsp;{card["output"]}</div>'
+        f'<div class="algo-body">{lines}</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+    st.caption(f'{card["algorithm"]} — {card["why"]}')
+    with st.expander("Plain-language steps"):
+        for i, step in enumerate(card["steps"], start=1):
+            st.markdown(f"{i}. {step}")
 
 
-with tab_method:
+if view == "Method":
     section_header(
         "Methodology", "How the analysis is produced",
         "One topic per view — pipeline flow, the algorithm behind every step, "
@@ -923,15 +1066,15 @@ with tab_method:
     with sub_flow:
         st.image(str(Path(__file__).parent / "assets/pipeline_architecture.png"),
                  use_container_width=True)
-        st.caption(
-            "The same five phases run in both lanes: scikit-learn is the "
-            "reference (exact proposal algorithms); the Hadoop/Spark lane "
-            "re-executes them distributed, storing everything in HDFS — "
-            "matching row counts across lanes cross-validate the preparation."
+        figcap(
+            "Two-lane pipeline architecture. The same five phases run in both "
+            "lanes: scikit-learn is the reference (exact proposal algorithms); "
+            "the Hadoop/Spark lane re-executes them distributed, storing "
+            "everything in HDFS — matching row counts across lanes "
+            "cross-validate the preparation."
         )
         if require(art, "metrics"):
             quality = art["metrics"].get("phase_1_preprocessing", {})
-            st.markdown("**From raw file to model-ready table**")
             funnel = pd.DataFrame(
                 [
                     {"stage": "1 · Raw shop records", "shops": quality.get("n_raw_shop_rows", 0)},
@@ -956,18 +1099,20 @@ with tab_method:
                 (bars + labels).properties(height=210, padding={"right": 52}),
                 width="stretch",
             )
-            st.caption(
-                f"Stage 3 removes {quality.get('n_invalid_or_missing_gps', 0):,} rows "
-                "whose coordinates were never captured (geometry = POINT EMPTY); "
+            figcap(
+                "From raw file to model-ready table. Stage 3 removes "
+                f"{quality.get('n_invalid_or_missing_gps', 0):,} rows whose "
+                "coordinates were never captured (geometry = POINT EMPTY); "
                 "what remains equals the paper's published count exactly."
             )
 
     # ---------------------------------------------------------- algorithms
     with sub_algo:
         col_a, col_b = st.columns(2)
-        for slot, card in zip([col_a, col_b, col_a, col_b, col_a], ALGORITHM_CARDS):
+        for slot, (no, card) in zip([col_a, col_b, col_a, col_b, col_a],
+                                    enumerate(ALGORITHM_CARDS, start=1)):
             with slot:
-                render_algorithm_card(card)
+                render_algorithm_card(no, card)
 
     # ---------------------------------------------------------- features
     with sub_feat:
@@ -1130,7 +1275,7 @@ with tab_method:
             )
 
 # ==========================================================================
-with tab_rq1:
+if view == "Archetypes":
     if require(art, "profiles", "metrics") and "cluster" in f:
         clustering = art["metrics"].get("phase_2_clustering", {})
         best_k = clustering.get("best_k", "?")
@@ -1210,8 +1355,9 @@ with tab_rq1:
                     text=alt.Text("shops", format=","))
         )
         st.altair_chart(bars + labels, width="stretch")
-        st.markdown("**Cluster profiles (medians, full dataset)**")
-        st.dataframe(art["profiles"], width="stretch", hide_index=True)
+        figcap("Archetype sizes under the current filters.")
+        with st.expander("Cluster profiles — medians, full dataset"):
+            st.dataframe(art["profiles"], width="stretch", hide_index=True)
 
         profiles = art["profiles"]
         key_account = profiles.loc[profiles[TARGET_COLUMN].idxmax()]
@@ -1261,7 +1407,7 @@ with tab_rq1:
                 )
 
 # ==========================================================================
-with tab_rq2:
+if view == "Sales":
     if require(art, "predictions", "metrics"):
         reg = art["metrics"].get("phase_3_regression", {})
         section(
@@ -1360,7 +1506,6 @@ with tab_rq2:
 
         preds = f[f["has_target"] & f["predicted"].notna()]
         if not preds.empty:
-            st.markdown("**Actual vs predicted (current view, sampled)**")
             preds = preds.sample(min(5_000, len(preds)), random_state=0)
             limit = float(preds[[TARGET_COLUMN, "predicted"]].quantile(0.99).max())
             scatter = (
@@ -1375,6 +1520,10 @@ with tab_rq2:
                 .mark_line(color="#999", strokeDash=[4, 4]).encode(x="v", y="v")
             )
             st.altair_chart((scatter + diagonal).properties(height=360), width="stretch")
+            figcap(
+                f"Actual vs predicted monthly target, {len(preds):,}-shop sample "
+                "of the current view; dashed diagonal marks a perfect prediction."
+            )
 
         baseline_r2 = reg.get("models", {}).get("linear_regression", {}).get("r2", float("nan"))
         best_r2 = reg.get("models", {}).get(reg.get("best_model", ""), {}).get("r2", float("nan"))
@@ -1393,7 +1542,7 @@ with tab_rq2:
         )
 
 # ==========================================================================
-with tab_rq3:
+if view == "Risk":
     if require(art, "metrics") and "risk_score" in f:
         clf = art["metrics"].get("phase_4_classification", {})
         section(
@@ -1482,13 +1631,13 @@ with tab_rq3:
                             height=270, title="Mean predicted risk by archetype"),
                         width="stretch",
                     )
-            st.markdown("**Highest-risk shops (current view)**")
-            st.dataframe(
-                risk_view.sort_values("risk_score", ascending=False)
-                [["shop_code", "division", "zila", "shop_type", "shop_importance",
-                  "cluster", TARGET_COLUMN, "risk_score", "at_risk"]].head(200),
-                width="stretch", hide_index=True,
-            )
+            with st.expander("Highest-risk shops — current view, top 200"):
+                st.dataframe(
+                    risk_view.sort_values("risk_score", ascending=False)
+                    [["shop_code", "division", "zila", "shop_type", "shop_importance",
+                      "cluster", TARGET_COLUMN, "risk_score", "at_risk"]].head(200),
+                    width="stretch", hide_index=True,
+                )
 
         best_auc = clf.get("models", {}).get(clf.get("best_model", ""), {}).get("roc_auc", float("nan"))
         risk_all = base[base["risk_score"].notna()] if "risk_score" in base else pd.DataFrame()
@@ -1511,7 +1660,7 @@ with tab_rq3:
         )
 
 # ==========================================================================
-with tab_rq4:
+if view == "Anomalies":
     if require(art, "metrics") and "combined_score" in f:
         anom = art["metrics"].get("phase_5_anomaly", {})
         section(
@@ -1542,16 +1691,19 @@ with tab_rq4:
         section_header("RQ4 · Result", "Ranked anomalies")
         score_view = f[f["combined_score"].notna()]
         if not score_view.empty:
-            hist_src = score_view[["combined_score"]].sample(
-                min(len(score_view), 50_000), random_state=42
+            # pre-bin on the server: embedding raw rows in the Vega spec would
+            # ship the whole sample to the browser
+            counts_h, edges_h = np.histogram(score_view["combined_score"], bins=60)
+            hist_bins = pd.DataFrame(
+                {"lo": edges_h[:-1], "hi": edges_h[1:], "shops": counts_h}
             )
             hist = (
-                alt.Chart(hist_src)
-                .mark_bar(color=SEQUENTIAL_HUE, opacity=0.85, binSpacing=1)
+                alt.Chart(hist_bins)
+                .mark_bar(color=SEQUENTIAL_HUE, opacity=0.85)
                 .encode(
-                    x=alt.X("combined_score", bin=alt.Bin(maxbins=60),
-                            title="combined anomaly score"),
-                    y=alt.Y("count()", title="shops"),
+                    x=alt.X("lo:Q", bin="binned", title="combined anomaly score"),
+                    x2="hi:Q",
+                    y=alt.Y("shops:Q", title="shops"),
                 )
                 .properties(height=220,
                             title="Distribution of the combined score (current view)")
@@ -1562,10 +1714,11 @@ with tab_rq4:
                 .encode(x="v")
             )
             st.altair_chart(hist + rule, width="stretch")
-            st.caption(
-                f"Everything right of the dashed line (score ≥ {decile_cut:.2f}, the "
-                "empirical 90th percentile) is the exported top decile — the same cut "
-                "shown in Fig. 18 of the report."
+            figcap(
+                f"Combined anomaly score, current view. Everything right of the "
+                f"dashed line (score ≥ {decile_cut:.2f}, the empirical 90th "
+                "percentile) is the exported top decile — the same cut shown in "
+                "Fig. 18 of the written report."
             )
         map_top = (
             anomaly_view.sort_values("combined_score", ascending=False)
@@ -1577,11 +1730,16 @@ with tab_rq4:
                          ["shop_code", "division", "shop_type", "combined_score"]),
                 height=400, use_container_width=True, returned_objects=[],
             )
-            st.dataframe(
-                map_top[["shop_code", "cluster", "combined_score", "division", "zila",
-                         "shop_type", "shop_importance", "density_1km", TARGET_COLUMN]].head(500),
-                width="stretch", hide_index=True,
+            figcap(
+                f"The {len(map_top):,} highest-scoring shops in the current view, "
+                "ranked by combined anomaly score."
             )
+            with st.expander("Ranked anomaly table — top 500 in view"):
+                st.dataframe(
+                    map_top[["shop_code", "cluster", "combined_score", "division", "zila",
+                             "shop_type", "shop_importance", "density_1km", TARGET_COLUMN]].head(500),
+                    width="stretch", hide_index=True,
+                )
         if art.get("top_anomalies") is not None and "division" in base.columns:
             with st.expander("Where the flags concentrate — geography as evidence"):
                 flag_share = (
@@ -1620,7 +1778,7 @@ with tab_rq4:
         )
 
 # ==========================================================================
-with tab_report:
+if view == "Report":
     if require(art, "metrics"):
         risk_by_division = None
         if "risk_score" in base.columns:
